@@ -23,6 +23,7 @@ return new class extends Migration
             $table->decimal('cost', 18, 2)->nullable();
             $table->string('barcode')->nullable();
             $table->string('reference')->nullable();
+            $table->boolean('is_shrink');
             $table->timestamps();
         });
     }

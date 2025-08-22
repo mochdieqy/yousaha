@@ -14,9 +14,17 @@ return new class extends Migration
         Schema::create('stock_histories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('stock_id')->constrained('stocks')->onDelete('cascade');
-            $table->integer('quantity');
+            $table->integer('quantity_total_before');
+            $table->integer('quantity_total_after');
+            $table->integer('quantity_reserve_before');
+            $table->integer('quantity_reserve_after');
+            $table->integer('quantity_saleable_before');
+            $table->integer('quantity_saleable_after');
+            $table->integer('quantity_incoming_before');
+            $table->integer('quantity_incoming_after');
             $table->string('type');
             $table->string('reference');
+            $table->date('date')->index();
             $table->timestamps();
         });
     }

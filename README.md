@@ -1,66 +1,243 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Yousaha - Mini ERP Web Application
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+**Information System Model Design Using Ward Peppard and Rapid Application Development**
 
-## About Laravel
+![Laravel](https://img.shields.io/badge/Laravel-v10.x-red?style=flat-square&logo=laravel)
+![PHP](https://img.shields.io/badge/PHP-v8.1+-blue?style=flat-square&logo=php)
+![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 📋 Description
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Yousaha is a mini ERP (Enterprise Resource Planning) web application developed as part of the thesis research "Information System Model Design Using Ward Peppard and Rapid Application Development". This application is designed to help small and medium enterprises manage their integrated business operations.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 🎯 Background
 
-## Learning Laravel
+Organizations greatly need the assistance of information systems and information technology (IS/IT) to survive and thrive in today's competitive business environment. This research analyzes the IS/IT needs of three companies:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- **PT Gimsak Teknologi Indonesia (GTI)** - Bogor: Goods and services trading company
+- **PT Megah Lautan Utama (MLU)** - Bali: Fisheries company with export focus
+- **PT Lingkar Nusa Teknologi (LNT)** - Jakarta: Drone pilot training center and certification
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## ✨ Key Features
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 🏢 Company Management
+- Multi-company support
+- Company profile configuration
+- User management and access control
 
-## Laravel Sponsors
+### 📦 Inventory Management
+- **Products**: Master product data with categories and specifications
+- **Warehouses**: Multiple warehouse management
+- **Stock**: Real-time stock tracking and stock history
+- **Stock Shrink**: Stock shrinkage recording
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 💰 Sales Management
+- **Sales Orders**: Sales order creation and tracking
+- **Delivery**: Goods delivery management
+- **Customers**: Integrated customer database
+- **Status Tracking**: Real-time order status monitoring
 
-### Premium Partners
+### 🛒 Purchase Management
+- **Purchase Orders**: Purchase order creation
+- **Receipt**: Goods receipt from suppliers
+- **Suppliers**: Supplier database management
+- **Status Tracking**: Purchase status monitoring
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+### 💼 Finance Management
+- **General Ledger**: General ledger and transaction details
+- **Chart of Accounts**: Financial account management
+- **Expense Management**: Expense recording
+- **Income Tracking**: Income recording
+- **Internal Transfer**: Inter-account transfers
 
-## Contributing
+### 👥 Human Resources (HR)
+- **Employee Management**: Employee database
+- **Department**: Department management
+- **Payroll**: Payroll system
+- **Attendance**: Attendance recording
+- **Time Off**: Leave and time-off management
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 🏭 Assets
+- **Asset Management**: Company asset management
+- **Asset Tracking**: Asset tracking and monitoring
 
-## Code of Conduct
+## 🛠 Technology Stack
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Backend
+- **Laravel 10.x** - PHP Web Framework
+- **PHP 8.1+** - Server-side scripting
+- **MySQL** - Database management system
 
-## Security Vulnerabilities
+### Frontend
+- **Blade Templates** - Laravel templating engine
+- **Bootstrap** - CSS framework for responsive design
+- **jQuery** - JavaScript library for DOM manipulation
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Development Methodology
+- **Ward and Peppard** - Strategic IS/IT planning methodology
+- **Rapid Application Development (RAD)** - Agile development approach
 
-## License
+## 📊 Research Methodology
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This application was developed using Ward and Peppard methodology which includes:
+
+### 🔍 Strategic Analysis
+- **PEST Analysis** - Analysis of Political, Economic, Social, and Technological factors
+- **Value Chain Analysis** - Value chain analysis for business process identification
+- **SWOT Analysis** - Analysis of Strengths, Weaknesses, Opportunities, and Threats
+- **McFarlan Strategic Grid** - IS/IT application portfolio mapping
+
+### 📈 Development Approach
+- **Rapid Application Development (RAD)** for fast development
+- **Iterative Development** for continuous improvement
+- **User-Centered Design** based on user requirements
+
+## 🚀 Installation
+
+### Prerequisites
+- PHP >= 8.1
+- Composer
+- MySQL/MariaDB
+
+### Installation Steps
+
+1. **Clone repository**
+   ```bash
+   git clone https://github.com/your-username/yousaha.git
+   cd yousaha
+   ```
+
+2. **Install dependencies**
+   ```bash
+   composer install
+   ```
+
+3. **Environment setup**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+
+4. **Database configuration**
+   Edit the `.env` file and configure your database settings:
+   ```env
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=yousaha
+   DB_USERNAME=your_username
+   DB_PASSWORD=your_password
+   ```
+
+5. **Database migration**
+   ```bash
+   php artisan migrate
+   php artisan db:seed
+   ```
+
+6. **Start development server**
+   ```bash
+   php artisan serve
+   ```
+
+   The application will run at `http://localhost:8000`
+
+## 📖 Usage
+
+### System Login
+1. Access the application through your browser
+2. Use default credentials or create a new account
+3. Select or create a company to start using the system
+
+### Main Workflow
+
+#### 1. Initial Setup
+- Create company profile
+- Setup chart of accounts
+- Add warehouses and locations
+- Input master product data
+
+#### 2. Daily Operations
+- **Sales**: Sales Order → Delivery → Invoice
+- **Purchase**: Purchase Order → Receipt → Payment
+- **Inventory**: Stock monitoring and adjustment
+- **Finance**: Transaction recording and reconciliation
+
+#### 3. HR Management
+- Input employee data
+- Record attendance
+- Process monthly payroll
+
+## 🏗 System Architecture
+
+```
+yousaha/
+├── app/                    # Application logic
+│   ├── Http/Controllers/   # HTTP Controllers
+│   ├── Models/            # Eloquent Models
+│   └── Providers/         # Service Providers
+├── database/
+│   ├── migrations/        # Database migrations
+│   └── seeders/          # Database seeders
+├── resources/
+│   ├── views/            # Blade templates with Bootstrap
+│   ├── css/              # Custom stylesheets
+│   └── js/               # JavaScript files
+├── public/               # Static assets and Bootstrap files
+└── routes/               # Application routes
+```
+
+## 📚 Additional Documentation
+
+### Database Model
+This application uses 39 main tables that include:
+- User management and authentication
+- Company and multi-tenant support
+- Complete ERP modules (Inventory, Sales, Purchase, Finance, HR)
+- Audit trail and logging
+
+### API Documentation
+- RESTful API available for external integration
+- Authentication using Laravel Sanctum
+- Comprehensive API documentation available
+
+## 🤝 Contributing
+
+This project was developed as part of academic research. Contributions and feedback are highly appreciated:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Create a Pull Request
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` file for more information.
+
+## 👨‍💻 Author
+
+**Mochammad Dieqy Dzulqaidar**  
+Student ID: 91123078  
+Master's Program in Information Systems Management  
+Gunadarma University  
+Jakarta, 2025
+
+## 📞 Contact
+
+- Email: [your-email@example.com]
+- LinkedIn: [Your LinkedIn Profile]
+- GitHub: [Your GitHub Profile]
+
+## 🙏 Acknowledgments
+
+- Gunadarma University - Master's Program in Information Systems Management
+- PT Gimsak Teknologi Indonesia
+- PT Megah Lautan Utama  
+- PT Lingkar Nusa Teknologi
+- Laravel Community
+- Open Source Community
+
+---
+
+**Note**: This application was developed for research and educational purposes. For production use, it is recommended to conduct additional security audits and performance optimization.

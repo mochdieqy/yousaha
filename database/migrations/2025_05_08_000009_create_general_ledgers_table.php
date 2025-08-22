@@ -19,6 +19,7 @@ return new class extends Migration
             $table->date('date');
             $table->text('note')->nullable();
             $table->decimal('total', 18, 2);
+            $table->string('reference')->nullable()->index();
             $table->timestamps();
         });
     }

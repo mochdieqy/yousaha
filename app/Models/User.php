@@ -17,8 +17,15 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-        'username',
+        'email',
         'password',
+        'name',
+        'phone',
+        'birthday',
+        'gender',
+        'marital_status',
+        'identity_number',
+        'address',
     ];
 
     /**
@@ -38,5 +45,39 @@ class User extends Authenticatable
      */
     protected $casts = [
         'password' => 'hashed',
+        'birthday' => 'date',
+        'verify_at' => 'datetime',
     ];
+
+    /**
+     * Get the companies owned by the user.
+     */
+    public function companies()
+    {
+        return $this->hasMany(Company::class, 'owner');
+    }
+
+    /**
+     * Get the departments managed by the user.
+     */
+    public function managedDepartments()
+    {
+        return $this->hasMany(Department::class, 'manager_id');
+    }
+
+    /**
+     * Get the employee record for this user.
+     */
+    public function employee()
+    {
+        return $this->hasOne(Employee::class);
+    }
+
+    /**
+     * Get the employees managed by this user.
+     */
+    public function managedEmployees()
+    {
+        return $this->hasMany(Employee::class, 'manager');
+    }
 }
