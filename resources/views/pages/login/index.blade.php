@@ -9,11 +9,11 @@
     <form method="POST" action="{{ route('auth.sign-in-process') }}">
         {{ csrf_field() }}
         <div class="form-group mb-0">
-            <label for="username">Username</label>
-            <input type="username" name="username" autocomplete="username" class="form-control" id="username" placeholder="Username">
+            <label for="email">Email</label>
+            <input type="email" name="email" autocomplete="email" class="form-control" id="email" placeholder="Email">
         </div>
-        @if($errors->first('username'))
-          <small class="text-danger">{{ $errors->first('username') }}</small>
+        @if($errors->first('email'))
+          <small class="text-danger">{{ $errors->first('email') }}</small>
         @endif
 
         <div class="form-group mb-0 mt-2">

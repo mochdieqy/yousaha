@@ -10,11 +10,19 @@
         {{ csrf_field() }}
 
         <div class="form-group mb-0">
-            <label for="username">Username</label>
-            <input type="username" name="username" autocomplete="username" class="form-control" id="username" placeholder="Username">
+            <label for="name">Full Name</label>
+            <input type="text" name="name" autocomplete="name" class="form-control" id="name" placeholder="Full Name">
         </div>
-        @if($errors->first('username'))
-          <small class="text-danger">{{ $errors->first('username') }}</small>
+        @if($errors->first('name'))
+          <small class="form-control-feedback text-danger">{{ $errors->first('name') }}</small>
+        @endif
+
+        <div class="form-group mb-0 mt-2">
+            <label for="email">Email</label>
+            <input type="email" name="email" autocomplete="email" class="form-control" id="email" placeholder="Email">
+        </div>
+        @if($errors->first('email'))
+          <small class="form-control-feedback text-danger">{{ $errors->first('email') }}</small>
         @endif
 
         <div class="form-group mb-0 mt-2">
@@ -36,8 +44,6 @@
         <div class="form-check icon-check mb-2 mt-2">
             <input class="form-check-input" type="checkbox" name="terms" id="check-terms">
             <label class="form-check-label" for="check-terms">Setuju dengan ketentuan <a href="{{ route('auth.sign-in') }}" class="color-highlight">Syarat Layanan</a></label>
-            <i class="icon-check-1 fa fa-square color-gray-dark font-16"></i>
-            <i class="icon-check-2 fa fa-check-square font-16 color-highlight"></i>
         </div>
         @if($errors->first('terms'))
           <small class="text-danger">{{ $errors->first('terms') }}</small>

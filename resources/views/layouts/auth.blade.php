@@ -38,8 +38,6 @@
             <img src="{{ asset('favicon/android-icon-144x144.png') }}" width="100px"/>
         </div>
 
-        <h2 class="text-center">@yield('title')</h2>
-
         @if(Session::has('message'))
           <div class="alert alert-success" role="alert">
             {{ Session::get('message') }}

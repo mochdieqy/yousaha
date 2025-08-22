@@ -23,7 +23,7 @@ class AuthController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'username' => 'required',
+            'email' => 'required|email',
             'password' => 'required',
         ]);
 
@@ -33,7 +33,7 @@ class AuthController extends Controller
         }
 
         $login = Auth::attempt([
-            'username' => $request->get('username'),
+            'email' => $request->get('email'),
             'password' => $request->get('password'),
         ], 1);
 
@@ -59,7 +59,8 @@ class AuthController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'username' => 'required|max:12|unique:users,username',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
             'password' => 'required',
             'confirmation_password' => 'required|same:password',
             'terms' => 'required',
@@ -73,7 +74,8 @@ class AuthController extends Controller
         }
 
         $user = new User;
-        $user->username = str_replace(' ', '', strip_tags($request->username));
+        $user->name = trim($request->name);
+        $user->email = strtolower(trim($request->email));
         $user->password = Hash::make($request->password);
 
         try{
