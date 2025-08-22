@@ -106,18 +106,15 @@ This application was developed using Ward and Peppard methodology which includes
    git clone https://github.com/your-username/yousaha.git
    cd yousaha
    ```
-
 2. **Install dependencies**
    ```bash
    composer install
    ```
-
 3. **Environment setup**
    ```bash
    cp .env.example .env
    php artisan key:generate
    ```
-
 4. **Database configuration**
    Edit the `.env` file and configure your database settings:
    ```env
@@ -128,18 +125,15 @@ This application was developed using Ward and Peppard methodology which includes
    DB_USERNAME=your_username
    DB_PASSWORD=your_password
    ```
-
 5. **Database migration**
    ```bash
    php artisan migrate
    php artisan db:seed
    ```
-
 6. **Start development server**
    ```bash
    php artisan serve
    ```
-
    The application will run at `http://localhost:8000`
 
 ## 📖 Usage
@@ -168,10 +162,11 @@ This application was developed using Ward and Peppard methodology which includes
 - Record attendance
 - Process monthly payroll
 
-## 🏗 System Architecture
+> 📋 **Quick Start**: For comprehensive documentation overview, see our [Documentation Guide](docs/README.md)  
+> 🔄 **Process Flows**: View complete business workflows in our [Sequence Diagrams](docs/sequence/)
 
-```
-yousaha/
+## 🏗 System Architecture
+```yousaha/
 ├── app/                    # Application logic
 │   ├── Http/Controllers/   # HTTP Controllers
 │   ├── Models/            # Eloquent Models
@@ -184,10 +179,47 @@ yousaha/
 │   ├── css/              # Custom stylesheets
 │   └── js/               # JavaScript files
 ├── public/               # Static assets and Bootstrap files
-└── routes/               # Application routes
-```
+└── routes/               # Application routes```
+## 📚 Documentation
 
-## 📚 Additional Documentation
+### Complete Documentation Suite
+
+This project includes comprehensive documentation covering all aspects of the system:
+
+#### 📖 [User Guide](docs/USER_GUIDE.md)
+Complete end-user manual with step-by-step instructions for all system features:
+- Getting started and account setup
+- Daily operations workflows
+- Module-specific user guides
+- Troubleshooting and best practices
+
+#### 🏗️ [System Documentation](docs/SYSTEM_DOCUMENTATION.md) 
+Comprehensive system overview and business processes:
+- System architecture and features
+- Business process flows
+- Business rules and validations
+- Technical architecture overview
+
+#### 🔧 [Technical Implementation Guide](docs/TECHNICAL_IMPLEMENTATION.md)
+Developer-focused technical documentation:
+- System architecture and design patterns
+- Database design and relationships
+- Business logic implementation
+- Security, testing, and deployment guides
+
+#### 🌐 [API Documentation](docs/API_DOCUMENTATION.md)
+Complete REST API reference:
+- Authentication and authorization
+- All endpoint specifications
+- Request/response formats
+- Error handling and status codes
+
+#### 🔄 [Sequence Diagrams](docs/sequence/)
+Detailed process flow diagrams for all business operations:
+- Authentication and user management workflows
+- Complete business process flows by module
+- Error handling and transaction management
+- System integration points and interactions
 
 ### Database Model
 This application uses 39 main tables that include:
@@ -196,10 +228,16 @@ This application uses 39 main tables that include:
 - Complete ERP modules (Inventory, Sales, Purchase, Finance, HR)
 - Audit trail and logging
 
-### API Documentation
-- RESTful API available for external integration
-- Authentication using Laravel Sanctum
-- Comprehensive API documentation available
+### Integration Features
+- RESTful API for external integration
+- SMTP email integration
+- AI-powered employee evaluations
+- Multi-format report exports (PDF, Excel, CSV)
+
+### Process Documentation
+- **[Sequence Diagrams](docs/sequence/)** - 54 detailed workflow diagrams organized by functional modules
+- Complete business process visualization for implementation and testing
+- websequencediagrams.com compatible format for easy modification
 
 ## 🤝 Contributing
 
