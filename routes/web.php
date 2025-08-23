@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\AdditionalPageController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\SupplierController;
 
 /*
 |--------------------------------------------------------------------------
@@ -60,9 +61,42 @@ Route::middleware(['auth'])->group(function () {
         Route::get('customers', function () { return 'Customers List - View Permission Required'; })->name('customers.index');
     });
     
+    // Supplier Management
+    Route::middleware(['permission:suppliers.view'])->group(function () {
+        Route::get('suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
+    });
+    
+    Route::middleware(['permission:suppliers.create'])->group(function () {
+        Route::get('suppliers/create', [SupplierController::class, 'create'])->name('suppliers.create');
+        Route::post('suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
+    });
+    
+    Route::middleware(['permission:suppliers.edit'])->group(function () {
+        Route::get('suppliers/{supplier}/edit', [SupplierController::class, 'edit'])->name('suppliers.edit');
+        Route::put('suppliers/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update');
+    });
+    
+    Route::middleware(['permission:suppliers.delete'])->group(function () {
+        Route::delete('suppliers/{supplier}', [SupplierController::class, 'destroy'])->name('suppliers.delete');
+    });
+    
     // Inventory Management
     Route::middleware(['permission:warehouses.view'])->group(function () {
-        Route::get('warehouses', function () { return 'Warehouses List - View Permission Required'; })->name('warehouses.index');
+        Route::get('warehouses', [App\Http\Controllers\WarehouseController::class, 'index'])->name('warehouses.index');
+    });
+    
+    Route::middleware(['permission:warehouses.create'])->group(function () {
+        Route::get('warehouses/create', [App\Http\Controllers\WarehouseController::class, 'create'])->name('warehouses.create');
+        Route::post('warehouses', [App\Http\Controllers\WarehouseController::class, 'store'])->name('warehouses.store');
+    });
+    
+    Route::middleware(['permission:warehouses.edit'])->group(function () {
+        Route::get('warehouses/{warehouse}/edit', [App\Http\Controllers\WarehouseController::class, 'edit'])->name('warehouses.edit');
+        Route::put('warehouses/{warehouse}', [App\Http\Controllers\WarehouseController::class, 'update'])->name('warehouses.update');
+    });
+    
+    Route::middleware(['permission:warehouses.delete'])->group(function () {
+        Route::delete('warehouses/{warehouse}', [App\Http\Controllers\WarehouseController::class, 'destroy'])->name('warehouses.delete');
     });
     
     Route::middleware(['permission:stocks.view'])->group(function () {

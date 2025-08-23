@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use App\Models\User;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Company>
@@ -17,7 +18,7 @@ class CompanyFactory extends Factory
     public function definition(): array
     {
         return [
-            'owner' => null, // Will be set in tests
+            'owner' => User::factory(),
             'name' => fake()->company(),
             'address' => fake()->address(),
             'phone' => fake()->phoneNumber(),

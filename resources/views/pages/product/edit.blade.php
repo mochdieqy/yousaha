@@ -321,7 +321,7 @@
 </div>
 @endsection
 
-@push('scripts')
+@section('script')
 <script>
 // Calculate total price including taxes
 document.getElementById('price').addEventListener('input', calculateTotal);
@@ -363,4 +363,4 @@ document.addEventListener('DOMContentLoaded', function() {
 // Update inventory tracking when product type changes
 document.getElementById('type').addEventListener('change', toggleInventoryTracking);
 </script>
-@endpush
+@endsection

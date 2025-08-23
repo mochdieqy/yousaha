@@ -131,13 +131,13 @@
       @endcan
       
       @can('suppliers.view')
-      <a href="#" class="list-group-item" style="background-color: #007bff; border: none;">
+      <a href="{{ route('suppliers.index') }}" class="list-group-item" style="background-color: #007bff; border: none;">
         <i class="fas fa-building"></i> Suppliers
       </a>
       @endcan
       
       @can('warehouses.view')
-      <a href="#" class="list-group-item" style="background-color: #007bff; border: none;">
+      <a href="{{ route('warehouses.index') }}" class="list-group-item" style="background-color: #007bff; border: none;">
         <i class="fas fa-warehouse"></i> Warehouses
       </a>
       @endcan

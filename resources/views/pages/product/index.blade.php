@@ -290,7 +290,7 @@
 
 @endsection
 
-@push('scripts')
+@section('script')
 <script>
 function confirmDelete(productId, productName) {
     document.getElementById('productName').textContent = productName;
@@ -300,4 +300,4 @@ function confirmDelete(productId, productName) {
     deleteModal.show();
 }
 </script>
-@endpush
+@endsection

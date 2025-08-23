@@ -173,10 +173,12 @@
                             @endcan
                             @can('warehouses.view')
                             <div class="col-md-6 mb-2">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-warehouse text-muted me-2"></i>
-                                    <span>Warehouse Management</span>
-                                </div>
+                                <a href="{{ route('warehouses.index') }}" class="text-decoration-none">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-warehouse text-muted me-2"></i>
+                                        <span>Warehouse Management</span>
+                                    </div>
+                                </a>
                             </div>
                             @endcan
                             @can('stocks.view')
@@ -281,10 +283,12 @@
                             @endcan
                             @can('suppliers.view')
                             <div class="col-md-6 mb-2">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-building text-muted me-2"></i>
-                                    <span>Supplier Management</span>
-                                </div>
+                                <a href="{{ route('suppliers.index') }}" class="text-decoration-none">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-building text-muted me-2"></i>
+                                        <span>Supplier Management</span>
+                                    </div>
+                                </a>
                             </div>
                             @endcan
                             @can('expenses.view')

@@ -276,7 +276,7 @@
 </div>
 @endsection
 
-@push('scripts')
+@section('script')
 <script>
 // Auto-generate SKU if empty
 document.getElementById('name').addEventListener('input', function() {
@@ -330,4 +330,4 @@ document.addEventListener('DOMContentLoaded', function() {
 // Update inventory tracking when product type changes
 document.getElementById('type').addEventListener('change', toggleInventoryTracking);
 </script>
-@endpush
+@endsection
