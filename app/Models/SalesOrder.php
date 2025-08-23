@@ -16,6 +16,7 @@ class SalesOrder extends Model
      */
     protected $fillable = [
         'company_id',
+        'warehouse_id',
         'number',
         'customer_id',
         'salesperson',
@@ -41,6 +42,14 @@ class SalesOrder extends Model
     public function company()
     {
         return $this->belongsTo(Company::class);
+    }
+
+    /**
+     * Get the warehouse for this sales order.
+     */
+    public function warehouse()
+    {
+        return $this->belongsTo(Warehouse::class);
     }
 
     /**

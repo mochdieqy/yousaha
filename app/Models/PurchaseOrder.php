@@ -16,6 +16,7 @@ class PurchaseOrder extends Model
      */
     protected $fillable = [
         'company_id',
+        'warehouse_id',
         'number',
         'supplier_id',
         'requestor',
@@ -44,6 +45,14 @@ class PurchaseOrder extends Model
     }
 
     /**
+     * Get the warehouse for this purchase order.
+     */
+    public function warehouse()
+    {
+        return $this->belongsTo(Warehouse::class);
+    }
+
+    /**
      * Get the supplier for this purchase order.
      */
     public function supplier()
@@ -65,6 +74,14 @@ class PurchaseOrder extends Model
     public function statusLogs()
     {
         return $this->hasMany(PurchaseOrderStatusLog::class);
+    }
+
+    /**
+     * Get the receipts related to this purchase order.
+     */
+    public function receipts()
+    {
+        return $this->hasMany(Receipt::class, 'reference', 'number');
     }
 
     /**

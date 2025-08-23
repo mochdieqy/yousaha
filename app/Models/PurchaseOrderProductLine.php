@@ -43,4 +43,12 @@ class PurchaseOrderProductLine extends Model
     {
         return $this->quantity * ($this->product->cost ?? $this->product->price);
     }
+
+    /**
+     * Get the formatted line total.
+     */
+    public function getFormattedLineTotalAttribute()
+    {
+        return number_format($this->line_total, 2);
+    }
 }

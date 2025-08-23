@@ -135,6 +135,55 @@ Route::middleware(['auth'])->group(function () {
         Route::get('stocks/{stock}', [App\Http\Controllers\StockController::class, 'show'])->name('stocks.show');
     });
     
+    // Receipt Management
+    Route::middleware(['permission:receipts.view'])->group(function () {
+        Route::get('receipts', [App\Http\Controllers\ReceiptController::class, 'index'])->name('receipts.index');
+    });
+    
+    Route::middleware(['permission:receipts.create'])->group(function () {
+        Route::get('receipts/create', [App\Http\Controllers\ReceiptController::class, 'create'])->name('receipts.create');
+        Route::post('receipts', [App\Http\Controllers\ReceiptController::class, 'store'])->name('receipts.store');
+    });
+    
+    Route::middleware(['permission:receipts.edit'])->group(function () {
+        Route::get('receipts/{receipt}/edit', [App\Http\Controllers\ReceiptController::class, 'edit'])->name('receipts.edit');
+        Route::put('receipts/{receipt}', [App\Http\Controllers\ReceiptController::class, 'update'])->name('receipts.update');
+        Route::post('receipts/{receipt}/status', [App\Http\Controllers\ReceiptController::class, 'updateStatus'])->name('receipts.update-status');
+        Route::post('receipts/{receipt}/goods-receive', [App\Http\Controllers\ReceiptController::class, 'goodsReceive'])->name('receipts.goods-receive');
+    });
+    
+    Route::middleware(['permission:receipts.delete'])->group(function () {
+        Route::delete('receipts/{receipt}', [App\Http\Controllers\ReceiptController::class, 'destroy'])->name('receipts.delete');
+    });
+    
+    Route::middleware(['permission:receipts.view'])->group(function () {
+        Route::get('receipts/{receipt}', [App\Http\Controllers\ReceiptController::class, 'show'])->name('receipts.show');
+    });
+    
+    // Purchase Management
+    Route::middleware(['permission:purchase-orders.view'])->group(function () {
+        Route::get('purchase-orders', [App\Http\Controllers\PurchaseOrderController::class, 'index'])->name('purchase-orders.index');
+    });
+    
+    Route::middleware(['permission:purchase-orders.create'])->group(function () {
+        Route::get('purchase-orders/create', [App\Http\Controllers\PurchaseOrderController::class, 'create'])->name('purchase-orders.create');
+        Route::post('purchase-orders', [App\Http\Controllers\PurchaseOrderController::class, 'store'])->name('purchase-orders.store');
+    });
+    
+    Route::middleware(['permission:purchase-orders.edit'])->group(function () {
+        Route::get('purchase-orders/{purchaseOrder}/edit', [App\Http\Controllers\PurchaseOrderController::class, 'edit'])->name('purchase-orders.edit');
+        Route::put('purchase-orders/{purchaseOrder}', [App\Http\Controllers\PurchaseOrderController::class, 'update'])->name('purchase-orders.update');
+        Route::post('purchase-orders/{purchaseOrder}/status', [App\Http\Controllers\PurchaseOrderController::class, 'updateStatus'])->name('purchase-orders.update-status');
+    });
+    
+    Route::middleware(['permission:purchase-orders.delete'])->group(function () {
+        Route::delete('purchase-orders/{purchaseOrder}', [App\Http\Controllers\PurchaseOrderController::class, 'destroy'])->name('purchase-orders.delete');
+    });
+    
+    Route::middleware(['permission:purchase-orders.view'])->group(function () {
+        Route::get('purchase-orders/{purchaseOrder}', [App\Http\Controllers\PurchaseOrderController::class, 'show'])->name('purchase-orders.show');
+    });
+    
     // Sales Management
     Route::middleware(['permission:sales-orders.view'])->group(function () {
         Route::get('sales-orders', function () { return 'Sales Orders List - View Permission Required'; })->name('sales-orders.index');

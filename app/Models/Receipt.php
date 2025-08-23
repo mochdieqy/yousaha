@@ -16,6 +16,7 @@ class Receipt extends Model
      */
     protected $fillable = [
         'company_id',
+        'warehouse_id',
         'receive_from',
         'scheduled_at',
         'reference',
@@ -37,6 +38,14 @@ class Receipt extends Model
     public function company()
     {
         return $this->belongsTo(Company::class);
+    }
+
+    /**
+     * Get the warehouse for this receipt.
+     */
+    public function warehouse()
+    {
+        return $this->belongsTo(Warehouse::class);
     }
 
     /**

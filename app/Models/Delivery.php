@@ -16,6 +16,7 @@ class Delivery extends Model
      */
     protected $fillable = [
         'company_id',
+        'warehouse_id',
         'delivery_address',
         'scheduled_at',
         'reference',
@@ -37,6 +38,14 @@ class Delivery extends Model
     public function company()
     {
         return $this->belongsTo(Company::class);
+    }
+
+    /**
+     * Get the warehouse for this delivery.
+     */
+    public function warehouse()
+    {
+        return $this->belongsTo(Warehouse::class);
     }
 
     /**

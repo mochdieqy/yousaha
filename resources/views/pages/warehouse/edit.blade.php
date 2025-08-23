@@ -234,6 +234,46 @@
         </div>
     </div>
 </div>
+
+<!-- Error Modal -->
+<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="errorModalLabel">Error</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="errorMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalLabel">Confirm Update</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="handleConfirm()">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden input for form reference -->
+<input type="hidden" id="confirmForm" value="">
 @endsection
 
 @section('script')
@@ -245,24 +285,45 @@ document.querySelector('form').addEventListener('submit', function(e) {
     
     if (!code || !name) {
         e.preventDefault();
-        alert('Please fill in all required fields.');
+        showErrorModal('Please fill in all required fields.');
         return false;
     }
     
     // Check if code contains only valid characters
     if (!/^[a-zA-Z0-9-_]+$/.test(code)) {
         e.preventDefault();
-        alert('Warehouse code can only contain letters, numbers, hyphens, and underscores.');
+        showErrorModal('Warehouse code can only contain letters, numbers, hyphens, and underscores.');
         return false;
     }
     
     // Confirm update if warehouse has stock
     @if($warehouse->stocks()->exists())
-    if (!confirm('This warehouse has stock records. Are you sure you want to update the warehouse information?')) {
-        e.preventDefault();
-        return false;
-    }
+    e.preventDefault();
+    showConfirmModal('This warehouse has stock records. Are you sure you want to update the warehouse information?', this);
+    return false;
     @endif
 });
+
+// Show error modal
+function showErrorModal(message) {
+    document.getElementById('errorMessage').textContent = message;
+    new bootstrap.Modal(document.getElementById('errorModal')).show();
+}
+
+// Show confirmation modal
+function showConfirmModal(message, form) {
+    document.getElementById('confirmMessage').textContent = message;
+    document.getElementById('confirmForm').value = form;
+    new bootstrap.Modal(document.getElementById('confirmModal')).show();
+}
+
+// Handle confirmation
+function handleConfirm() {
+    const form = document.getElementById('confirmForm').value;
+    if (form) {
+        form.submit();
+    }
+    bootstrap.Modal.getInstance(document.getElementById('confirmModal')).hide();
+}
 </script>
 @endsection

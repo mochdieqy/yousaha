@@ -172,6 +172,26 @@
         </div>
     </div>
 </div>
+
+<!-- Error Modal -->
+<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger" id="errorModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Validation Error
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="errorMessage" class="mb-0"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('script')
@@ -198,16 +218,22 @@ document.querySelector('form').addEventListener('submit', function(e) {
     
     if (!code || !name) {
         e.preventDefault();
-        alert('Please fill in all required fields.');
+        showErrorModal('Please fill in all required fields.');
         return false;
     }
     
     // Check if code contains only valid characters
     if (!/^[a-zA-Z0-9-_]+$/.test(code)) {
         e.preventDefault();
-        alert('Warehouse code can only contain letters, numbers, hyphens, and underscores.');
+        showErrorModal('Warehouse code can only contain letters, numbers, hyphens, and underscores.');
         return false;
     }
 });
+
+// Show error modal
+function showErrorModal(message) {
+    document.getElementById('errorMessage').textContent = message;
+    new bootstrap.Modal(document.getElementById('errorModal')).show();
+}
 </script>
 @endsection

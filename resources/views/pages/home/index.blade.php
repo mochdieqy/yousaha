@@ -193,7 +193,7 @@
                             @endcan
                             @if(app('permissions')->userCanAny(['receipts.view', 'deliveries.view']))
                             <div class="col-md-6 mb-2">
-                                <a href="{{ route('stocks.index') }}" class="text-decoration-none">
+                                <a href="{{ route('receipts.index') }}" class="text-decoration-none">
                                     <div class="d-flex align-items-center">
                                         <i class="fas fa-exchange-alt text-muted me-2"></i>
                                         <span>Stock Transfers</span>
@@ -273,18 +273,22 @@
                         <div class="row">
                             @can('purchase-orders.view')
                             <div class="col-md-6 mb-2">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-file-purchase text-muted me-2"></i>
-                                    <span>Purchase Orders</span>
-                                </div>
+                                <a href="{{ route('purchase-orders.index') }}" class="text-decoration-none">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-file-purchase text-muted me-2"></i>
+                                        <span>Purchase Orders</span>
+                                    </div>
+                                </a>
                             </div>
                             @endcan
                             @can('receipts.view')
                             <div class="col-md-6 mb-2">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-receipt text-muted me-2"></i>
-                                    <span>Goods Receiving</span>
-                                </div>
+                                <a href="{{ route('receipts.index') }}" class="text-decoration-none">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-receipt text-muted me-2"></i>
+                                        <span>Goods Receiving</span>
+                                    </div>
+                                </a>
                             </div>
                             @endcan
                             @can('suppliers.view')
