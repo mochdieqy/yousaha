@@ -6,10 +6,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -79,5 +80,25 @@ class User extends Authenticatable
     public function managedEmployees()
     {
         return $this->hasMany(Employee::class, 'manager');
+    }
+
+    /**
+     * Get the current company for the user.
+     */
+    public function getCurrentCompanyAttribute()
+    {
+        // First check if user owns a company
+        $company = $this->companies()->first();
+        if ($company) {
+            return $company;
+        }
+        
+        // If not owner, check if user is an employee
+        $employee = $this->employee;
+        if ($employee && $employee->company) {
+            return $employee->company;
+        }
+        
+        return null;
     }
 }

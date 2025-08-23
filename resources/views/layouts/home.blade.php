@@ -117,6 +117,58 @@
       <p>Mini ERP System</p>
     </div>
     <div class="list-group list-group-flush">
+      <!-- ERP Modules -->
+      @can('products.view')
+      <a href="{{ route('products.index') }}" class="list-group-item" style="background-color: #007bff; border: none;">
+        <i class="fas fa-boxes"></i> Products
+      </a>
+      @endcan
+      
+      @can('customers.view')
+      <a href="#" class="list-group-item" style="background-color: #007bff; border: none;">
+        <i class="fas fa-users"></i> Customers
+      </a>
+      @endcan
+      
+      @can('suppliers.view')
+      <a href="#" class="list-group-item" style="background-color: #007bff; border: none;">
+        <i class="fas fa-building"></i> Suppliers
+      </a>
+      @endcan
+      
+      @can('warehouses.view')
+      <a href="#" class="list-group-item" style="background-color: #007bff; border: none;">
+        <i class="fas fa-warehouse"></i> Warehouses
+      </a>
+      @endcan
+      
+      @can('sales-orders.view')
+      <a href="#" class="list-group-item" style="background-color: #007bff; border: none;">
+        <i class="fas fa-chart-line"></i> Sales Orders
+      </a>
+      @endcan
+      
+      @can('purchase-orders.view')
+      <a href="#" class="list-group-item" style="background-color: #007bff; border: none;">
+        <i class="fas fa-shopping-cart"></i> Purchase Orders
+      </a>
+      @endcan
+      
+      @can('general-ledger.view')
+      <a href="#" class="list-group-item" style="background-color: #007bff; border: none;">
+        <i class="fas fa-dollar-sign"></i> Finance
+      </a>
+      @endcan
+      
+      @can('employees.view')
+      <a href="#" class="list-group-item" style="background-color: #007bff; border: none;">
+        <i class="fas fa-users-cog"></i> HR
+      </a>
+      @endcan
+      
+      <hr style="border-color: rgba(255,255,255,0.2); margin: 15px 0;">
+      
+      <!-- Additional Pages -->
       <a href="{{ route('additional-page.about') }}" class="list-group-item" style="background-color: #007bff; border: none;">
         <i class="fas fa-info-circle"></i> About Us
       </a>
@@ -126,6 +178,7 @@
       <a href="{{ route('additional-page.privacy') }}" class="list-group-item" style="background-color: #007bff; border: none;">
         <i class="fas fa-shield-alt"></i> Privacy Policy
       </a>
+      
       <div class="list-group-item" style="background-color: #007bff; border: none; border-top: 1px solid rgba(255,255,255,0.1); margin-top: 10px;">
         <a href="{{ route('auth.sign-out') }}" class="text-white text-decoration-none">
           <i class="fas fa-sign-out-alt"></i> Logout
