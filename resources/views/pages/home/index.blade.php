@@ -183,18 +183,22 @@
                             @endcan
                             @can('stocks.view')
                             <div class="col-md-6 mb-2">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-chart-bar text-muted me-2"></i>
-                                    <span>Stock Tracking</span>
-                                </div>
+                                <a href="{{ route('stocks.index') }}" class="text-decoration-none">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-chart-bar text-muted me-2"></i>
+                                        <span>Stock Tracking</span>
+                                    </div>
+                                </a>
                             </div>
                             @endcan
                             @if(app('permissions')->userCanAny(['receipts.view', 'deliveries.view']))
                             <div class="col-md-6 mb-2">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-exchange-alt text-muted me-2"></i>
-                                    <span>Stock Transfers</span>
-                                </div>
+                                <a href="{{ route('stocks.index') }}" class="text-decoration-none">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-exchange-alt text-muted me-2"></i>
+                                        <span>Stock Transfers</span>
+                                    </div>
+                                </a>
                             </div>
                             @endif
                         </div>

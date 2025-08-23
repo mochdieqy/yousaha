@@ -114,7 +114,25 @@ Route::middleware(['auth'])->group(function () {
     });
     
     Route::middleware(['permission:stocks.view'])->group(function () {
-        Route::get('stocks', function () { return 'Stocks List - View Permission Required'; })->name('stocks.index');
+        Route::get('stocks', [App\Http\Controllers\StockController::class, 'index'])->name('stocks.index');
+    });
+    
+    Route::middleware(['permission:stocks.create'])->group(function () {
+        Route::get('stocks/create', [App\Http\Controllers\StockController::class, 'create'])->name('stocks.create');
+        Route::post('stocks', [App\Http\Controllers\StockController::class, 'store'])->name('stocks.store');
+    });
+    
+    Route::middleware(['permission:stocks.edit'])->group(function () {
+        Route::get('stocks/{stock}/edit', [App\Http\Controllers\StockController::class, 'edit'])->name('stocks.edit');
+        Route::put('stocks/{stock}', [App\Http\Controllers\StockController::class, 'update'])->name('stocks.update');
+    });
+    
+    Route::middleware(['permission:stocks.delete'])->group(function () {
+        Route::delete('stocks/{stock}', [App\Http\Controllers\StockController::class, 'destroy'])->name('stocks.delete');
+    });
+    
+    Route::middleware(['permission:stocks.view'])->group(function () {
+        Route::get('stocks/{stock}', [App\Http\Controllers\StockController::class, 'show'])->name('stocks.show');
     });
     
     // Sales Management

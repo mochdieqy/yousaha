@@ -87,7 +87,23 @@ class User extends Authenticatable
      */
     public function getCurrentCompanyAttribute()
     {
-        // First check if user owns a company
+        // First check session for current company
+        if (session('current_company_id')) {
+            $company = Company::find(session('current_company_id'));
+            if ($company) {
+                // Check if user owns this company or is an employee
+                if ($company->owner === $this->id) {
+                    return $company;
+                }
+                
+                $employee = $this->employee;
+                if ($employee && $employee->company_id === $company->id) {
+                    return $company;
+                }
+            }
+        }
+        
+        // Fallback: check if user owns a company
         $company = $this->companies()->first();
         if ($company) {
             return $company;
