@@ -233,10 +233,12 @@
                             @endcan
                             @can('customers.view')
                             <div class="col-md-6 mb-2">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-users text-muted me-2"></i>
-                                    <span>Customer Management</span>
-                                </div>
+                                <a href="{{ route('customers.index') }}" class="text-decoration-none">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-users text-muted me-2"></i>
+                                        <span>Customer Management</span>
+                                    </div>
+                                </a>
                             </div>
                             @endcan
                             @if(app('permissions')->userCanAny(['sales-orders.generate-quotation', 'sales-orders.generate-invoice']))

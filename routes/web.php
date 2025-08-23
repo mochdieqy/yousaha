@@ -58,7 +58,21 @@ Route::middleware(['auth'])->group(function () {
     });
     
     Route::middleware(['permission:customers.view'])->group(function () {
-        Route::get('customers', function () { return 'Customers List - View Permission Required'; })->name('customers.index');
+        Route::get('customers', [App\Http\Controllers\CustomerController::class, 'index'])->name('customers.index');
+    });
+    
+    Route::middleware(['permission:customers.create'])->group(function () {
+        Route::get('customers/create', [App\Http\Controllers\CustomerController::class, 'create'])->name('customers.create');
+        Route::post('customers', [App\Http\Controllers\CustomerController::class, 'store'])->name('customers.store');
+    });
+    
+    Route::middleware(['permission:customers.edit'])->group(function () {
+        Route::get('customers/{customer}/edit', [App\Http\Controllers\CustomerController::class, 'edit'])->name('customers.edit');
+        Route::put('customers/{customer}', [App\Http\Controllers\CustomerController::class, 'update'])->name('customers.update');
+    });
+    
+    Route::middleware(['permission:customers.delete'])->group(function () {
+        Route::delete('customers/{customer}', [App\Http\Controllers\CustomerController::class, 'destroy'])->name('customers.delete');
     });
     
     // Supplier Management
