@@ -27,20 +27,20 @@
         <button type="submit" class="btn btn-dark btn-block mt-4">Login</button>
     </form>
     <p class="text-center mt-2 mb-0">
-        <a href="{{ route('auth.sign-up') }}">Buat akun</a>
+        <a href="{{ route('auth.sign-up') }}">Create Account</a>
     </p>
 
     <p class="text-center mt-4 mb-0">
         <a href="{{ route('additional-page.about') }}" class="color-highlight">
-            Tentang Kami
+            About Us
         </a>
         ·
         <a href="{{ route('additional-page.terms') }}" class="color-highlight">
-            Syarat Layanan
+            Terms of Service
         </a>
         ·
         <a href="{{ route('additional-page.privacy') }}" class="color-highlight">
-            Kebijakan Privasi
+            Privacy Policy
         </a>
     </p>
 @endsection

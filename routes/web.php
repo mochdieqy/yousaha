@@ -27,4 +27,10 @@ Route::get('privacy', [AdditionalPageController::class, 'Privacy'])->name('addit
 
 Route::middleware(['auth'])->group(function () {
     Route::get('home', [HomeController::class, 'Home'])->name('home');
+    
+    // Company management routes
+    Route::get('company/choice', [HomeController::class, 'companyChoice'])->name('company.choice');
+    Route::get('company/create', [HomeController::class, 'createCompany'])->name('company.create');
+    Route::post('company/store', [HomeController::class, 'storeCompany'])->name('company.store');
+    Route::get('company/employee-invitation', [HomeController::class, 'employeeInvitation'])->name('company.employee-invitation');
 });

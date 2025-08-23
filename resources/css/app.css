@@ -1,0 +1,115 @@
+/* Company header specific styling - Simple override with !important */
+.company-header-card {
+    background: linear-gradient(135deg, #007bff 0%, #0056b6 100%) !important;
+    background-color: #007bff !important;
+}
+
+.company-header-card .card-body {
+    background: linear-gradient(135deg, #007bff 0%, #0056b6 100%) !important;
+    background-color: #007bff !important;
+}
+
+/* Gradient backgrounds */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b6 100%) !important;
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+}
+
+.bg-gradient-primary .card-body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+    pointer-events: none;
+}
+
+.bg-gradient-primary h4,
+.bg-gradient-primary p {
+    position: relative;
+    z-index: 1;
+}
+
+/* Enhanced text shadows for better readability */
+.text-shadow-sm {
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.text-shadow-md {
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.text-shadow-lg {
+    text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+/* Hover effects */
+.hover-shadow:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+    transition: all 0.3s ease;
+}
+
+.card {
+    transition: all 0.3s ease;
+}
+
+/* Custom button styles */
+.btn-lg {
+    padding: 12px 24px;
+    font-size: 1.1rem;
+}
+
+/* Alert styling */
+.alert {
+    border: none;
+    border-radius: 8px;
+}
+
+/* Form styling */
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Badge styling */
+.badge {
+    font-size: 0.875rem;
+    padding: 0.5em 0.75em;
+}
+
+/* Opacity utilities */
+.opacity-75 {
+    opacity: 0.75;
+}
+
+.opacity-95 {
+    opacity: 0.95;
+}
+
+/* Shadow utilities */
+.shadow-sm {
+    box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075) !important;
+}
+
+.shadow-lg {
+    box-shadow: 0 1rem 3rem rgba(0,0,0,0.175) !important;
+}
+
+/* Font weight utilities */
+.fw-bold {
+    font-weight: 700 !important;
+}

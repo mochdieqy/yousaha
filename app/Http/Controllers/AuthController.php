@@ -28,7 +28,7 @@ class AuthController extends Controller
         ]);
 
         if($validator->fails()) {
-            $validator->errors()->add('message', 'Gagal login');
+            $validator->errors()->add('message', 'Login failed');
             return redirect()->back()->withInput()->withErrors($validator);
         }
 
@@ -40,7 +40,7 @@ class AuthController extends Controller
         if($login) {
             return redirect()->route('home');
         } else {
-            return redirect()->back()->withInput()->withErrors(['message' => 'Gagal login']);
+            return redirect()->back()->withInput()->withErrors(['message' => 'Login failed']);
         }
     }
 
@@ -69,7 +69,7 @@ class AuthController extends Controller
 
         if($validator->fails())
         {
-            $validator->errors()->add('message', 'Gagal register');
+            $validator->errors()->add('message', 'Registration failed');
             return redirect()->back()->withInput()->withErrors($validator);
         }
 
@@ -83,10 +83,10 @@ class AuthController extends Controller
         } catch(\Exception $errors) {
             Log::error($errors->getMessage());
             return redirect()->back()
-            ->withInput()->withErrors(['message' => 'Gagal register']);
+            ->withInput()->withErrors(['message' => 'Registration failed']);
         }
 
-        Session::flash('message', 'Berhasil register! Silakan melakukan login');
+        Session::flash('message', 'Registration successful! Please login');
         return redirect()->route('auth.sign-in');
     }
 

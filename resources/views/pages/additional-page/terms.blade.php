@@ -3,51 +3,51 @@
 @section('stylesheet')
 @endsection
 
-@section('title', 'Syarat Layanan')
+@section('title', 'Terms of Service')
 @section('back', route('home'))
 
 @section('content')
-<h3>Syarat Layanan</h3>
+<h3>Terms of Service</h3>
 
-<p>Selamat Datang! Kami berharap bahwa Kamu akan menikmati pengalaman online Kamu.</p>
-<p>{{ config('app.name') }} berkomitmen untuk menjaga kepercayaan dengan pengguna kami. Persyaratan di bawah ini mengatur penggunaan Kamu atas aplikasi ini.</p>
+<p>Welcome! We hope that you will enjoy your online experience.</p>
+<p>{{ config('app.name') }} is committed to maintaining trust with our users. The terms below govern your use of this application.</p>
 
-<h4>Penggunaan yang dapat diterima</h4>
-<p>Silakan menjelajahi aplikasi kami dengan leluasa.</p>
-<p>Namun, penggunaan aplikasi dan bahan yang diposting ke aplikasi ini seharusnya bukan yang ilegal atau yang menyinggung dengan cara apapun. Kamu harus berhati-hati untuk tidak:</p>
+<h4>Acceptable Use</h4>
+<p>Please feel free to explore our application.</p>
+<p>However, the use of the application and materials posted to this application should not be illegal or offensive in any way. You should be careful not to:</p>
 <ul>
-    <li>Melanggar hak orang lain untuk privasi;</li>
-    <li>Melanggar hak kekayaan intelektual;</li>
-    <li>Membuat pernyataan yang memfitnah (termasuk terhadap {{ config('app.name') }}), berhubungan dengan pornografi, bersifat rasis atau xenofobia, mempromosikan kebencian atau menghasut kekerasan atau gangguan;</li>
-    <li>Mengunggah file yang berisi virus atau dapat menyebabkan masalah keamanan; atau</li>
-    <li>Tidak membahayakan integritas aplikasi.</li>
+    <li>Violate others' rights to privacy;</li>
+    <li>Violate intellectual property rights;</li>
+    <li>Make defamatory statements (including against {{ config('app.name') }}), related to pornography, racist or xenophobic in nature, promote hatred or incite violence or harassment;</li>
+    <li>Upload files containing viruses or that may cause security issues; or</li>
+    <li>Harm the integrity of the application.</li>
 </ul>
-<p>Harap dicatat bahwa {{ config('app.name') }} dapat menghapus konten apapun dari aplikasi yang dipercaya mungkin ilegal atau menyinggung.</p>
+<p>Please note that {{ config('app.name') }} may remove any content from the application that is believed to be illegal or offensive.</p>
 
-<h4>Perlindungan Data</h4>
-<p>Pernyataan Privasi kami berlaku untuk data pribadi atau bahan yang dibagi bersama pada aplikasi ini. Cari tahu lebih lanjut di <a href="{{ route('additional-page.privacy') }}">sini.</a></p>
+<h4>Data Protection</h4>
+<p>Our Privacy Statement applies to personal data or materials shared on this application. Find out more <a href="{{ route('additional-page.privacy') }}">here.</a></p>
 
-<h4>Kekayaan Intelektual</h4>
-<h6>1. Konten yang disediakan oleh {{ config('app.name') }}</h6>
-<p>Semua hak kekayaan intelektual, termasuk hak cipta dan merek dagang, bahan yang diterbitkan oleh atau atas nama {{ config('app.name') }} di aplikasi (misalnya teks dan gambar) yang dimiliki oleh {{ config('app.name') }} atau pemberi lisensinya.</p>
-<p>Kamu mungkin mereproduksi ekstrak dari aplikasi ini untuk penggunaan pribadi Kamu sendiri (misalnya penggunaan non-komersial) asalkan Kamu menyimpan semua hak kekayaan intelektual secara utuh dan dengan rasa hormat, termasuk pemberitahuan hak cipta yang mungkin muncul di konten tersebut (misalnya @2020 {{ config('app.name') }}).</p>
-<h6>2. Konten Kamu sediakan</h6>
-<p>Kamu mewakili untuk {{ config('app.name') }} bahwa Kamu baik sebagai penulis konten yang Kamu kontribusikan ke aplikasi ini, ataupun bahwa Kamu memiliki hak (yaitu: telah diberi izin oleh pemegang hak) dan mampu memberikan kontribusi atas konten tersebut (misalnya gambar, video, musik) ke aplikasi.</p>
-<p>Kamu setuju bahwa konten tersebut akan diperlakukan sebagai bukan rahasia dan Kamu memberikan {{ config('app.name') }} royalti, berkelanjutan, dan lisensi luas secara gratis untuk menggunakan (termasuk untuk mengungkapkan, mereproduksi, mentransmisikan, mempublikasikan, atau menyiarkan) konten yang Kamu berikan untuk tujuan yang berkaitan dengan bisnisnya.</p>
-<p>Harap dicatat bahwa {{ config('app.name') }} bebas untuk memutuskan apakah menggunakan atau tidak menggunakan konten ini dan bahwa {{ config('app.name') }} mungkin telah mengembangkan edisi serupa atau telah memperoleh konten tersebut dari sumber lain, dalam hal ini semua hak kekayaan intelektual di konten ini tetap ada pada {{ config('app.name') }} dan pemberi lisensinya.</p>
-<h6>3. Kewajiban</h6>
-<p>Sementara {{ config('app.name') }} menggunakan semua upaya yang wajar untuk memastikan keakuratan dari bahan pada aplikasi kami dan untuk menghindari gangguan, kami tidak bertanggung jawab atas informasi yang tidak akurat, gangguan, penghentian atau peristiwa lain yang dapat menyebabkan Kamu mengalami kerugian, baik secara langsung (misalnya kegagalan komputer) atau tidak langsung (misalnya kehilangan keuntungan). Setiap ketergantungan pada bahan-bahan dalam aplikasi ini akan menjadi risiko Kamu sendiri.</p>
-<p>Aplikasi ini mungkin berisi hubungan ke aplikasi-aplikasi di luar {{ config('app.name') }}. {{ config('app.name') }} tidak memiliki kontrol atas aplikasi pihak ketiga tersebut, tidak selalu mendukung mereka dan tidak bertanggung jawab untuk mereka, termasuk untuk konten, akurasi atau fungsi mereka. Sebagai akibatnya, kami mengharapkan agar Kamu berhati-hati dalam meninjau pernyataan hukum aplikasi-aplikasi pihak ketiga tersebut, termasuk menjaga diri tetap mengetahui informasi mengenai perubahan atas mereka.</p>
+<h4>Intellectual Property</h4>
+<h6>1. Content provided by {{ config('app.name') }}</h6>
+<p>All intellectual property rights, including copyright and trademarks, in materials published by or on behalf of {{ config('app.name') }} on the application (e.g., text and images) are owned by {{ config('app.name') }} or its licensors.</p>
+<p>You may reproduce extracts from this application for your own personal use (e.g., non-commercial use) provided you preserve all intellectual property rights intact and with respect, including copyright notices that may appear in such content (e.g., @2020 {{ config('app.name') }}).</p>
+<h6>2. Content you provide</h6>
+<p>You represent to {{ config('app.name') }} that you are either the author of the content you contribute to this application, or that you have the rights (i.e., have been given permission by the rights holder) and are able to contribute such content (e.g., images, videos, music) to the application.</p>
+<p>You agree that such content will be treated as non-confidential and you grant {{ config('app.name') }} a royalty-free, perpetual, and broad license to use (including to disclose, reproduce, transmit, publish, or broadcast) the content you provide for purposes related to its business.</p>
+<p>Please note that {{ config('app.name') }} is free to decide whether to use or not use this content and that {{ config('app.name') }} may have developed similar editions or may have obtained such content from other sources, in which case all intellectual property rights in this content remain with {{ config('app.name') }} and its licensors.</p>
+<h6>3. Liability</h6>
+<p>While {{ config('app.name') }} uses all reasonable efforts to ensure the accuracy of materials on our application and to avoid disruption, we are not responsible for inaccurate information, disruption, termination, or other events that may cause you to suffer losses, either directly (e.g., computer failure) or indirectly (e.g., loss of profits). Any reliance on materials in this application will be at your own risk.</p>
+<p>This application may contain links to applications outside {{ config('app.name') }}. {{ config('app.name') }} has no control over such third-party applications, does not always support them, and is not responsible for them, including for their content, accuracy, or functionality. As a result, we expect you to be careful in reviewing the legal statements of such third-party applications, including keeping yourself informed of information regarding changes to them.</p>
 
-<h4>Kontak Kami</h4>
-<p>Jika Kamu memiliki pertanyaan atau komentar tentang aplikasi, jangan ragu untuk menghubungi kami melalui (i) mobile phone di (0821) 25251123 atau (ii) telepon di (0251) 8563279 atau (ii) e-mail di info@jagonyamvp.com atau (iv) surat biasa di Jl Mayjen HR Edi Sukma No 59 Cigombong Bogor</p>
+<h4>Contact Us</h4>
+<p>If you have questions or comments about the application, please feel free to contact us through (i) mobile phone at (0821) 25251123 or (ii) phone at (0251) 8563279 or (iii) e-mail at info@jagonyamvp.com or (iv) regular mail at Jl Mayjen HR Edi Sukma No 59 Cigombong Bogor</p>
 
-<h4>Perubahan</h4>
-<p>{{ config('app.name') }} memiliki hak untuk membuat perubahan atas persyaratan penggunaan ini. Silakan lihat halaman ini pada setiap saat untuk meninjau persyaratan penggunaan dan informasi baru.</p>
+<h4>Changes</h4>
+<p>{{ config('app.name') }} has the right to make changes to these terms of use. Please check this page at any time to review the terms of use and new information.</p>
 
-<h4>Hukum dan yurisdiksi yang mengatur</h4>
-<p>Aplikasi ini ditujukan untuk pengguna dari Indonesia saja. {{ config('app.name') }} tidak membuat pernyataan bahwa produk dan konten aplikasi ini sesuai atau tersedia di lokasi selain Indonesia.</p>
-<p>Kamu dan {{ config('app.name') }} setuju bahwa setiap klaim atau sengketa yang berkaitan dengan aplikasi ini akan diatur oleh hukum Republik dan dibawa ke pengadilan dari Bogor di Indonesia.</p>
+<h4>Governing Law and Jurisdiction</h4>
+<p>This application is intended for users from Indonesia only. {{ config('app.name') }} makes no representation that the products and content of this application are appropriate or available in locations other than Indonesia.</p>
+<p>You and {{ config('app.name') }} agree that any claim or dispute related to this application will be governed by the laws of the Republic and brought to the courts of Bogor in Indonesia.</p>
 
 @endsection
 

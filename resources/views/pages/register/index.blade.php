@@ -34,8 +34,8 @@
         @endif
 
         <div class="form-group mb-0 mt-2">
-            <label for="confirmation-password">Konfirmasi Password</label>
-            <input type="password" name="confirmation_password" class="form-control" id="confirmation-password" placeholder="Konfirmasi Password">
+            <label for="confirmation-password">Confirm Password</label>
+            <input type="password" name="confirmation_password" class="form-control" id="confirmation-password" placeholder="Confirm Password">
         </div>
         @if($errors->first('confirmation_password'))
           <small class="text-danger">{{ $errors->first('confirmation_password') }}</small>
@@ -43,7 +43,7 @@
 
         <div class="form-check icon-check mb-2 mt-2">
             <input class="form-check-input" type="checkbox" name="terms" id="check-terms">
-            <label class="form-check-label" for="check-terms">Setuju dengan ketentuan <a href="{{ route('auth.sign-in') }}" class="color-highlight">Syarat Layanan</a></label>
+            <label class="form-check-label" for="check-terms">I agree to the <a href="{{ route('auth.sign-in') }}" class="color-highlight">Terms of Service</a></label>
         </div>
         @if($errors->first('terms'))
           <small class="text-danger">{{ $errors->first('terms') }}</small>
@@ -57,7 +57,7 @@
         <button type="submit" class="btn btn-dark btn-block mt-4">Register</button>
     </form>
     <p class="text-center mt-2 mb-0">
-        <a href="{{ route('auth.sign-in') }}">Sudah punya akun</a>
+        <a href="{{ route('auth.sign-in') }}">Already have an account</a>
     </p>
 @endsection
 

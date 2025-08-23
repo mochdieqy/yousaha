@@ -3,16 +3,16 @@
 @section('stylesheet')
 @endsection
 
-@section('title', 'Tentang Kami')
+@section('title', 'About Us')
 @section('back', route('home'))
 
 @section('content')
-<h3>Tentang Kami</h3>
+<h3>About Us</h3>
 <p>
-    Catat Hutang adalah aplikasi sederhana yang dirancang untuk membantu Anda mencatat dan melacak hutang secara praktis. Dengan tampilan yang mudah digunakan, aplikasi ini memungkinkan Anda mencatat siapa yang berhutang, jumlah hutang, serta status pelunasannya.
+    {{ config('app.name') }} is a simple application designed to help you record and track debts easily. With a user-friendly interface, this application allows you to record who owes you, the amount of debt, and the repayment status.
 </p>
 <p>
-    Aplikasi ini cocok untuk keperluan pribadi atau penggunaan sehari-hari, membantu Anda menjaga keuangan tetap terkontrol dengan mudah tanpa kerumitan tambahan.
+    This application is suitable for personal use or daily use, helping you keep your finances under control easily without additional complexity.
 </p>
 @endsection
 
