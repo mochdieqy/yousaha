@@ -97,7 +97,7 @@ class CustomerController extends Controller
                 ->with('success', 'Customer created successfully.');
         } catch (\Exception $e) {
             return redirect()->back()
-                ->with('error', 'Failed to create customer. Please try again.')
+                ->with('error', 'Failed to create customer: ' . $e->getMessage())
                 ->withInput();
         }
     }
@@ -164,7 +164,7 @@ class CustomerController extends Controller
                 ->with('success', 'Customer updated successfully.');
         } catch (\Exception $e) {
             return redirect()->back()
-                ->with('error', 'Failed to update customer. Please try again.')
+                ->with('error', 'Failed to update customer: ' . $e->getMessage())
                 ->withInput();
         }
     }
@@ -198,7 +198,7 @@ class CustomerController extends Controller
                 ->with('success', 'Customer deleted successfully.');
         } catch (\Exception $e) {
             return redirect()->back()
-                ->with('error', 'Failed to delete customer. Please try again.');
+                ->with('error', 'Failed to delete customer: ' . $e->getMessage());
         }
     }
 }

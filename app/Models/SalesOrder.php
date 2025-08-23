@@ -77,6 +77,14 @@ class SalesOrder extends Model
     }
 
     /**
+     * Get the deliveries for this sales order.
+     */
+    public function deliveries()
+    {
+        return $this->hasMany(Delivery::class);
+    }
+
+    /**
      * Check if the sales order is overdue.
      */
     public function isOverdue()

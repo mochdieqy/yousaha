@@ -14,6 +14,7 @@ use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class ReceiptController extends Controller
 {
@@ -65,7 +66,7 @@ class ReceiptController extends Controller
             return redirect()->route('company.choice')->with('error', 'Please select a company first.');
         }
 
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'warehouse_id' => 'required|exists:warehouses,id',
             'receive_from' => 'required|exists:suppliers,id',
             'scheduled_at' => 'required|date',
@@ -74,6 +75,12 @@ class ReceiptController extends Controller
             'products.*.product_id' => 'required|exists:products,id',
             'products.*.quantity' => 'required|numeric|min:0.01',
         ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
 
         try {
             DB::beginTransaction();
@@ -184,7 +191,7 @@ class ReceiptController extends Controller
             return back()->with('error', 'Receipt cannot be updated in its current status.');
         }
 
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'warehouse_id' => 'required|exists:warehouses,id',
             'receive_from' => 'required|exists:suppliers,id',
             'scheduled_at' => 'required|date',
@@ -193,6 +200,12 @@ class ReceiptController extends Controller
             'products.*.product_id' => 'required|exists:products,id',
             'products.*.quantity' => 'required|numeric|min:0.01',
         ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
 
         try {
             DB::beginTransaction();
@@ -400,9 +413,15 @@ class ReceiptController extends Controller
             return redirect()->route('company.choice')->with('error', 'Please select a company first.');
         }
 
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'status' => 'required|in:draft,waiting,ready,done,cancel',
         ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
 
         // Validate status transition logic
         $currentStatus = $receipt->status;

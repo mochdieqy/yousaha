@@ -23,6 +23,7 @@ class Income extends Model
         'paid',
         'status',
         'note',
+        'description',
     ];
 
     /**

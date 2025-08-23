@@ -83,7 +83,7 @@ class AuthController extends Controller
         } catch(\Exception $errors) {
             Log::error($errors->getMessage());
             return redirect()->back()
-            ->withInput()->withErrors(['message' => 'Registration failed']);
+            ->withInput()->withErrors(['message' => 'Registration failed: ' . $errors->getMessage()]);
         }
 
         Session::flash('message', 'Registration successful! Please login');

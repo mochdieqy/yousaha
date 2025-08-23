@@ -21,6 +21,10 @@ class Delivery extends Model
         'scheduled_at',
         'reference',
         'status',
+        'sales_order_id',
+        'customer_id',
+        'number',
+        'notes',
     ];
 
     /**
@@ -46,6 +50,22 @@ class Delivery extends Model
     public function warehouse()
     {
         return $this->belongsTo(Warehouse::class);
+    }
+
+    /**
+     * Get the sales order for this delivery.
+     */
+    public function salesOrder()
+    {
+        return $this->belongsTo(SalesOrder::class);
+    }
+
+    /**
+     * Get the customer for this delivery.
+     */
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
     }
 
     /**
@@ -78,5 +98,30 @@ class Delivery extends Model
     public function getTotalQuantityAttribute()
     {
         return $this->productLines()->sum('quantity');
+    }
+
+    /**
+     * Get the current status from the latest status log.
+     */
+    public function getCurrentStatusAttribute()
+    {
+        $latestStatusLog = $this->statusLogs()->latest('changed_at')->first();
+        return $latestStatusLog ? $latestStatusLog->status : $this->status;
+    }
+
+    /**
+     * Check if the delivery can be edited.
+     */
+    public function canBeEdited()
+    {
+        return in_array($this->status, ['draft', 'waiting']);
+    }
+
+    /**
+     * Check if the delivery can be processed for goods issue.
+     */
+    public function canBeProcessed()
+    {
+        return $this->status === 'ready';
     }
 }

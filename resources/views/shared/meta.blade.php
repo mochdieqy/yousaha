@@ -21,4 +21,5 @@
 <meta name="msapplication-TileColor" content="#cccccc">
 <meta name="msapplication-TileImage" content="{{ asset('favicon/ms-icon-144x144.png') }}">
 <meta name="theme-color" content="#cccccc">
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <title>{{ config('app.name') }}</title>

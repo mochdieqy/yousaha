@@ -19,6 +19,9 @@ class GeneralLedgerDetail extends Model
         'account_id',
         'type',
         'value',
+        'debit',
+        'credit',
+        'description',
     ];
 
     /**

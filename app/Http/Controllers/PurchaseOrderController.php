@@ -20,6 +20,7 @@ use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use App\Models\Account; // Added this import for Account model
 
@@ -73,7 +74,7 @@ class PurchaseOrderController extends Controller
             return redirect()->route('company.choice')->with('error', 'Please select a company first.');
         }
 
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'warehouse_id' => 'required|exists:warehouses,id',
             'supplier_id' => 'required|exists:suppliers,id',
             'requestor' => 'required|string|max:255',
@@ -83,6 +84,12 @@ class PurchaseOrderController extends Controller
             'products.*.product_id' => 'required|exists:products,id',
             'products.*.quantity' => 'required|integer|min:1',
         ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
 
         try {
             DB::beginTransaction();
@@ -185,7 +192,7 @@ class PurchaseOrderController extends Controller
             return back()->with('error', 'Cannot edit purchase order with status: ' . $purchaseOrder->status);
         }
 
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'warehouse_id' => 'required|exists:warehouses,id',
             'supplier_id' => 'required|exists:suppliers,id',
             'requestor' => 'required|string|max:255',
@@ -196,6 +203,12 @@ class PurchaseOrderController extends Controller
             'products.*.product_id' => 'required|exists:products,id',
             'products.*.quantity' => 'required|integer|min:1',
         ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
 
         // Validate status transition for draft orders
         if ($purchaseOrder->status === 'draft' && !in_array($request->status, ['draft', 'accepted', 'cancel'])) {
@@ -298,9 +311,15 @@ class PurchaseOrderController extends Controller
     {
         $this->authorizeCompany($purchaseOrder);
         
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'status' => ['required', Rule::in(['draft', 'accepted', 'sent', 'done', 'cancel'])],
         ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
 
         // Validate status transition for draft orders
         if ($purchaseOrder->status === 'draft' && !in_array($request->status, ['draft', 'accepted', 'cancel'])) {

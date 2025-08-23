@@ -114,7 +114,7 @@ class ProductController extends Controller
                 ->with('success', 'Product created successfully.');
         } catch (\Exception $e) {
             return redirect()->back()
-                ->with('error', 'Failed to create product. Please try again.')
+                ->with('error', 'Failed to create product: ' . $e->getMessage())
                 ->withInput();
         }
     }
@@ -198,7 +198,7 @@ class ProductController extends Controller
                 ->with('success', 'Product updated successfully.');
         } catch (\Exception $e) {
             return redirect()->back()
-                ->with('error', 'Failed to update product. Please try again.')
+                ->with('error', 'Failed to update product: ' . $e->getMessage())
                 ->withInput();
         }
     }
@@ -236,7 +236,7 @@ class ProductController extends Controller
                 ->with('success', 'Product deleted successfully.');
         } catch (\Exception $e) {
             return redirect()->back()
-                ->with('error', 'Failed to delete product. Please try again.');
+                ->with('error', 'Failed to delete product: ' . $e->getMessage());
         }
     }
 }

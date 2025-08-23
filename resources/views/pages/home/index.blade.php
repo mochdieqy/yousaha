@@ -191,16 +191,26 @@
                                 </a>
                             </div>
                             @endcan
-                            @if(app('permissions')->userCanAny(['receipts.view', 'deliveries.view']))
+                            @can('receipts.view')
                             <div class="col-md-6 mb-2">
                                 <a href="{{ route('receipts.index') }}" class="text-decoration-none">
                                     <div class="d-flex align-items-center">
-                                        <i class="fas fa-exchange-alt text-muted me-2"></i>
-                                        <span>Stock Transfers</span>
+                                        <i class="fas fa-receipt text-muted me-2"></i>
+                                        <span>Goods Receiving</span>
                                     </div>
                                 </a>
                             </div>
-                            @endif
+                            @endcan
+                            @can('deliveries.view')
+                            <div class="col-md-6 mb-2">
+                                <a href="{{ route('deliveries.index') }}" class="text-decoration-none">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-truck text-muted me-2"></i>
+                                        <span>Goods Issue</span>
+                                    </div>
+                                </a>
+                            </div>
+                            @endcan
                         </div>
                     </div>
                 </div>
@@ -221,18 +231,22 @@
                         <div class="row">
                             @can('sales-orders.view')
                             <div class="col-md-6 mb-2">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-file-invoice text-muted me-2"></i>
-                                    <span>Sales Orders</span>
-                                </div>
+                                <a href="{{ route('sales-orders.index') }}" class="text-decoration-none">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-file-invoice text-muted me-2"></i>
+                                        <span>Sales Orders</span>
+                                    </div>
+                                </a>
                             </div>
                             @endcan
                             @can('deliveries.view')
                             <div class="col-md-6 mb-2">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-truck text-muted me-2"></i>
-                                    <span>Delivery Management</span>
-                                </div>
+                                <a href="{{ route('deliveries.index') }}" class="text-decoration-none">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-truck text-muted me-2"></i>
+                                        <span>Delivery Management</span>
+                                    </div>
+                                </a>
                             </div>
                             @endcan
                             @can('customers.view')

@@ -203,7 +203,7 @@ class StockController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
             return redirect()->back()
-                ->with('error', 'Failed to create stock. Please try again.')
+                ->with('error', 'Failed to create stock: ' . $e->getMessage())
                 ->withInput();
         }
     }
@@ -357,7 +357,7 @@ class StockController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
             return redirect()->back()
-                ->with('error', 'Failed to update stock. Please try again.')
+                ->with('error', 'Failed to update stock: ' . $e->getMessage())
                 ->withInput();
         }
     }
@@ -398,7 +398,7 @@ class StockController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
             return redirect()->route('stocks.index')
-                ->with('error', 'Failed to delete stock. Please try again.');
+                ->with('error', 'Failed to delete stock: ' . $e->getMessage());
         }
     }
 

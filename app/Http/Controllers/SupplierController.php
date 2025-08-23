@@ -97,7 +97,7 @@ class SupplierController extends Controller
                 ->with('success', 'Supplier created successfully.');
         } catch (\Exception $e) {
             return redirect()->back()
-                ->with('error', 'Failed to create supplier. Please try again.')
+                ->with('error', 'Failed to create supplier: ' . $e->getMessage())
                 ->withInput();
         }
     }
@@ -164,7 +164,7 @@ class SupplierController extends Controller
                 ->with('success', 'Supplier updated successfully.');
         } catch (\Exception $e) {
             return redirect()->back()
-                ->with('error', 'Failed to update supplier. Please try again.')
+                ->with('error', 'Failed to update supplier: ' . $e->getMessage())
                 ->withInput();
         }
     }
@@ -199,7 +199,7 @@ class SupplierController extends Controller
                 ->with('success', 'Supplier deleted successfully.');
         } catch (\Exception $e) {
             return redirect()->back()
-                ->with('error', 'Failed to delete supplier. Please try again.');
+                ->with('error', 'Failed to delete supplier: ' . $e->getMessage());
         }
     }
 }

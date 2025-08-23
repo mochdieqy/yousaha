@@ -95,7 +95,7 @@ class WarehouseController extends Controller
                 ->with('success', 'Warehouse created successfully.');
         } catch (\Exception $e) {
             return redirect()->back()
-                ->with('error', 'Failed to create warehouse. Please try again.')
+                ->with('error', 'Failed to create warehouse: ' . $e->getMessage())
                 ->withInput();
         }
     }
@@ -166,7 +166,7 @@ class WarehouseController extends Controller
                 ->with('success', 'Warehouse updated successfully.');
         } catch (\Exception $e) {
             return redirect()->back()
-                ->with('error', 'Failed to update warehouse. Please try again.')
+                ->with('error', 'Failed to update warehouse: ' . $e->getMessage())
                 ->withInput();
         }
     }
@@ -200,7 +200,7 @@ class WarehouseController extends Controller
                 ->with('success', 'Warehouse deleted successfully.');
         } catch (\Exception $e) {
             return redirect()->route('warehouses.index')
-                ->with('error', 'Failed to delete warehouse. Please try again.');
+                ->with('error', 'Failed to delete warehouse: ' . $e->getMessage());
         }
     }
 }

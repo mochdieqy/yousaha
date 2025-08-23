@@ -22,6 +22,7 @@ class Stock extends Model
         'quantity_reserve',
         'quantity_saleable',
         'quantity_incoming',
+        'quantity',
     ];
 
     /**

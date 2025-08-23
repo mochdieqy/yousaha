@@ -22,6 +22,8 @@ class GeneralLedger extends Model
         'note',
         'total',
         'reference',
+        'description',
+        'status',
     ];
 
     /**

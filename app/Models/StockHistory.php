@@ -27,6 +27,13 @@ class StockHistory extends Model
         'type',
         'reference',
         'date',
+        'company_id',
+        'warehouse_id',
+        'product_id',
+        'quantity',
+        'reference_type',
+        'reference_id',
+        'notes',
     ];
 
     /**
