@@ -492,8 +492,17 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('payrolls/{payroll}', [App\Http\Controllers\PayrollController::class, 'destroy'])->name('payrolls.delete');
     });
     
-    // Payroll processing route
-    Route::middleware(['permission:payrolls.edit'])->group(function () {
-        Route::post('payrolls/{payroll}/process', [App\Http\Controllers\PayrollController::class, 'process'])->name('payrolls.process');
+    // Payroll view route
+    Route::middleware(['permission:payrolls.view'])->group(function () {
+        Route::get('payrolls/{payroll}', [App\Http\Controllers\PayrollController::class, 'show'])->name('payrolls.show');
+    });
+
+    // Role Management (for company owners)
+    Route::middleware(['permission:company.manage-employee-roles'])->group(function () {
+        Route::get('roles', [App\Http\Controllers\RoleController::class, 'index'])->name('roles.index');
+        Route::get('employee-roles', [App\Http\Controllers\EmployeeRoleController::class, 'index'])->name('employee-roles.index');
+        Route::get('employee-roles/create', [App\Http\Controllers\EmployeeRoleController::class, 'create'])->name('employee-roles.create');
+        Route::post('employee-roles', [App\Http\Controllers\EmployeeRoleController::class, 'store'])->name('employee-roles.store');
+        Route::delete('employee-roles/{employee}', [App\Http\Controllers\EmployeeRoleController::class, 'destroy'])->name('employee-roles.destroy');
     });
 });

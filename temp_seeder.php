@@ -1278,6 +1278,48 @@ class TransactionDataSeeder extends Seeder
         // Fallback to any equity account if specific one not found
         if (!$equityAccount) {
             $equityAccount = $accounts->where('type', 'Equity')->first();
+
+    /**
+     * Create equity transaction (e.g., capital injection, dividend payment)
+     */
+    private function createEquityTransaction($company, $date, $accounts)
+    {
+        $equityTypes = [
+            'Capital Injection' => [10000000, 50000000],
+            'Dividend Payment' => [5000000, 20000000],
+            'Share Repurchase' => [10000000, 30000000],
+            'Share Issuance' => [20000000, 100000000],
+            'Retained Earnings Transfer' => [5000000, 50000000],
+            'Other Equity Adjustment' => [1000000, 10000000],
+        ];
+        
+        $type = array_rand($equityTypes);
+        $amountRange = $equityTypes[$type];
+        $amount = rand($amountRange[0], $amountRange[1]);
+        
+        // Determine if it's a credit (increase equity) or debit (decrease equity)
+        $isCredit = in_array($type, ['Capital Injection', 'Share Issuance', 'Retained Earnings Transfer']);
+        
+        // Get appropriate accounts for equity transactions
+        $cashAccount = $accounts->where('code', '1000')->first(); // Cash
+        $equityAccount = null;
+        
+        // Select appropriate equity account based on transaction type
+        if (in_array($type, ['Capital Injection', 'Share Issuance'])) {
+            $equityAccount = $accounts->where('code', '3000')->first(); // Owner's Equity
+        } elseif ($type === 'Dividend Payment') {
+            $equityAccount = $accounts->where('code', '3100')->first(); // Retained Earnings
+        } elseif ($type === 'Share Repurchase') {
+            $equityAccount = $accounts->where('code', '3000')->first(); // Owner's Equity
+        } elseif ($type === 'Retained Earnings Transfer') {
+            $equityAccount = $accounts->where('code', '3100')->first(); // Retained Earnings
+        } else {
+            $equityAccount = $accounts->where('code', '3200')->first(); // Current Year Earnings
+        }
+        
+        // Fallback to any equity account if specific one not found
+        if (!$equityAccount) {
+            $equityAccount = $accounts->where('type', 'Equity')->first();
         }
         
         if (!$cashAccount || !$equityAccount) {
@@ -1291,6 +1333,8 @@ class TransactionDataSeeder extends Seeder
                 ['account' => $cashAccount->code, 'type' => $isCredit ? 'debit' : 'credit', 'value' => $amount, 'description' => "Cash for {$type}"],
                 ['account' => $equityAccount->code, 'type' => $isCredit ? 'credit' : 'debit', 'value' => $amount, 'description' => "Equity adjustment for {$type}"],
             ], "Equity transaction: {$type}");
+            
+            $this->command->info("Created equity transaction: {$type} - IDR " . number_format($amount, 0, ',', '.') . " ({$isCredit ? 'Credit' : 'Debit'} to {$equityAccount->name})");
             
             return true;
             

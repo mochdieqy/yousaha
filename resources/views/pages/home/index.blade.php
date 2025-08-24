@@ -53,7 +53,7 @@
             </div>
         </div>
         @endif
-        
+
         <!-- Quick Stats Row - Only show if user has any relevant permissions -->
         @if(app('permissions')->userCanAny(['products.view', 'warehouses.view', 'stocks.view', 'sales-orders.view', 'purchase-orders.view', 'general-ledger.view', 'expenses.view', 'incomes.view', 'employees.view', 'attendances.view']))
         <div class="row mb-4">
@@ -429,14 +429,40 @@
                                 </a>
                             </div>
                             @endcan
-                            @if(app('permissions')->userCanAny(['employees.view', 'attendances.view']))
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
+
+            <!-- Advanced Settings -->
+            @if(app('permissions')->userCanAny(['company.manage-employee-roles', 'attendances.view']))
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="fas fa-cogs text-primary me-2"></i>
+                            Advanced Settings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
                             <div class="col-md-6 mb-2">
                                 <div class="d-flex align-items-center">
                                     <i class="fas fa-robot text-muted me-2"></i>
                                     <span>AI Evaluation</span>
                                 </div>
                             </div>
-                            @endif
+                            @can('company.manage-employee-roles')
+                            <div class="col-md-6 mb-2">
+                                <a href="{{ route('employee-roles.index') }}" class="text-decoration-none">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-user-shield text-muted me-2"></i>
+                                        <span>Employee Access</span>
+                                    </div>
+                                </a>
+                            </div>
+                            @endcan
                         </div>
                     </div>
                 </div>
@@ -447,4 +473,5 @@
         </div>
     </div>
 </div>
+
 @endsection

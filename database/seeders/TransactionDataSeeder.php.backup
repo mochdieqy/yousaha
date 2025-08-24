@@ -1292,6 +1292,8 @@ class TransactionDataSeeder extends Seeder
                 ['account' => $equityAccount->code, 'type' => $isCredit ? 'credit' : 'debit', 'value' => $amount, 'description' => "Equity adjustment for {$type}"],
             ], "Equity transaction: {$type}");
             
+            $this->command->info("Created equity transaction: {$type} - IDR " . number_format($amount, 0, ",", ".") . " ({$isCredit ? "Credit" : "Debit"} to {$equityAccount->name})");
+            
             return true;
             
         } catch (\Exception $e) {

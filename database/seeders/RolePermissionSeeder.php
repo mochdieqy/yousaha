@@ -181,6 +181,7 @@ class RolePermissionSeeder extends Seeder
         Permission::create(['name' => 'company.edit']);
         Permission::create(['name' => 'company.manage-employees']);
         Permission::create(['name' => 'company.invite-employees']);
+        Permission::create(['name' => 'company.manage-employee-roles']);
     }
 
     private function createRoles()
@@ -247,14 +248,6 @@ class RolePermissionSeeder extends Seeder
         // Employee - Basic permissions for daily work
         $employee = Role::create(['name' => 'Employee']);
         $employee->givePermissionTo([
-            'products.view',
-            'customers.view',
-            'suppliers.view',
-            'stocks.view',
-            'sales-orders.view', 'sales-orders.create',
-            'purchase-orders.view', 'purchase-orders.create',
-            'receipts.view', 'receipts.create',
-            'deliveries.view', 'deliveries.create',
             'attendances.view', 'attendances.create',
             'time-offs.view', 'time-offs.create',
             'company.view'

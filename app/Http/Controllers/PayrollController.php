@@ -9,10 +9,33 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
+/**
+ * PayrollController
+ * 
+ * IMPORTANT: This controller ONLY manages employee payroll information records.
+ * It does NOT handle:
+ * - Salary calculations
+ * - Automatic payment processing
+ * - Payroll period management
+ * - Actual salary disbursements
+ * 
+ * What it DOES manage:
+ * - Employee bank account details for payroll
+ * - Tax identification numbers
+ * - Employment insurance numbers
+ * - Health insurance numbers
+ * 
+ * This is essentially a "payroll setup" system for storing employee
+ * payment and insurance information, not a payroll processing system.
+ */
 class PayrollController extends Controller
 {
     /**
      * Display a listing of payrolls.
+     * 
+     * Note: This system only manages employee payroll information
+     * (bank details, tax numbers, insurance) and does NOT handle
+     * salary calculations or automatic payments.
      */
     public function index()
     {
@@ -26,14 +49,16 @@ class PayrollController extends Controller
                 $query->where('company_id', $company->id);
             })
             ->with(['employee.user', 'employee.department'])
-            ->orderBy('period', 'desc')
+            ->orderBy('created_at', 'desc')
             ->get();
 
         return view('pages.payrolls.index', compact('payrolls'));
     }
 
     /**
-     * Show the form for creating a new payroll.
+     * Show the form for creating a new payroll information record.
+     * 
+     * Note: This creates payroll information records, not salary payments.
      */
     public function create()
     {
@@ -52,7 +77,10 @@ class PayrollController extends Controller
     }
 
     /**
-     * Store a newly created payroll in storage.
+     * Store a newly created payroll information record.
+     * 
+     * Note: This stores employee payroll information (bank details, tax numbers, insurance)
+     * and does NOT process salary payments or calculations.
      */
     public function store(Request $request)
     {
@@ -64,30 +92,21 @@ class PayrollController extends Controller
 
         $validator = Validator::make($request->all(), [
             'employee_id' => 'required|exists:employees,id',
-            'period' => 'required|date_format:Y-m',
-            'basic_salary' => 'required|numeric|min:0',
-            'allowances' => 'nullable|numeric|min:0',
-            'deductions' => 'nullable|numeric|min:0',
-            'overtime_pay' => 'nullable|numeric|min:0',
-            'bonus' => 'nullable|numeric|min:0',
-            'notes' => 'nullable|string|max:1000',
+            'payment_account_bank' => 'required|string|max:255',
+            'payment_account_number' => 'required|string|max:255',
+            'tax_number' => 'nullable|string|max:255',
+            'employment_insurance_number' => 'nullable|string|max:255',
+            'health_insurance_number' => 'nullable|string|max:255',
         ], [
             'employee_id.required' => 'Please select an employee.',
             'employee_id.exists' => 'The selected employee is invalid.',
-            'period.required' => 'Payroll period is required.',
-            'period.date_format' => 'Period must be in YYYY-MM format.',
-            'basic_salary.required' => 'Basic salary is required.',
-            'basic_salary.numeric' => 'Basic salary must be a number.',
-            'basic_salary.min' => 'Basic salary cannot be negative.',
-            'allowances.numeric' => 'Allowances must be a number.',
-            'allowances.min' => 'Allowances cannot be negative.',
-            'deductions.numeric' => 'Deductions must be a number.',
-            'deductions.min' => 'Deductions cannot be negative.',
-            'overtime_pay.numeric' => 'Overtime pay must be a number.',
-            'overtime_pay.min' => 'Overtime pay cannot be negative.',
-            'bonus.numeric' => 'Bonus must be a number.',
-            'bonus.min' => 'Bonus cannot be negative.',
-            'notes.max' => 'Notes cannot exceed 1000 characters.',
+            'payment_account_bank.required' => 'Bank name is required.',
+            'payment_account_bank.max' => 'Bank name cannot exceed 255 characters.',
+            'payment_account_number.required' => 'Account number is required.',
+            'payment_account_number.max' => 'Account number cannot exceed 255 characters.',
+            'tax_number.max' => 'Tax number cannot exceed 255 characters.',
+            'employment_insurance_number.max' => 'Employment insurance number cannot exceed 255 characters.',
+            'health_insurance_number.max' => 'Health insurance number cannot exceed 255 characters.',
         ]);
 
         if ($validator->fails()) {
@@ -103,55 +122,38 @@ class PayrollController extends Controller
             return redirect()->back()->with('error', 'The selected employee is invalid.')->withInput();
         }
 
-        // Check if payroll already exists for this employee in this period
-        $existingPayroll = Payroll::where('employee_id', $request->employee_id)
-            ->where('period', $request->period)
-            ->first();
+        // Check if payroll information already exists for this employee
+        $existingPayroll = Payroll::where('employee_id', $request->employee_id)->first();
 
         if ($existingPayroll) {
-            return redirect()->back()->with('error', 'Payroll already exists for this employee in this period.')->withInput();
+            return redirect()->back()->with('error', 'Payroll information already exists for this employee.')->withInput();
         }
 
         try {
-            $netSalary = $request->basic_salary + 
-                        ($request->allowances ?? 0) + 
-                        ($request->overtime_pay ?? 0) + 
-                        ($request->bonus ?? 0) - 
-                        ($request->deductions ?? 0);
-
             Payroll::create([
                 'employee_id' => $request->employee_id,
-                'period' => $request->period,
-                'basic_salary' => $request->basic_salary,
-                'allowances' => $request->allowances ?? 0,
-                'deductions' => $request->deductions ?? 0,
-                'overtime_pay' => $request->overtime_pay ?? 0,
-                'bonus' => $request->bonus ?? 0,
-                'net_salary' => $netSalary,
-                'notes' => $request->notes,
-                'status' => 'pending',
+                'payment_account_bank' => $request->payment_account_bank,
+                'payment_account_number' => $request->payment_account_number,
+                'tax_number' => $request->tax_number,
+                'employment_insurance_number' => $request->employment_insurance_number,
+                'health_insurance_number' => $request->health_insurance_number,
             ]);
 
-            return redirect()->route('payrolls.index')->with('success', 'Payroll created successfully.');
+            return redirect()->route('payrolls.index')->with('success', 'Payroll information created successfully.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Failed to create payroll. Please try again.')->withInput();
+            return redirect()->back()->with('error', 'Failed to create payroll information. Please try again.')->withInput();
         }
     }
 
     /**
-     * Show the form for editing the specified payroll.
+     * Show the form for editing the specified payroll information.
      */
     public function edit(Payroll $payroll)
     {
         $company = Auth::user()->currentCompany;
         
         if (!$company || $payroll->employee->company_id !== $company->id) {
-            return redirect()->route('payrolls.index')->with('error', 'Payroll not found.');
-        }
-
-        // Only allow editing if status is pending
-        if ($payroll->status !== 'pending') {
-            return redirect()->route('payrolls.index')->with('error', 'Cannot edit processed payroll.');
+            return redirect()->route('payrolls.index')->with('error', 'Payroll information not found.');
         }
 
         $employees = Employee::where('company_id', $company->id)
@@ -163,47 +165,33 @@ class PayrollController extends Controller
     }
 
     /**
-     * Update the specified payroll in storage.
+     * Update the specified payroll information.
      */
     public function update(Request $request, Payroll $payroll)
     {
         $company = Auth::user()->currentCompany;
         
         if (!$company || $payroll->employee->company_id !== $company->id) {
-            return redirect()->route('payrolls.index')->with('error', 'Payroll not found.');
-        }
-
-        // Only allow editing if status is pending
-        if ($payroll->status !== 'pending') {
-            return redirect()->route('payrolls.index')->with('error', 'Cannot edit processed payroll.');
+            return redirect()->route('payrolls.index')->with('error', 'Payroll information not found.');
         }
 
         $validator = Validator::make($request->all(), [
             'employee_id' => 'required|exists:employees,id',
-            'period' => 'required|date_format:Y-m',
-            'basic_salary' => 'required|numeric|min:0',
-            'allowances' => 'nullable|numeric|min:0',
-            'deductions' => 'nullable|numeric|min:0',
-            'overtime_pay' => 'nullable|numeric|min:0',
-            'bonus' => 'nullable|numeric|min:0',
-            'notes' => 'nullable|string|max:1000',
+            'payment_account_bank' => 'required|string|max:255',
+            'payment_account_number' => 'required|string|max:255',
+            'tax_number' => 'nullable|string|max:255',
+            'employment_insurance_number' => 'nullable|string|max:255',
+            'health_insurance_number' => 'nullable|string|max:255',
         ], [
             'employee_id.required' => 'Please select an employee.',
             'employee_id.exists' => 'The selected employee is invalid.',
-            'period.required' => 'Payroll period is required.',
-            'period.date_format' => 'Period must be in YYYY-MM format.',
-            'basic_salary.required' => 'Basic salary is required.',
-            'basic_salary.numeric' => 'Basic salary must be a number.',
-            'basic_salary.min' => 'Basic salary cannot be negative.',
-            'allowances.numeric' => 'Allowances must be a number.',
-            'allowances.min' => 'Allowances cannot be negative.',
-            'deductions.numeric' => 'Deductions must be a number.',
-            'deductions.min' => 'Deductions cannot be negative.',
-            'overtime_pay.numeric' => 'Overtime pay must be a number.',
-            'overtime_pay.min' => 'Overtime pay cannot be negative.',
-            'bonus.numeric' => 'Bonus must be a number.',
-            'bonus.min' => 'Bonus cannot be negative.',
-            'notes.max' => 'Notes cannot exceed 1000 characters.',
+            'payment_account_bank.required' => 'Bank name is required.',
+            'payment_account_bank.max' => 'Bank name cannot exceed 255 characters.',
+            'payment_account_number.required' => 'Account number is required.',
+            'payment_account_number.max' => 'Account number cannot exceed 255 characters.',
+            'tax_number.max' => 'Tax number cannot exceed 255 characters.',
+            'employment_insurance_number.max' => 'Employment insurance number cannot exceed 255 characters.',
+            'health_insurance_number.max' => 'Health insurance number cannot exceed 255 characters.',
         ]);
 
         if ($validator->fails()) {
@@ -219,91 +207,61 @@ class PayrollController extends Controller
             return redirect()->back()->with('error', 'The selected employee is invalid.')->withInput();
         }
 
-        // Check if payroll already exists for this employee in this period (excluding current payroll)
+        // Check if payroll information already exists for this employee (excluding current payroll)
         $existingPayroll = Payroll::where('employee_id', $request->employee_id)
-            ->where('period', $request->period)
             ->where('id', '!=', $payroll->id)
             ->first();
 
         if ($existingPayroll) {
-            return redirect()->back()->with('error', 'Payroll already exists for this employee in this period.')->withInput();
+            return redirect()->back()->with('error', 'Payroll information already exists for this employee.')->withInput();
         }
 
         try {
-            $netSalary = $request->basic_salary + 
-                        ($request->allowances ?? 0) + 
-                        ($request->overtime_pay ?? 0) + 
-                        ($request->bonus ?? 0) - 
-                        ($request->deductions ?? 0);
-
             $payroll->update([
                 'employee_id' => $request->employee_id,
-                'period' => $request->period,
-                'basic_salary' => $request->basic_salary,
-                'allowances' => $request->allowances ?? 0,
-                'deductions' => $request->deductions ?? 0,
-                'overtime_pay' => $request->overtime_pay ?? 0,
-                'bonus' => $request->bonus ?? 0,
-                'net_salary' => $netSalary,
-                'notes' => $request->notes,
+                'payment_account_bank' => $request->payment_account_bank,
+                'payment_account_number' => $request->payment_account_number,
+                'tax_number' => $request->tax_number,
+                'employment_insurance_number' => $request->employment_insurance_number,
+                'health_insurance_number' => $request->health_insurance_number,
             ]);
 
-            return redirect()->route('payrolls.index')->with('success', 'Payroll updated successfully.');
+            return redirect()->route('payrolls.index')->with('success', 'Payroll information updated successfully.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Failed to update payroll. Please try again.')->withInput();
+            return redirect()->back()->with('error', 'Failed to update payroll information. Please try again.')->withInput();
         }
     }
 
     /**
-     * Remove the specified payroll from storage.
+     * Remove the specified payroll information.
      */
     public function destroy(Payroll $payroll)
     {
         $company = Auth::user()->currentCompany;
         
         if (!$company || $payroll->employee->company_id !== $company->id) {
-            return redirect()->route('payrolls.index')->with('error', 'Payroll not found.');
-        }
-
-        // Only allow deletion if status is pending
-        if ($payroll->status !== 'pending') {
-            return redirect()->route('payrolls.index')->with('error', 'Cannot delete processed payroll.');
+            return redirect()->route('payrolls.index')->with('error', 'Payroll information not found.');
         }
 
         try {
             $payroll->delete();
-            return redirect()->route('payrolls.index')->with('success', 'Payroll deleted successfully.');
+            return redirect()->route('payrolls.index')->with('success', 'Payroll information deleted successfully.');
         } catch (\Exception $e) {
-            return redirect()->route('payrolls.index')->with('error', 'Failed to delete payroll. Please try again.');
+            return redirect()->route('payrolls.index')->with('error', 'Failed to delete payroll information. Please try again.');
         }
     }
 
     /**
-     * Process payroll (change status to processed).
+     * Show payroll information details.
      */
-    public function process(Payroll $payroll)
+    public function show(Payroll $payroll)
     {
         $company = Auth::user()->currentCompany;
         
         if (!$company || $payroll->employee->company_id !== $company->id) {
-            return redirect()->route('payrolls.index')->with('error', 'Payroll not found.');
+            return redirect()->route('payrolls.index')->with('error', 'Payroll information not found.');
         }
 
-        // Only allow processing if status is pending
-        if ($payroll->status !== 'pending') {
-            return redirect()->route('payrolls.index')->with('error', 'This payroll has already been processed.');
-        }
-
-        try {
-            $payroll->update([
-                'status' => 'processed',
-                'processed_at' => now(),
-                'processed_by' => Auth::id(),
-            ]);
-
-            return redirect()->route('payrolls.index')->with('success', 'Payroll processed successfully.');
-        } catch (\Exception $e) {
-            return redirect()->route('payrolls.index')->with('error', 'Failed to process payroll. Please try again.');
-        }
+        return view('pages.payrolls.show', compact('payroll'));
     }
 }

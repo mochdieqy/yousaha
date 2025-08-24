@@ -14,7 +14,7 @@ class AttendanceController extends Controller
     /**
      * Display a listing of attendances.
      */
-    public function index()
+    public function index(Request $request)
     {
         $company = Auth::user()->currentCompany;
         
@@ -22,15 +22,43 @@ class AttendanceController extends Controller
             return redirect()->route('company.choice')->with('error', 'Please select a company first.');
         }
 
-        $attendances = Attendance::whereHas('employee', function($query) use ($company) {
-                $query->where('company_id', $company->id);
-            })
-            ->with(['employee.user', 'employee.department'])
-            ->orderBy('date', 'desc')
-            ->orderBy('created_at', 'desc')
+        // Get employees for filter dropdown
+        $employees = Employee::where('company_id', $company->id)
+            ->with('user')
+            ->orderBy('number')
             ->get();
 
-        return view('pages.attendances.index', compact('attendances'));
+        // Build query with filters
+        $query = Attendance::whereHas('employee', function($query) use ($company) {
+                $query->where('company_id', $company->id);
+            })
+            ->with(['employee.user', 'employee.department']);
+
+        // Filter by employee
+        if ($request->filled('employee_id')) {
+            $query->where('employee_id', $request->employee_id);
+        }
+
+        // Filter by date range
+        if ($request->filled('date_from')) {
+            $query->where('date', '>=', $request->date_from);
+        }
+        
+        if ($request->filled('date_to')) {
+            $query->where('date', '<=', $request->date_to);
+        }
+
+        // Filter by specific date
+        if ($request->filled('date') && !$request->filled('date_from') && !$request->filled('date_to')) {
+            $query->where('date', $request->date);
+        }
+
+        $attendances = $query->orderBy('date', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('pages.attendances.index', compact('attendances', 'employees'));
     }
 
     /**
