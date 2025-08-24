@@ -379,28 +379,54 @@
                     </div>
                     <div class="card-body">
                         <div class="row">
+                            @can('departments.view')
+                            <div class="col-md-6 mb-2">
+                                <a href="{{ route('departments.index') }}" class="text-decoration-none">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-sitemap text-muted me-2"></i>
+                                        <span>Department Management</span>
+                                    </div>
+                                </a>
+                            </div>
+                            @endcan
                             @can('employees.view')
                             <div class="col-md-6 mb-2">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-user-tie text-muted me-2"></i>
-                                    <span>Employee Management</span>
-                                </div>
+                                <a href="{{ route('employees.index') }}" class="text-decoration-none">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-user-tie text-muted me-2"></i>
+                                        <span>Employee Management</span>
+                                    </div>
+                                </a>
                             </div>
                             @endcan
                             @can('attendances.view')
                             <div class="col-md-6 mb-2">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-clock text-muted me-2"></i>
-                                    <span>Attendance Tracking</span>
-                                </div>
+                                <a href="{{ route('attendances.index') }}" class="text-decoration-none">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-clock text-muted me-2"></i>
+                                        <span>Attendance Tracking</span>
+                                    </div>
+                                </a>
                             </div>
                             @endcan
                             @can('time-offs.view')
                             <div class="col-md-6 mb-2">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-calendar-alt text-muted me-2"></i>
-                                    <span>Time Off Management</span>
-                                </div>
+                                <a href="{{ route('time-offs.index') }}" class="text-decoration-none">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-calendar-alt text-muted me-2"></i>
+                                        <span>Time Off Management</span>
+                                    </div>
+                                </a>
+                            </div>
+                            @endcan
+                            @can('payrolls.view')
+                            <div class="col-md-6 mb-2">
+                                <a href="{{ route('payrolls.index') }}" class="text-decoration-none">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-money-check-alt text-muted me-2"></i>
+                                        <span>Payroll Management</span>
+                                    </div>
+                                </a>
                             </div>
                             @endcan
                             @if(app('permissions')->userCanAny(['employees.view', 'attendances.view']))

@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             DeliverySeeder::class,
             FinanceAccountSeeder::class,
             InitialStockSeeder::class,
+            EmployeeSeeder::class,
             TransactionDataSeeder::class,
         ]);
     }

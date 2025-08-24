@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class Company extends Model
 {
@@ -164,5 +166,39 @@ class Company extends Model
     public function assets()
     {
         return $this->hasMany(Asset::class);
+    }
+
+    /**
+     * Get the users associated with this company (owners and employees).
+     */
+    public function users()
+    {
+        // Get company owner
+        $owner = $this->owner;
+        
+        // Get employees
+        $employees = $this->employees()->with('user')->get()->pluck('user');
+        
+        // Combine and return unique users
+        return collect([$owner])->merge($employees)->filter()->unique('id');
+    }
+
+    /**
+     * Get a query builder for users associated with this company.
+     */
+    public function usersQuery()
+    {
+        // Get company owner ID
+        $ownerId = $this->owner;
+        
+        // Get employee user IDs
+        $employeeUserIds = $this->employees()->pluck('user_id')->toArray();
+        
+        // Combine owner and employee user IDs
+        $userIds = array_merge([$ownerId], $employeeUserIds);
+        $userIds = array_filter($userIds); // Remove null/empty values
+        
+        // Return query builder for these users
+        return User::whereIn('id', $userIds);
     }
 }

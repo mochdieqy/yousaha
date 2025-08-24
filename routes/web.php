@@ -386,12 +386,114 @@ Route::middleware(['auth'])->group(function () {
         Route::get('financial-reports/general-ledger-history', [App\Http\Controllers\FinancialReportController::class, 'generalLedgerHistory'])->name('financial-reports.general-ledger-history');
     });
     
-    // HR Management
-    Route::middleware(['permission:employees.view'])->group(function () {
-        Route::get('employees', function () { return 'Employees List - View Permission Required'; })->name('employees.index');
+    // HR Management - Departments
+    Route::middleware(['permission:departments.view'])->group(function () {
+        Route::get('departments', [App\Http\Controllers\DepartmentController::class, 'index'])->name('departments.index');
     });
     
+    Route::middleware(['permission:departments.create'])->group(function () {
+        Route::get('departments/create', [App\Http\Controllers\DepartmentController::class, 'create'])->name('departments.create');
+        Route::post('departments', [App\Http\Controllers\DepartmentController::class, 'store'])->name('departments.store');
+    });
+    
+    Route::middleware(['permission:departments.edit'])->group(function () {
+        Route::get('departments/{department}/edit', [App\Http\Controllers\DepartmentController::class, 'edit'])->name('departments.edit');
+        Route::put('departments/{department}', [App\Http\Controllers\DepartmentController::class, 'update'])->name('departments.update');
+    });
+    
+    Route::middleware(['permission:departments.delete'])->group(function () {
+        Route::delete('departments/{department}', [App\Http\Controllers\DepartmentController::class, 'destroy'])->name('departments.delete');
+    });
+    
+    // HR Management - Employees
+    Route::middleware(['permission:employees.view'])->group(function () {
+        Route::get('employees', [App\Http\Controllers\EmployeeController::class, 'index'])->name('employees.index');
+    });
+    
+    Route::middleware(['permission:employees.create'])->group(function () {
+        Route::get('employees/create', [App\Http\Controllers\EmployeeController::class, 'create'])->name('employees.create');
+        Route::post('employees', [App\Http\Controllers\EmployeeController::class, 'store'])->name('employees.store');
+    });
+    
+    Route::middleware(['permission:employees.edit'])->group(function () {
+        Route::get('employees/{employee}/edit', [App\Http\Controllers\EmployeeController::class, 'edit'])->name('employees.edit');
+        Route::put('employees/{employee}', [App\Http\Controllers\EmployeeController::class, 'update'])->name('employees.update');
+    });
+    
+    Route::middleware(['permission:employees.delete'])->group(function () {
+        Route::delete('employees/{employee}', [App\Http\Controllers\EmployeeController::class, 'destroy'])->name('employees.delete');
+    });
+    
+    // HR Management - Attendances
     Route::middleware(['permission:attendances.view'])->group(function () {
-        Route::get('attendances', function () { return 'Attendances List - View Permission Required'; })->name('attendances.index');
+        Route::get('attendances', [App\Http\Controllers\AttendanceController::class, 'index'])->name('attendances.index');
+    });
+    
+    Route::middleware(['permission:attendances.create'])->group(function () {
+        Route::get('attendances/create', [App\Http\Controllers\AttendanceController::class, 'create'])->name('attendances.create');
+        Route::post('attendances', [App\Http\Controllers\AttendanceController::class, 'store'])->name('attendances.store');
+    });
+    
+    Route::middleware(['permission:attendances.edit'])->group(function () {
+        Route::get('attendances/{attendance}/edit', [App\Http\Controllers\AttendanceController::class, 'edit'])->name('attendances.edit');
+        Route::put('attendances/{attendance}', [App\Http\Controllers\AttendanceController::class, 'update'])->name('attendances.update');
+    });
+    
+    Route::middleware(['permission:attendances.delete'])->group(function () {
+        Route::delete('attendances/{attendance}', [App\Http\Controllers\AttendanceController::class, 'destroy'])->name('attendances.delete');
+    });
+    
+    // Clock in/out routes (no specific permission required, but user must be employee)
+    Route::post('attendances/clock-in', [App\Http\Controllers\AttendanceController::class, 'clockIn'])->name('attendances.clock-in');
+    Route::post('attendances/clock-out', [App\Http\Controllers\AttendanceController::class, 'clockOut'])->name('attendances.clock-out');
+    
+    // HR Management - Time Offs
+    Route::middleware(['permission:time-offs.view'])->group(function () {
+        Route::get('time-offs', [App\Http\Controllers\TimeOffController::class, 'index'])->name('time-offs.index');
+    });
+    
+    Route::middleware(['permission:time-offs.create'])->group(function () {
+        Route::get('time-offs/create', [App\Http\Controllers\TimeOffController::class, 'create'])->name('time-offs.create');
+        Route::post('time-offs', [App\Http\Controllers\TimeOffController::class, 'store'])->name('time-offs.store');
+    });
+    
+    Route::middleware(['permission:time-offs.edit'])->group(function () {
+        Route::get('time-offs/{timeOff}/edit', [App\Http\Controllers\TimeOffController::class, 'edit'])->name('time-offs.edit');
+        Route::put('time-offs/{timeOff}', [App\Http\Controllers\TimeOffController::class, 'update'])->name('time-offs.update');
+    });
+    
+    Route::middleware(['permission:time-offs.delete'])->group(function () {
+        Route::delete('time-offs/{timeOff}', [App\Http\Controllers\TimeOffController::class, 'destroy'])->name('time-offs.delete');
+    });
+    
+    // Time off approval routes
+    Route::middleware(['permission:time-offs.approve'])->group(function () {
+        Route::get('time-offs/approval', [App\Http\Controllers\TimeOffController::class, 'approvalIndex'])->name('time-offs.approval');
+        Route::get('time-offs/{timeOff}/approval', [App\Http\Controllers\TimeOffController::class, 'approvalForm'])->name('time-offs.approval-form');
+        Route::post('time-offs/{timeOff}/approval', [App\Http\Controllers\TimeOffController::class, 'processApproval'])->name('time-offs.process-approval');
+    });
+    
+    // HR Management - Payrolls
+    Route::middleware(['permission:payrolls.view'])->group(function () {
+        Route::get('payrolls', [App\Http\Controllers\PayrollController::class, 'index'])->name('payrolls.index');
+    });
+    
+    Route::middleware(['permission:payrolls.create'])->group(function () {
+        Route::get('payrolls/create', [App\Http\Controllers\PayrollController::class, 'create'])->name('payrolls.create');
+        Route::post('payrolls', [App\Http\Controllers\PayrollController::class, 'store'])->name('payrolls.store');
+    });
+    
+    Route::middleware(['permission:payrolls.edit'])->group(function () {
+        Route::get('payrolls/{payroll}/edit', [App\Http\Controllers\PayrollController::class, 'edit'])->name('payrolls.edit');
+        Route::put('payrolls/{payroll}', [App\Http\Controllers\PayrollController::class, 'update'])->name('payrolls.update');
+    });
+    
+    Route::middleware(['permission:payrolls.delete'])->group(function () {
+        Route::delete('payrolls/{payroll}', [App\Http\Controllers\PayrollController::class, 'destroy'])->name('payrolls.delete');
+    });
+    
+    // Payroll processing route
+    Route::middleware(['permission:payrolls.edit'])->group(function () {
+        Route::post('payrolls/{payroll}/process', [App\Http\Controllers\PayrollController::class, 'process'])->name('payrolls.process');
     });
 });
