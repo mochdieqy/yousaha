@@ -105,7 +105,7 @@
                             <label class="form-label fw-bold">Total Amount:</label>
                             <p class="form-control-plaintext">
                                 <span class="h4 text-primary fw-bold">
-                                    ${{ number_format($purchaseOrder->total, 2) }}
+                                    Rp {{ number_format($purchaseOrder->total, 0, ',', '.') }}
                                 </span>
                             </p>
                         </div>
@@ -158,10 +158,10 @@
                                     </td>
                                     <td>{{ $line->product->sku }}</td>
                                     <td>{{ $line->quantity }}</td>
-                                    <td>${{ number_format($line->product->cost ?? $line->product->price, 2) }}</td>
+                                    <td>Rp {{ number_format($line->product->cost ?? $line->product->price, 0, ',', '.') }}</td>
                                     <td>
                                         <span class="fw-bold text-primary">
-                                            ${{ number_format($line->line_total, 2) }}
+                                            Rp {{ number_format($line->line_total, 0, ',', '.') }}
                                         </span>
                                     </td>
                                 </tr>
@@ -172,7 +172,7 @@
                                     <td colspan="4" class="text-end fw-bold">Total:</td>
                                     <td>
                                         <span class="h5 text-primary fw-bold">
-                                            ${{ number_format($purchaseOrder->total, 2) }}
+                                            Rp {{ number_format($purchaseOrder->total, 0, ',', '.') }}
                                         </span>
                                     </td>
                                 </tr>

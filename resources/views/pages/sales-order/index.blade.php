@@ -7,7 +7,7 @@
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
                     <i class="fas fa-file-invoice text-success me-2"></i>
-                    Sales Orders
+                    Sales Orders Management
                 </h5>
                 @can('sales-orders.create')
                 <a href="{{ route('sales-orders.create') }}" class="btn btn-success btn-sm">
@@ -44,7 +44,7 @@
                                 <td>{{ $salesOrder->salesperson }}</td>
                                 <td>
                                     <span class="fw-bold text-success">
-                                        {{ number_format($salesOrder->total, 2) }}
+                                        Rp {{ number_format($salesOrder->total, 0, ',', '.') }}
                                     </span>
                                 </td>
                                 <td>

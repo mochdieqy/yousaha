@@ -117,7 +117,7 @@
                                 <td class="fw-bold">Total Amount:</td>
                                 <td>
                                     <span class="fw-bold text-success fs-5">
-                                        {{ number_format($salesOrder->total, 2) }}
+                                        Rp {{ number_format($salesOrder->total, 0, ',', '.') }}
                                     </span>
                                 </td>
                             </tr>
@@ -162,10 +162,10 @@
                                     </td>
                                     <td>{{ $productLine->product->sku }}</td>
                                     <td>{{ $productLine->quantity }}</td>
-                                    <td>{{ number_format($productLine->product->price, 2) }}</td>
+                                    <td>Rp {{ number_format($productLine->product->price, 0, ',', '.') }}</td>
                                     <td>
                                         <span class="fw-bold text-success">
-                                            {{ number_format($productLine->line_total, 2) }}
+                                            Rp {{ number_format($productLine->line_total, 0, ',', '.') }}
                                         </span>
                                     </td>
                                 </tr>
@@ -176,7 +176,7 @@
                                     <td colspan="4" class="text-end fw-bold">Total:</td>
                                     <td>
                                         <span class="fw-bold text-success fs-5">
-                                            {{ number_format($salesOrder->total, 2) }}
+                                            Rp {{ number_format($salesOrder->total, 0, ',', '.') }}
                                         </span>
                                     </td>
                                 </tr>

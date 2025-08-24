@@ -376,7 +376,18 @@ class SalesOrderController extends Controller
                         'description' => 'Income from sales order ' . $salesOrder->number,
                         'total' => $total,
                         'status' => 'confirmed',
+                        'receipt_account_id' => $accountsReceivableAccount ? $accountsReceivableAccount->id : null,
                     ]);
+
+                    // Create income details - allocate to Sales Revenue account
+                    if ($salesRevenueAccount) {
+                        \App\Models\IncomeDetail::create([
+                            'income_id' => $income->id,
+                            'account_id' => $salesRevenueAccount->id,
+                            'value' => $total,
+                            'description' => 'Sales revenue from ' . $salesOrder->number,
+                        ]);
+                    }
 
                     // Create general ledger entry
                     $generalLedger = GeneralLedger::create([
@@ -405,6 +416,7 @@ class SalesOrderController extends Controller
                             'account_id' => $salesRevenueAccount->id,
                             'type' => 'credit',
                             'value' => $salesOrder->total,
+                            'description' => 'Sales revenue from ' . $salesOrder->number,
                         ]);
 
                         GeneralLedgerDetail::create([
@@ -412,6 +424,7 @@ class SalesOrderController extends Controller
                             'account_id' => $accountsReceivableAccount->id,
                             'type' => 'debit',
                             'value' => $salesOrder->total,
+                            'description' => 'Accounts receivable from ' . $salesOrder->number,
                         ]);
                     }
                 }
@@ -886,6 +899,16 @@ class SalesOrderController extends Controller
                 ]);
             }
         }
+        
+        // Find Sales Revenue account (4000) for credit entry
+        $salesRevenueAccount = Account::where('company_id', $company->id)
+            ->where('code', '4000')
+            ->first();
+        
+        // Find Accounts Receivable account (1100) for debit entry
+        $accountsReceivableAccount = Account::where('company_id', $company->id)
+            ->where('code', '1100')
+            ->first();
 
         // Create income record
         $income = Income::create([
@@ -896,7 +919,18 @@ class SalesOrderController extends Controller
             'description' => 'Income from completed sales order ' . $salesOrder->number,
             'total' => $salesOrder->total,
             'status' => 'confirmed',
+            'receipt_account_id' => $accountsReceivableAccount ? $accountsReceivableAccount->id : null,
         ]);
+
+        // Create income details - allocate to Sales Revenue account
+        if ($salesRevenueAccount) {
+            \App\Models\IncomeDetail::create([
+                'income_id' => $income->id,
+                'account_id' => $salesRevenueAccount->id,
+                'value' => $salesOrder->total,
+                'description' => 'Sales revenue from ' . $salesOrder->number,
+            ]);
+        }
 
         // Create general ledger entry
         $generalLedger = GeneralLedger::create([
@@ -907,25 +941,17 @@ class SalesOrderController extends Controller
             'note' => 'Sales order completion ' . $salesOrder->number,
             'total' => $salesOrder->total,
             'reference' => $salesOrder->number,
+            'status' => 'posted',
         ]);
 
         // Create general ledger details
-        // Find Sales Revenue account (4000) for credit entry
-        $salesRevenueAccount = Account::where('company_id', $company->id)
-            ->where('code', '4000')
-            ->first();
-        
-        // Find Accounts Receivable account (1100) for debit entry
-        $accountsReceivableAccount = Account::where('company_id', $company->id)
-            ->where('code', '1100')
-            ->first();
-        
         if ($salesRevenueAccount && $accountsReceivableAccount) {
             GeneralLedgerDetail::create([
                 'general_ledger_id' => $generalLedger->id,
                 'account_id' => $salesRevenueAccount->id,
                 'type' => 'credit',
                 'value' => $salesOrder->total,
+                'description' => 'Sales revenue from ' . $salesOrder->number,
             ]);
 
             GeneralLedgerDetail::create([
@@ -933,6 +959,7 @@ class SalesOrderController extends Controller
                 'account_id' => $accountsReceivableAccount->id,
                 'type' => 'debit',
                 'value' => $salesOrder->total,
+                'description' => 'Accounts receivable from ' . $salesOrder->number,
             ]);
         }
     }

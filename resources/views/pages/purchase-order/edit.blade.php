@@ -231,7 +231,7 @@
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between">
                                             <h5 class="mb-0">Total Amount:</h5>
-                                            <h4 class="mb-0 text-primary" id="totalAmount">${{ number_format($purchaseOrder->total, 2) }}</h4>
+                                            <h4 class="mb-0 text-primary" id="totalAmount">Rp {{ number_format($purchaseOrder->total, 0, ',', '.') }}</h4>
                                         </div>
                                     </div>
                                 </div>
@@ -358,8 +358,8 @@ $(document).ready(function() {
         const cost = $(this).find(':selected').data('cost') || 0;
         const quantity = row.find('.product-quantity').val() || 0;
         
-        row.find('.product-cost').val('$' + parseFloat(cost).toFixed(2));
-        row.find('.product-total').val('$' + (cost * quantity).toFixed(2));
+        row.find('.product-cost').val(formatCurrency(cost));
+        row.find('.product-total').val(formatCurrency(cost * quantity));
         
         updateTotal();
     });
@@ -369,7 +369,7 @@ $(document).ready(function() {
         const cost = parseFloat(row.find('.product-select option:selected').data('cost') || 0);
         const quantity = parseInt($(this).val()) || 0;
         
-        row.find('.product-total').val('$' + (cost * quantity).toFixed(2));
+        row.find('.product-total').val(formatCurrency(cost * quantity));
         
         updateTotal();
     });
@@ -378,11 +378,11 @@ $(document).ready(function() {
     function updateTotal() {
         let total = 0;
         $('.product-total').each(function() {
-            const value = parseFloat($(this).val().replace('$', '')) || 0;
+            const value = parseCurrency($(this).val()) || 0;
             total += value;
         });
         
-        $('#totalAmount').text('$' + total.toFixed(2));
+        $('#totalAmount').text(formatCurrency(total));
     }
 
     // Initialize existing rows
@@ -392,6 +392,25 @@ $(document).ready(function() {
     $('.product-quantity').each(function() {
         $(this).trigger('input');
     });
+    
+    // Currency formatting function
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount);
+    }
+    
+    function parseCurrency(currencyString) {
+        if (!currencyString) return 0;
+        // Remove Rp prefix and spaces, then replace dots with empty string (thousand separators)
+        const cleanString = currencyString.replace(/Rp\s*/g, '').replace(/\./g, '');
+        // Replace comma with dot for decimal (if any)
+        const finalString = cleanString.replace(',', '.');
+        return parseFloat(finalString) || 0;
+    }
 
     // Form validation
     $('#purchaseOrderForm').submit(function(e) {

@@ -153,7 +153,7 @@
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <h6 class="mb-0">Total:</h6>
-                                        <h5 class="mb-0 text-success" id="totalAmount">{{ number_format($salesOrder->total, 2) }}</h5>
+                                        <h5 class="mb-0 text-success" id="totalAmount">Rp {{ number_format($salesOrder->total, 0, ',', '.') }}</h5>
                                     </div>
                                 </div>
                             </div>
@@ -328,7 +328,7 @@ $(document).ready(function() {
     // Quantity change
     $(document).on('input', '.product-quantity', function() {
         const row = $(this).closest('.product-row');
-        const price = parseFloat(row.find('.product-price').val().replace(/[^\d.-]/g, '')) || 0;
+        const price = parseCurrency(row.find('.product-price').val()) || 0;
         const quantity = parseInt($(this).val()) || 0;
         const lineTotal = price * quantity;
         
@@ -425,7 +425,7 @@ $(document).ready(function() {
     function calculateTotal() {
         let total = 0;
         $('.product-line-total').each(function() {
-            const value = parseFloat($(this).val().replace(/[^\d.-]/g, '')) || 0;
+            const value = parseCurrency($(this).val()) || 0;
             total += value;
         });
         
@@ -433,10 +433,21 @@ $(document).ready(function() {
     }
     
     function formatCurrency(amount) {
-        return new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
         }).format(amount);
+    }
+    
+    function parseCurrency(currencyString) {
+        if (!currencyString) return 0;
+        // Remove Rp prefix and spaces, then replace dots with empty string (thousand separators)
+        const cleanString = currencyString.replace(/Rp\s*/g, '').replace(/\./g, '');
+        // Replace comma with dot for decimal (if any)
+        const finalString = cleanString.replace(',', '.');
+        return parseFloat(finalString) || 0;
     }
     
 

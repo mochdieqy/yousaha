@@ -21,5 +21,14 @@ class AppServiceProvider extends ServiceProvider
     {
         // Use Bootstrap pagination
         \Illuminate\Pagination\Paginator::useBootstrap();
+        
+        // Share CurrencyHelper globally
+        \Illuminate\Support\Facades\Blade::directive('currency', function ($expression) {
+            return "<?php echo App\Helpers\CurrencyHelper::formatRupiah($expression); ?>";
+        });
+        
+        \Illuminate\Support\Facades\Blade::directive('currencyOnly', function ($expression) {
+            return "<?php echo App\Helpers\CurrencyHelper::formatRupiahOnly($expression); ?>";
+        });
     }
 }

@@ -280,7 +280,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (saleable < 0) {
             display.innerHTML = '<span class="text-danger">Invalid: Reserved > Total</span>';
         } else {
-            display.innerHTML = `<span class="fw-bold text-success">${saleable.toFixed(2)}</span>`;
+            display.innerHTML = `<span class="fw-bold text-success">${saleable.toLocaleString('id-ID')}</span>`;
         }
     }
 

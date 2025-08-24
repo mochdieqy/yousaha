@@ -33,23 +33,23 @@ class FinanceAccountSeeder extends Seeder
         
         $basicAccounts = [
             // Asset Accounts
-            ['code' => '1000', 'name' => 'Cash', 'type' => 'Asset', 'balance' => 50000.00],
-            ['code' => '1100', 'name' => 'Accounts Receivable', 'type' => 'Asset', 'balance' => 25000.00],
-            ['code' => '1200', 'name' => 'Inventory', 'type' => 'Asset', 'balance' => 75000.00],
-            ['code' => '1300', 'name' => 'Prepaid Expenses', 'type' => 'Asset', 'balance' => 5000.00],
-            ['code' => '1400', 'name' => 'Fixed Assets', 'type' => 'Asset', 'balance' => 150000.00],
-            ['code' => '1500', 'name' => 'Accumulated Depreciation', 'type' => 'Asset', 'balance' => -25000.00],
+            ['code' => '1000', 'name' => 'Cash', 'type' => 'Asset', 'balance' => 0.00],
+            ['code' => '1100', 'name' => 'Accounts Receivable', 'type' => 'Asset', 'balance' => 0.00],
+            ['code' => '1200', 'name' => 'Inventory', 'type' => 'Asset', 'balance' => 0.00],
+            ['code' => '1300', 'name' => 'Prepaid Expenses', 'type' => 'Asset', 'balance' => 0.00],
+            ['code' => '1400', 'name' => 'Fixed Assets', 'type' => 'Asset', 'balance' => 0.00],
+            ['code' => '1500', 'name' => 'Accumulated Depreciation', 'type' => 'Asset', 'balance' => 0.00],
             
             // Liability Accounts
-            ['code' => '2000', 'name' => 'Accounts Payable', 'type' => 'Liability', 'balance' => 30000.00],
-            ['code' => '2100', 'name' => 'Accrued Expenses', 'type' => 'Liability', 'balance' => 8000.00],
-            ['code' => '2200', 'name' => 'Short-term Loans', 'type' => 'Liability', 'balance' => 50000.00],
-            ['code' => '2300', 'name' => 'Long-term Loans', 'type' => 'Liability', 'balance' => 100000.00],
+            ['code' => '2000', 'name' => 'Accounts Payable', 'type' => 'Liability', 'balance' => 0.00],
+            ['code' => '2100', 'name' => 'Accrued Expenses', 'type' => 'Liability', 'balance' => 0.00],
+            ['code' => '2200', 'name' => 'Short-term Loans', 'type' => 'Liability', 'balance' => 0.00],
+            ['code' => '2300', 'name' => 'Long-term Loans', 'type' => 'Liability', 'balance' => 0.00],
             
             // Equity Accounts
-            ['code' => '3000', 'name' => 'Owner\'s Equity', 'type' => 'Equity', 'balance' => 100000.00],
-            ['code' => '3100', 'name' => 'Retained Earnings', 'type' => 'Equity', 'balance' => 45000.00],
-            ['code' => '3200', 'name' => 'Current Year Earnings', 'type' => 'Equity', 'balance' => 22000.00],
+            ['code' => '3000', 'name' => 'Owner\'s Equity', 'type' => 'Equity', 'balance' => 0.00],
+            ['code' => '3100', 'name' => 'Retained Earnings', 'type' => 'Equity', 'balance' => 0.00],
+            ['code' => '3200', 'name' => 'Current Year Earnings', 'type' => 'Equity', 'balance' => 0.00],
             
             // Revenue Accounts
             ['code' => '4000', 'name' => 'Sales Revenue', 'type' => 'Revenue', 'balance' => 0.00],

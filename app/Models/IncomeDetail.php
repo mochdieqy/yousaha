@@ -18,6 +18,7 @@ class IncomeDetail extends Model
         'income_id',
         'account_id',
         'value',
+        'description',
     ];
 
     /**
@@ -43,5 +44,21 @@ class IncomeDetail extends Model
     public function account()
     {
         return $this->belongsTo(Account::class);
+    }
+
+    /**
+     * Get the amount (alias for value).
+     */
+    public function getAmountAttribute()
+    {
+        return $this->value;
+    }
+
+    /**
+     * Set the amount (alias for value).
+     */
+    public function setAmountAttribute($value)
+    {
+        $this->attributes['value'] = $value;
     }
 }

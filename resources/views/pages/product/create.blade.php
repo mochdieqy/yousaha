@@ -135,7 +135,7 @@
                                         Selling Price <span class="text-danger">*</span>
                                     </label>
                                     <div class="input-group">
-                                        <span class="input-group-text">$</span>
+                                        <span class="input-group-text">Rp</span>
                                         <input type="number" 
                                                class="form-control @error('price') is-invalid @enderror" 
                                                id="price" 
@@ -156,7 +156,7 @@
                                         Taxes
                                     </label>
                                     <div class="input-group">
-                                        <span class="input-group-text">$</span>
+                                        <span class="input-group-text">Rp</span>
                                         <input type="number" 
                                                class="form-control @error('taxes') is-invalid @enderror" 
                                                id="taxes" 
@@ -179,7 +179,7 @@
                                         Cost Price
                                     </label>
                                     <div class="input-group">
-                                        <span class="input-group-text">$</span>
+                                        <span class="input-group-text">Rp</span>
                                         <input type="number" 
                                                class="form-control @error('cost') is-invalid @enderror" 
                                                id="cost" 
@@ -300,7 +300,7 @@ function calculateTotal() {
     const total = price + taxes;
     
     // You can display this somewhere if needed
-    console.log('Total Price (including taxes): $' + total.toFixed(2));
+    console.log('Total Price (including taxes): Rp ' + total.toLocaleString('id-ID'));
 }
 
 // Toggle inventory tracking based on product type

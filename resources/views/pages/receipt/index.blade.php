@@ -6,7 +6,7 @@
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">
             <i class="fas fa-truck text-info me-2"></i>
-            Receipts
+            Receipts Management
         </h1>
         @can('receipts.create')
         <a href="{{ route('receipts.create') }}" class="btn btn-primary btn-sm">

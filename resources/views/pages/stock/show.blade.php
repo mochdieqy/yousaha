@@ -197,7 +197,7 @@
                             </td>
                             <td>
                                 @if($detail->cost)
-                                    <span class="text-success">{{ number_format($detail->cost, 2) }}</span>
+                                    <span class="text-success">Rp {{ number_format($detail->cost, 0, ',', '.') }}</span>
                                 @else
                                     <span class="text-muted">-</span>
                                 @endif
@@ -226,7 +226,7 @@
                             <td>
                                 @if($detail->cost)
                                     <span class="text-success">
-                                        Total: {{ number_format($detail->total_value, 2) }}
+                                        Total: Rp {{ number_format($detail->total_value, 0, ',', '.') }}
                                     </span>
                                 @else
                                     <span class="text-muted">-</span>

@@ -420,6 +420,16 @@ class PurchaseOrderController extends Controller
                 // and stock quantities are properly moved from incoming to saleable
                 $this->updateRelatedReceiptsToDone($purchaseOrder);
 
+                // Find Cost of Goods Sold account (5000) for debit entry
+                $costOfGoodsSoldAccount = Account::where('company_id', $company->id)
+                    ->where('code', '5000')
+                    ->first();
+                
+                // Find Accounts Payable account (2000) for credit entry
+                $accountsPayableAccount = Account::where('company_id', $company->id)
+                    ->where('code', '2000')
+                    ->first();
+                    
                 // Create expense
                 $expense = Expense::create([
                     'company_id' => $company->id,
@@ -430,7 +440,20 @@ class PurchaseOrderController extends Controller
                     'paid' => false, // Default to unpaid
                     'status' => 'pending', // Default status
                     'note' => 'Purchase from ' . $purchaseOrder->supplier->name,
+                    'supplier_id' => $purchaseOrder->supplier_id,
+                    'payment_account_id' => $accountsPayableAccount ? $accountsPayableAccount->id : null,
                 ]);
+
+                // Create expense details - allocate to Cost of Goods Sold account
+                if ($costOfGoodsSoldAccount) {
+                    \App\Models\ExpenseDetail::create([
+                        'expense_id' => $expense->id,
+                        'account_id' => $costOfGoodsSoldAccount->id,
+                        'value' => $purchaseOrder->total,
+                        'description' => 'Cost of goods sold from ' . $purchaseOrder->number,
+                        'status' => 'active',
+                    ]);
+                }
 
                 // Create general ledger entry
                 $generalLedger = GeneralLedger::create([
@@ -441,25 +464,17 @@ class PurchaseOrderController extends Controller
                     'note' => 'Purchase expense from ' . $purchaseOrder->supplier->name,
                     'total' => $purchaseOrder->total,
                     'reference' => 'PO-' . $purchaseOrder->number, // Add reference to purchase order
+                    'status' => 'posted',
                 ]);
 
                 // Create general ledger details
-                // Find Cost of Goods Sold account (5000) for debit entry
-                $costOfGoodsSoldAccount = Account::where('company_id', $company->id)
-                    ->where('code', '5000')
-                    ->first();
-                
-                // Find Accounts Payable account (2000) for credit entry
-                $accountsPayableAccount = Account::where('company_id', $company->id)
-                    ->where('code', '2000')
-                    ->first();
-                
                 if ($costOfGoodsSoldAccount && $accountsPayableAccount) {
                     GeneralLedgerDetail::create([
                         'general_ledger_id' => $generalLedger->id,
                         'account_id' => $costOfGoodsSoldAccount->id,
                         'type' => 'debit',
                         'value' => $purchaseOrder->total,
+                        'description' => 'Cost of goods sold from ' . $purchaseOrder->number,
                     ]);
 
                     GeneralLedgerDetail::create([
@@ -467,6 +482,7 @@ class PurchaseOrderController extends Controller
                         'account_id' => $accountsPayableAccount->id,
                         'type' => 'credit',
                         'value' => $purchaseOrder->total,
+                        'description' => 'Accounts payable from ' . $purchaseOrder->number,
                     ]);
                 }
                 break;

@@ -134,15 +134,15 @@
                                 </td>
                                 <td>
                                     <div>
-                                        <strong class="text-success">${{ number_format($product->price, 2) }}</strong>
+                                        <strong class="text-success">Rp {{ number_format($product->price, 0, ',', '.') }}</strong>
                                         @if($product->taxes > 0)
-                                            <br><small class="text-muted">+${{ number_format($product->taxes, 2) }} tax</small>
+                                            <br><small class="text-muted">+Rp {{ number_format($product->taxes, 0, ',', '.') }} tax</small>
                                         @endif
                                     </div>
                                 </td>
                                 <td>
                                     @if($product->cost)
-                                        <span class="text-muted">${{ number_format($product->cost, 2) }}</span>
+                                        <span class="text-muted">Rp {{ number_format($product->cost, 0, ',', '.') }}</span>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif

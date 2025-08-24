@@ -236,13 +236,154 @@ Route::middleware(['auth'])->group(function () {
         Route::get('sales-orders/{salesOrder}', [App\Http\Controllers\SalesOrderController::class, 'show'])->name('sales-orders.show');
     });
     
-    // Finance Management
+    // Finance Management - General Ledger
     Route::middleware(['permission:general-ledger.view'])->group(function () {
-        Route::get('general-ledger', function () { return 'General Ledger - View Permission Required'; })->name('general-ledger.index');
+        Route::get('general-ledger', [App\Http\Controllers\GeneralLedgerController::class, 'index'])->name('general-ledger.index');
+    });
+    
+    Route::middleware(['permission:general-ledger.create'])->group(function () {
+        Route::get('general-ledger/create', [App\Http\Controllers\GeneralLedgerController::class, 'create'])->name('general-ledger.create');
+        Route::post('general-ledger', [App\Http\Controllers\GeneralLedgerController::class, 'store'])->name('general-ledger.store');
+    });
+    
+    Route::middleware(['permission:general-ledger.edit'])->group(function () {
+        Route::get('general-ledger/{generalLedger}/edit', [App\Http\Controllers\GeneralLedgerController::class, 'edit'])->name('general-ledger.edit');
+        Route::put('general-ledger/{generalLedger}', [App\Http\Controllers\GeneralLedgerController::class, 'update'])->name('general-ledger.update');
+    });
+    
+    Route::middleware(['permission:general-ledger.delete'])->group(function () {
+        Route::delete('general-ledger/{generalLedger}', [App\Http\Controllers\GeneralLedgerController::class, 'destroy'])->name('general-ledger.delete');
+    });
+    
+    Route::middleware(['permission:general-ledger.view'])->group(function () {
+        Route::get('general-ledger/{generalLedger}', [App\Http\Controllers\GeneralLedgerController::class, 'show'])->name('general-ledger.show');
+    });
+    
+    Route::middleware(['permission:general-ledger.view'])->group(function () {
+        Route::get('general-ledger/export', [App\Http\Controllers\GeneralLedgerController::class, 'export'])->name('general-ledger.export');
+    });
+    
+    // Finance Management - Chart of Accounts
+    Route::middleware(['permission:accounts.view'])->group(function () {
+        Route::get('accounts', [App\Http\Controllers\AccountController::class, 'index'])->name('accounts.index');
+    });
+    
+    Route::middleware(['permission:accounts.create'])->group(function () {
+        Route::get('accounts/create', [App\Http\Controllers\AccountController::class, 'create'])->name('accounts.create');
+        Route::post('accounts', [App\Http\Controllers\AccountController::class, 'store'])->name('accounts.store');
+    });
+    
+    Route::middleware(['permission:accounts.edit'])->group(function () {
+        Route::get('accounts/{account}/edit', [App\Http\Controllers\AccountController::class, 'edit'])->name('accounts.edit');
+        Route::put('accounts/{account}', [App\Http\Controllers\AccountController::class, 'update'])->name('accounts.update');
+    });
+    
+    Route::middleware(['permission:accounts.delete'])->group(function () {
+        Route::delete('accounts/{account}', [App\Http\Controllers\AccountController::class, 'destroy'])->name('accounts.delete');
+    });
+    
+    Route::middleware(['permission:accounts.view'])->group(function () {
+        Route::get('accounts/{account}', [App\Http\Controllers\AccountController::class, 'show'])->name('accounts.show');
+    });
+    
+    // Finance Management - Expenses
+    Route::middleware(['permission:expenses.view'])->group(function () {
+        Route::get('expenses', [App\Http\Controllers\ExpenseController::class, 'index'])->name('expenses.index');
+    });
+    
+    Route::middleware(['permission:expenses.create'])->group(function () {
+        Route::get('expenses/create', [App\Http\Controllers\ExpenseController::class, 'create'])->name('expenses.create');
+        Route::post('expenses', [App\Http\Controllers\ExpenseController::class, 'store'])->name('expenses.store');
+    });
+    
+    Route::middleware(['permission:expenses.edit'])->group(function () {
+        Route::get('expenses/{expense}/edit', [App\Http\Controllers\ExpenseController::class, 'edit'])->name('expenses.edit');
+        Route::put('expenses/{expense}', [App\Http\Controllers\ExpenseController::class, 'update'])->name('expenses.update');
+    });
+    
+    Route::middleware(['permission:expenses.delete'])->group(function () {
+        Route::delete('expenses/{expense}', [App\Http\Controllers\ExpenseController::class, 'destroy'])->name('expenses.delete');
     });
     
     Route::middleware(['permission:expenses.view'])->group(function () {
-        Route::get('expenses', function () { return 'Expenses List - View Permission Required'; })->name('expenses.index');
+        Route::get('expenses/{expense}', [App\Http\Controllers\ExpenseController::class, 'show'])->name('expenses.show');
+    });
+    
+    // Finance Management - Incomes
+    Route::middleware(['permission:incomes.view'])->group(function () {
+        Route::get('incomes', [App\Http\Controllers\IncomeController::class, 'index'])->name('incomes.index');
+    });
+    
+    Route::middleware(['permission:incomes.create'])->group(function () {
+        Route::get('incomes/create', [App\Http\Controllers\IncomeController::class, 'create'])->name('incomes.create');
+        Route::post('incomes', [App\Http\Controllers\IncomeController::class, 'store'])->name('incomes.store');
+    });
+    
+    Route::middleware(['permission:incomes.edit'])->group(function () {
+        Route::get('incomes/{income}/edit', [App\Http\Controllers\IncomeController::class, 'edit'])->name('incomes.edit');
+        Route::put('incomes/{income}', [App\Http\Controllers\IncomeController::class, 'update'])->name('incomes.update');
+    });
+    
+    Route::middleware(['permission:incomes.delete'])->group(function () {
+        Route::delete('incomes/{income}', [App\Http\Controllers\IncomeController::class, 'destroy'])->name('incomes.delete');
+    });
+    
+    Route::middleware(['permission:incomes.view'])->group(function () {
+        Route::get('incomes/{income}', [App\Http\Controllers\IncomeController::class, 'show'])->name('incomes.show');
+    });
+    
+    // Finance Management - Internal Transfers
+    Route::middleware(['permission:internal-transfers.view'])->group(function () {
+        Route::get('internal-transfers', [App\Http\Controllers\InternalTransferController::class, 'index'])->name('internal-transfers.index');
+    });
+    
+    Route::middleware(['permission:internal-transfers.create'])->group(function () {
+        Route::get('internal-transfers/create', [App\Http\Controllers\InternalTransferController::class, 'create'])->name('internal-transfers.create');
+        Route::post('internal-transfers', [App\Http\Controllers\InternalTransferController::class, 'store'])->name('internal-transfers.store');
+    });
+    
+    Route::middleware(['permission:internal-transfers.edit'])->group(function () {
+        Route::get('internal-transfers/{internalTransfer}/edit', [App\Http\Controllers\InternalTransferController::class, 'edit'])->name('internal-transfers.edit');
+        Route::put('internal-transfers/{internalTransfer}', [App\Http\Controllers\InternalTransferController::class, 'update'])->name('internal-transfers.update');
+    });
+    
+    Route::middleware(['permission:internal-transfers.delete'])->group(function () {
+        Route::delete('internal-transfers/{internalTransfer}', [App\Http\Controllers\InternalTransferController::class, 'destroy'])->name('internal-transfers.delete');
+    });
+    
+    Route::middleware(['permission:internal-transfers.view'])->group(function () {
+        Route::get('internal-transfers/{internalTransfer}', [App\Http\Controllers\InternalTransferController::class, 'show'])->name('internal-transfers.show');
+    });
+    
+    // Finance Management - Assets
+    Route::middleware(['permission:assets.view'])->group(function () {
+        Route::get('assets', [App\Http\Controllers\AssetController::class, 'index'])->name('assets.index');
+    });
+    
+    Route::middleware(['permission:assets.create'])->group(function () {
+        Route::get('assets/create', [App\Http\Controllers\AssetController::class, 'create'])->name('assets.create');
+        Route::post('assets', [App\Http\Controllers\AssetController::class, 'store'])->name('assets.store');
+    });
+    
+    Route::middleware(['permission:assets.edit'])->group(function () {
+        Route::get('assets/{asset}/edit', [App\Http\Controllers\AssetController::class, 'edit'])->name('assets.edit');
+        Route::put('assets/{asset}', [App\Http\Controllers\AssetController::class, 'update'])->name('assets.update');
+    });
+    
+    Route::middleware(['permission:assets.delete'])->group(function () {
+        Route::delete('assets/{asset}', [App\Http\Controllers\AssetController::class, 'destroy'])->name('assets.delete');
+    });
+    
+    Route::middleware(['permission:assets.view'])->group(function () {
+        Route::get('assets/{asset}', [App\Http\Controllers\AssetController::class, 'show'])->name('assets.show');
+    });
+    
+    // Financial Reports
+    Route::middleware(['permission:general-ledger.view'])->group(function () {
+        Route::get('financial-reports', [App\Http\Controllers\FinancialReportController::class, 'index'])->name('financial-reports.index');
+        Route::get('financial-reports/statement-of-financial-position', [App\Http\Controllers\FinancialReportController::class, 'statementOfFinancialPosition'])->name('financial-reports.statement-of-financial-position');
+        Route::get('financial-reports/profit-and-loss', [App\Http\Controllers\FinancialReportController::class, 'profitAndLoss'])->name('financial-reports.profit-and-loss');
+        Route::get('financial-reports/general-ledger-history', [App\Http\Controllers\FinancialReportController::class, 'generalLedgerHistory'])->name('financial-reports.general-ledger-history');
     });
     
     // HR Management

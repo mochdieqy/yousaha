@@ -122,7 +122,7 @@
                                     <span class="badge bg-info">{{ $warehouse->total_products }}</span>
                                 </td>
                                 <td>
-                                    <span class="badge bg-success">{{ number_format($warehouse->total_quantity) }}</span>
+                                    <span class="badge bg-success">{{ number_format($warehouse->total_quantity, 0, ',', '.') }}</span>
                                 </td>
                                 <td>
                                     <small class="text-muted">

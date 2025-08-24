@@ -24,6 +24,8 @@ class Income extends Model
         'status',
         'note',
         'description',
+        'customer_id',
+        'receipt_account_id',
     ];
 
     /**
@@ -52,6 +54,22 @@ class Income extends Model
     public function details()
     {
         return $this->hasMany(IncomeDetail::class);
+    }
+
+    /**
+     * Get the customer for this income.
+     */
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
+    /**
+     * Get the receipt account for this income.
+     */
+    public function receiptAccount()
+    {
+        return $this->belongsTo(Account::class, 'receipt_account_id');
     }
 
     /**

@@ -16,8 +16,8 @@ class Asset extends Model
      */
     protected $fillable = [
         'company_id',
-        'number',
         'name',
+        'number',
         'purchased_date',
         'account_asset',
         'quantity',
@@ -32,6 +32,7 @@ class Asset extends Model
      */
     protected $casts = [
         'purchased_date' => 'date',
+        'quantity' => 'integer',
     ];
 
     /**
@@ -45,32 +46,10 @@ class Asset extends Model
     /**
      * Get the asset account.
      */
-    public function assetAccount()
+    public function accountAsset()
     {
         return $this->belongsTo(Account::class, 'account_asset');
     }
 
-    /**
-     * Get the age of the asset in years.
-     */
-    public function getAgeInYearsAttribute()
-    {
-        return $this->purchased_date->diffInYears(now());
-    }
 
-    /**
-     * Get the age of the asset in months.
-     */
-    public function getAgeInMonthsAttribute()
-    {
-        return $this->purchased_date->diffInMonths(now());
-    }
-
-    /**
-     * Check if the asset is recently purchased (within 1 year).
-     */
-    public function isRecentlyPurchased()
-    {
-        return $this->purchased_date->isAfter(now()->subYear());
-    }
 }

@@ -120,8 +120,8 @@
                                 <tr>
                                     <td>{{ $productLine->product->name }}</td>
                                     <td>{{ $productLine->quantity }}</td>
-                                    <td>{{ number_format($productLine->product->cost ?? 0, 2) }}</td>
-                                    <td>{{ number_format($productLine->line_total, 2) }}</td>
+                                    <td>Rp {{ number_format($productLine->product->cost ?? 0, 0, ',', '.') }}</td>
+                                    <td>Rp {{ number_format($productLine->line_total, 0, ',', '.') }}</td>
                                 </tr>
                                 @endforeach
                             </tbody>

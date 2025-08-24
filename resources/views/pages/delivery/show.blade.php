@@ -148,8 +148,8 @@
                                     <td>
                                         <span class="badge bg-primary">{{ $productLine->quantity }}</span>
                                     </td>
-                                    <td>{{ number_format($productLine->product->price, 0, ',', '.') }}</td>
-                                    <td>{{ number_format($productLine->line_total, 0, ',', '.') }}</td>
+                                    <td>Rp {{ number_format($productLine->product->price, 0, ',', '.') }}</td>
+                                    <td>Rp {{ number_format($productLine->line_total, 0, ',', '.') }}</td>
                                 </tr>
                                 @endforeach
                             </tbody>

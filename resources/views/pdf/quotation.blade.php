@@ -235,8 +235,8 @@
                 </td>
                 <td class="text-center">{{ $productLine->product->sku }}</td>
                 <td class="text-center">{{ $productLine->quantity }}</td>
-                <td class="text-right">{{ number_format($productLine->product->price, 2) }}</td>
-                <td class="text-right">{{ number_format($productLine->line_total, 2) }}</td>
+                                                <td class="text-right">Rp {{ number_format($productLine->product->price, 0, ',', '.') }}</td>
+                                                <td class="text-right">Rp {{ number_format($productLine->line_total, 0, ',', '.') }}</td>
             </tr>
             @endforeach
         </tbody>
@@ -245,7 +245,7 @@
     <div class="total-section">
         <div class="total-row">
             <span class="total-label">Total Amount:</span>
-            <span class="total-amount">{{ number_format($salesOrder->total, 2) }}</span>
+                                    <span class="total-amount">Rp {{ number_format($salesOrder->total, 0, ',', '.') }}</span>
         </div>
     </div>
 

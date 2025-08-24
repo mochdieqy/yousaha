@@ -28,6 +28,8 @@ class DatabaseSeeder extends Seeder
             CustomerSeeder::class,
             DeliverySeeder::class,
             FinanceAccountSeeder::class,
+            InitialStockSeeder::class,
+            TransactionDataSeeder::class,
         ]);
     }
 }

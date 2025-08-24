@@ -148,7 +148,7 @@
                                         Selling Price <span class="text-danger">*</span>
                                     </label>
                                     <div class="input-group">
-                                        <span class="input-group-text">$</span>
+                                        <span class="input-group-text">Rp</span>
                                         <input type="number" 
                                                class="form-control @error('price') is-invalid @enderror" 
                                                id="price" 
@@ -169,7 +169,7 @@
                                         Taxes
                                     </label>
                                     <div class="input-group">
-                                        <span class="input-group-text">$</span>
+                                        <span class="input-group-text">Rp</span>
                                         <input type="number" 
                                                class="form-control @error('taxes') is-invalid @enderror" 
                                                id="taxes" 
@@ -192,7 +192,7 @@
                                         Cost Price
                                     </label>
                                     <div class="input-group">
-                                        <span class="input-group-text">$</span>
+                                        <span class="input-group-text">Rp</span>
                                         <input type="number" 
                                                class="form-control @error('cost') is-invalid @enderror" 
                                                id="cost" 
@@ -291,13 +291,13 @@
                                     
                                     <div class="mb-2">
                                         <small class="text-muted">Total Price (with taxes):</small>
-                                        <div class="fw-bold text-success">${{ number_format($product->total_price, 2) }}</div>
+                                        <div class="fw-bold text-success">Rp {{ number_format($product->total_price, 0, ',', '.') }}</div>
                                     </div>
                                     
                                     @if($product->cost)
                                     <div class="mb-2">
                                         <small class="text-muted">Profit Margin:</small>
-                                        <div class="fw-bold text-info">${{ number_format($product->profit_margin, 2) }}</div>
+                                        <div class="fw-bold text-info">Rp {{ number_format($product->profit_margin, 0, ',', '.') }}</div>
                                     </div>
                                     @endif
                                     
@@ -333,7 +333,7 @@ function calculateTotal() {
     const total = price + taxes;
     
     // You can display this somewhere if needed
-    console.log('Total Price (including taxes): $' + total.toFixed(2));
+    console.log('Total Price (including taxes): Rp ' + total.toLocaleString('id-ID'));
 }
 
 // Toggle inventory tracking based on product type

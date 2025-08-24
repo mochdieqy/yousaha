@@ -8,7 +8,7 @@
 
 ## 📋 Description
 
-Yousaha is a mini ERP (Enterprise Resource Planning) web application developed as part of the thesis research "Information System Model Design Using Ward Peppard and Rapid Application Development". This application is designed to help small and medium enterprises manage their integrated business operations.
+Yousaha is a mini ERP (Enterprise Resource Planning) web application developed as part of the thesis research "Information System Model Design Using Ward Peppard and Rapid Application Development". This application is designed to help small and medium enterprises manage their integrated business operations in Indonesia, with full support for Indonesian Rupiah (IDR) currency.
 
 ### 🎯 Background
 
@@ -72,6 +72,10 @@ Organizations greatly need the assistance of information systems and information
 - **Blade Templates** - Laravel templating engine
 - **Bootstrap** - CSS framework for responsive design
 - **jQuery** - JavaScript library for DOM manipulation
+
+### Localization
+- **Indonesian Rupiah (IDR)** - Default currency with proper formatting
+- **Indonesian locale** - Number formatting with Indonesian standards (comma as thousand separator, dot as decimal separator)
 
 ### Development Methodology
 - **Ward and Peppard** - Strategic IS/IT planning methodology
@@ -263,9 +267,9 @@ Jakarta, 2025
 
 ## 📞 Contact
 
-- Email: [your-email@example.com]
-- LinkedIn: [Your LinkedIn Profile]
-- GitHub: [Your GitHub Profile]
+- Email: m.dieqy.dzulqaidar@gmail.com
+- LinkedIn: https://www.linkedin.com/in/mochdieqy/
+- GitHub: https://github.com/mochdieqy
 
 ## 🙏 Acknowledgments
 

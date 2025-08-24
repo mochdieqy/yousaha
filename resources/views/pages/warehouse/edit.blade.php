@@ -50,7 +50,7 @@
                     </div>
                     <div class="col-md-3">
                         <strong>Total Quantity:</strong>
-                        <span class="badge bg-success">{{ number_format($warehouse->total_quantity) }}</span>
+                                                        <span class="badge bg-success">{{ number_format($warehouse->total_quantity, 0, ',', '.') }}</span>
                     </div>
                     <div class="col-md-3">
                         <strong>Created:</strong>
@@ -179,7 +179,7 @@
                 <div class="row">
                     <div class="col-md-8">
                         <p class="mb-2">
-                            <strong>This warehouse has {{ $warehouse->total_products }} products with a total quantity of {{ number_format($warehouse->total_quantity) }}.</strong>
+                            <strong>This warehouse has {{ $warehouse->total_products }} products with a total quantity of {{ number_format($warehouse->total_quantity, 0, ',', '.') }}.</strong>
                         </p>
                         <p class="mb-0 text-muted">
                             Changing the warehouse code or name may affect inventory tracking and reporting. 

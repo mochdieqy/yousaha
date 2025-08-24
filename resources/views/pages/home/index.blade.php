@@ -117,7 +117,7 @@
                     <div class="card-body">
                         <div class="d-flex align-items-center">
                             <div class="me-3">
-                                <i class="fas fa-dollar-sign fa-2x"></i>
+                                <i class="fas fa-money-bill-wave fa-2x"></i>
                             </div>
                             <div>
                                 <h4 class="mb-0">Finance</h4>
@@ -179,7 +179,7 @@
                             <div class="col-md-6 mb-2">
                                 <a href="{{ route('receipts.index') }}" class="text-decoration-none">
                                     <div class="d-flex align-items-center">
-                                        <i class="fas fa-receipt text-muted me-2"></i>
+                                        <i class="fas fa-truck text-muted me-2"></i>
                                         <span>Goods Receiving</span>
                                     </div>
                                 </a>
@@ -195,6 +195,94 @@
                                 </a>
                             </div>
                             @endcan
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
+
+            <!-- Finance Management -->
+            @if(app('permissions')->userCanAny(['general-ledger.view', 'accounts.view', 'expenses.view', 'incomes.view', 'internal-transfers.view', 'assets.view']))
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="fas fa-money-bill-wave text-warning me-2"></i>
+                            Finance Management
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @can('general-ledger.view')
+                            <div class="col-md-4 mb-2">
+                                <a href="{{ route('general-ledger.index') }}" class="text-decoration-none">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-book text-muted me-2"></i>
+                                        <span>General Ledger</span>
+                                    </div>
+                                </a>
+                            </div>
+                            @endcan
+                            @can('accounts.view')
+                            <div class="col-md-4 mb-2">
+                                <a href="{{ route('accounts.index') }}" class="text-decoration-none">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-chart-area text-muted me-2"></i>
+                                        <span>Chart of Accounts</span>
+                                    </div>
+                                </a>
+                            </div>
+                            @endcan
+                            @can('expenses.view')
+                            <div class="col-md-4 mb-2">
+                                <a href="{{ route('expenses.index') }}" class="text-decoration-none">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-file-invoice text-muted me-2"></i>
+                                        <span>Expenses</span>
+                                    </div>
+                                </a>
+                            </div>
+                            @endcan
+                            @can('incomes.view')
+                            <div class="col-md-4 mb-2">
+                                <a href="{{ route('incomes.index') }}" class="text-decoration-none">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-money-bill-wave text-muted me-2"></i>
+                                        <span>Incomes</span>
+                                    </div>
+                                </a>
+                            </div>
+                            @endcan
+                            @can('internal-transfers.view')
+                            <div class="col-md-4 mb-2">
+                                <a href="{{ route('internal-transfers.index') }}" class="text-decoration-none">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-exchange-alt text-muted me-2"></i>
+                                        <span>Internal Transfers</span>
+                                    </div>
+                                </a>
+                            </div>
+                            @endcan
+                            @can('assets.view')
+                            <div class="col-md-4 mb-2">
+                                <a href="{{ route('assets.index') }}" class="text-decoration-none">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-building text-muted me-2"></i>
+                                        <span>Asset Management</span>
+                                    </div>
+                                </a>
+                            </div>
+                            @endcan
+                            @if(app('permissions')->userCanAny(['general-ledger.view', 'expenses.view', 'incomes.view']))
+                            <div class="col-md-4 mb-2">
+                                <a href="{{ route('financial-reports.index') }}" class="text-decoration-none">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-chart-pie text-muted me-2"></i>
+                                        <span>Financial Reports</span>
+                                    </div>
+                                </a>
+                            </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -223,16 +311,6 @@
                                 </a>
                             </div>
                             @endcan
-                            @can('deliveries.view')
-                            <div class="col-md-6 mb-2">
-                                <a href="{{ route('deliveries.index') }}" class="text-decoration-none">
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-truck text-muted me-2"></i>
-                                        <span>Delivery Management</span>
-                                    </div>
-                                </a>
-                            </div>
-                            @endcan
                             @can('customers.view')
                             <div class="col-md-6 mb-2">
                                 <a href="{{ route('customers.index') }}" class="text-decoration-none">
@@ -243,14 +321,7 @@
                                 </a>
                             </div>
                             @endcan
-                            @if(app('permissions')->userCanAny(['sales-orders.generate-quotation', 'sales-orders.generate-invoice']))
-                            <div class="col-md-6 mb-2">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-file-pdf text-muted me-2"></i>
-                                    <span>Quotations & Invoices</span>
-                                </div>
-                            </div>
-                            @endif
+
                         </div>
                     </div>
                 </div>
@@ -279,16 +350,6 @@
                                 </a>
                             </div>
                             @endcan
-                            @can('receipts.view')
-                            <div class="col-md-6 mb-2">
-                                <a href="{{ route('receipts.index') }}" class="text-decoration-none">
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-receipt text-muted me-2"></i>
-                                        <span>Goods Receiving</span>
-                                    </div>
-                                </a>
-                            </div>
-                            @endcan
                             @can('suppliers.view')
                             <div class="col-md-6 mb-2">
                                 <a href="{{ route('suppliers.index') }}" class="text-decoration-none">
@@ -299,64 +360,7 @@
                                 </a>
                             </div>
                             @endcan
-                            @can('expenses.view')
-                            <div class="col-md-6 mb-2">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-chart-pie text-muted me-2"></i>
-                                    <span>Expense Tracking</span>
-                                </div>
-                            </div>
-                            @endcan
-                        </div>
-                    </div>
-                </div>
-            </div>
-            @endif
 
-            <!-- Finance Management -->
-            @if(app('permissions')->userCanAny(['general-ledger.view', 'accounts.view', 'expenses.view', 'incomes.view', 'internal-transfers.view', 'assets.view']))
-            <div class="col-lg-6 mb-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-header bg-light">
-                        <h5 class="mb-0">
-                            <i class="fas fa-dollar-sign text-warning me-2"></i>
-                            Finance Management
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            @can('general-ledger.view')
-                            <div class="col-md-6 mb-2">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-book text-muted me-2"></i>
-                                    <span>General Ledger</span>
-                                </div>
-                            </div>
-                            @endcan
-                            @can('accounts.view')
-                            <div class="col-md-6 mb-2">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-chart-area text-muted me-2"></i>
-                                    <span>Chart of Accounts</span>
-                                </div>
-                            </div>
-                            @endcan
-                            @can('internal-transfers.view')
-                            <div class="col-md-6 mb-2">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-exchange-alt text-muted me-2"></i>
-                                    <span>Internal Transfers</span>
-                                </div>
-                            </div>
-                            @endcan
-                            @if(app('permissions')->userCanAny(['general-ledger.view', 'expenses.view', 'incomes.view']))
-                            <div class="col-md-6 mb-2">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-file-invoice-dollar text-muted me-2"></i>
-                                    <span>Financial Reports</span>
-                                </div>
-                            </div>
-                            @endif
                         </div>
                     </div>
                 </div>
@@ -413,100 +417,7 @@
             </div>
             @endif
 
-            <!-- Assets & Reporting -->
-            @if(app('permissions')->userCanAny(['assets.view', 'general-ledger.view', 'expenses.view', 'incomes.view']))
-            <div class="col-lg-6 mb-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-header bg-light">
-                        <h5 class="mb-0">
-                            <i class="fas fa-chart-bar text-dark me-2"></i>
-                            Assets & Reporting
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            @can('assets.view')
-                            <div class="col-md-6 mb-2">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-building text-muted me-2"></i>
-                                    <span>Asset Management</span>
-                                </div>
-                            </div>
-                            @endcan
-                            @if(app('permissions')->userCanAny(['general-ledger.view', 'expenses.view', 'incomes.view']))
-                            <div class="col-md-6 mb-2">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-file-export text-muted me-2"></i>
-                                    <span>Data Export</span>
-                                </div>
-                            </div>
-                            @endif
-                            @if(app('permissions')->userCanAny(['general-ledger.view', 'expenses.view', 'incomes.view']))
-                            <div class="col-md-6 mb-2">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-chart-pie text-muted me-2"></i>
-                                    <span>Analytics</span>
-                                </div>
-                            </div>
-                            @endif
-                            @if(app('permissions')->userCanAny(['general-ledger.view', 'expenses.view', 'incomes.view']))
-                            <div class="col-md-6 mb-2">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-download text-muted me-2"></i>
-                                    <span>Report Generation</span>
-                                </div>
-                            </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
-            @endif
-        </div>
 
-        <!-- System Information -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-light">
-                        <h5 class="mb-0">
-                            <i class="fas fa-info-circle text-primary me-2"></i>
-                            System Information
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-shield-alt text-success me-2"></i>
-                                    <div>
-                                        <strong>Multi-Company Support</strong>
-                                        <br><small class="text-muted">Isolated data per company</small>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-sync-alt text-info me-2"></i>
-                                    <div>
-                                        <strong>Real-time Updates</strong>
-                                        <br><small class="text-muted">Live inventory tracking</small>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-brain text-warning me-2"></i>
-                                    <div>
-                                        <strong>AI Integration</strong>
-                                        <br><small class="text-muted">Smart employee evaluation</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>

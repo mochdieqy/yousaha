@@ -19,6 +19,7 @@ class ExpenseDetail extends Model
         'account_id',
         'value',
         'status',
+        'description',
     ];
 
     /**
@@ -44,5 +45,21 @@ class ExpenseDetail extends Model
     public function account()
     {
         return $this->belongsTo(Account::class);
+    }
+
+    /**
+     * Get the amount (alias for value).
+     */
+    public function getAmountAttribute()
+    {
+        return $this->value;
+    }
+
+    /**
+     * Set the amount (alias for value).
+     */
+    public function setAmountAttribute($value)
+    {
+        $this->attributes['value'] = $value;
     }
 }

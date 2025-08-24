@@ -6,7 +6,7 @@
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">
             <i class="fas fa-shopping-cart text-info me-2"></i>
-            Purchase Orders
+            Purchase Orders Management
         </h1>
         @can('purchase-orders.create')
         <a href="{{ route('purchase-orders.create') }}" class="btn btn-primary btn-sm">
@@ -57,7 +57,7 @@
                             <td>{{ $purchaseOrder->requestor }}</td>
                             <td>
                                 <span class="fw-bold text-primary">
-                                    {{ number_format($purchaseOrder->total, 2) }}
+                                    Rp {{ number_format($purchaseOrder->total, 0, ',', '.') }}
                                 </span>
                             </td>
                             <td>

@@ -20,10 +20,10 @@ class InternalTransfer extends Model
         'date',
         'account_in',
         'account_out',
-        'note',
         'value',
         'fee',
         'fee_charged_to',
+        'note',
     ];
 
     /**
@@ -36,12 +36,6 @@ class InternalTransfer extends Model
         'value' => 'decimal:2',
         'fee' => 'decimal:2',
     ];
-
-    /**
-     * The possible fee charge options.
-     */
-    const FEE_CHARGED_TO_IN = 'in';
-    const FEE_CHARGED_TO_OUT = 'out';
 
     /**
      * Get the company that owns the transfer.
@@ -65,25 +59,5 @@ class InternalTransfer extends Model
     public function accountOut()
     {
         return $this->belongsTo(Account::class, 'account_out');
-    }
-
-    /**
-     * Get the net amount for the receiving account.
-     */
-    public function getNetAmountInAttribute()
-    {
-        return $this->fee_charged_to === self::FEE_CHARGED_TO_IN 
-            ? $this->value - $this->fee 
-            : $this->value;
-    }
-
-    /**
-     * Get the net amount for the sending account.
-     */
-    public function getNetAmountOutAttribute()
-    {
-        return $this->fee_charged_to === self::FEE_CHARGED_TO_OUT 
-            ? $this->value + $this->fee 
-            : $this->value;
     }
 }

@@ -23,6 +23,9 @@ class Expense extends Model
         'paid',
         'status',
         'note',
+        'supplier_id',
+        'payment_account_id',
+        'description',
     ];
 
     /**
@@ -51,6 +54,22 @@ class Expense extends Model
     public function details()
     {
         return $this->hasMany(ExpenseDetail::class);
+    }
+
+    /**
+     * Get the supplier for this expense.
+     */
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class);
+    }
+
+    /**
+     * Get the payment account for this expense.
+     */
+    public function paymentAccount()
+    {
+        return $this->belongsTo(Account::class, 'payment_account_id');
     }
 
     /**
