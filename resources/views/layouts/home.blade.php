@@ -107,6 +107,41 @@
                 margin-left: 0;
             }
         }
+        
+        /* Enhanced Global Alert Styling */
+        .alert {
+            border-left: 4px solid;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+        }
+        
+        .alert-danger {
+            border-left-color: #dc3545;
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+        }
+        
+        .alert-success {
+            border-left-color: #28a745;
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        }
+        
+        .alert-info {
+            border-left-color: #17a2b8;
+            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+        }
+        
+        .alert-warning {
+            border-left-color: #ffc107;
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        }
+        
+        /* Enhanced button hover effects */
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s ease;
+        }
     </style>
 </head>
 <body>
@@ -209,6 +244,50 @@
 
   <main class="main-content" id="main-content">
     <div class="container-fluid pt-4">
+      <!-- Global Error Messages -->
+      @if(session('error'))
+      <div class="row mb-3">
+        <div class="col-12">
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        </div>
+      </div>
+      @endif
+
+      <!-- Global Success Messages -->
+      @if(session('success'))
+      <div class="row mb-3">
+        <div class="col-12">
+          <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        </div>
+      </div>
+      @endif
+
+      <!-- Global Validation Errors -->
+      @if($errors->any())
+      <div class="row mb-3">
+        <div class="col-12">
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Please fix the following errors:</strong>
+            <ul class="mb-0 mt-2">
+              @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+              @endforeach
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        </div>
+      </div>
+      @endif
+
       @yield('content')
     </div>
   </main>
@@ -252,6 +331,30 @@
         sidebar.classList.remove('active');
         mainContent.classList.remove('sidebar-open');
       }
+    });
+
+    // Global Alert Management
+    document.addEventListener('DOMContentLoaded', function() {
+      // Auto-hide alerts after 8 seconds
+      setTimeout(function() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+          alert.style.transition = 'opacity 0.5s ease';
+          alert.style.opacity = '0';
+          setTimeout(() => alert.remove(), 500);
+        });
+      }, 8000);
+      
+      // Add smooth scrolling to error messages
+      const alerts = document.querySelectorAll('.alert');
+      alerts.forEach(alert => {
+        alert.addEventListener('click', function() {
+          window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+          });
+        });
+      });
     });
   </script>
 

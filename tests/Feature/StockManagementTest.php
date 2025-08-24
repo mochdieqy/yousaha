@@ -22,15 +22,24 @@ class StockManagementTest extends TestCase
     {
         parent::setUp();
         
-        // Create permissions
-        Permission::create(['name' => 'stocks.view']);
-        Permission::create(['name' => 'stocks.create']);
-        Permission::create(['name' => 'stocks.edit']);
-        Permission::create(['name' => 'stocks.delete']);
+        // Create role with stock permissions
+        $this->role = $this->createTestRole('stock-manager', [
+            'stocks.view',
+            'stocks.create',
+            'stocks.edit',
+            'stocks.delete'
+        ]);
         
-        // Create Company Owner role
-        $companyOwnerRole = Role::create(['name' => 'Company Owner']);
-        $companyOwnerRole->givePermissionTo(Permission::all());
+        // Create user and company
+        $this->user = User::factory()->create();
+        $this->company = Company::factory()->create();
+        
+        // Assign role to user
+        $this->user->assignRole($this->role);
+        
+        // Set current company for user by making user own the company
+        $this->company->owner = $this->user->id;
+        $this->company->save();
     }
 
     /** @test */

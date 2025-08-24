@@ -26,14 +26,31 @@ class SalesOrderStatusChangeTest extends TestCase
     protected $warehouse;
     protected $stock;
     protected $salesOrder;
+    protected $role;
 
     protected function setUp(): void
     {
         parent::setUp();
         
+        // Create role with sales order permissions
+        $this->role = $this->createTestRole('sales-manager', [
+            'sales-orders.view',
+            'sales-orders.create',
+            'sales-orders.edit',
+            'sales-orders.delete',
+            'sales-orders.generate-quotation',
+            'sales-orders.generate-invoice'
+        ]);
+        
         // Create test data
         $this->user = User::factory()->create();
         $this->company = Company::factory()->create(['owner' => $this->user->id]);
+        
+        // Assign role to user
+        $this->user->assignRole($this->role);
+        
+        // Set current company in session
+        session(['current_company_id' => $this->company->id]);
         
         // Create department
         $department = \App\Models\Department::create([
@@ -57,7 +74,11 @@ class SalesOrderStatusChangeTest extends TestCase
         ]);
         
         $this->customer = Customer::factory()->create(['company_id' => $this->company->id]);
-        $this->product = Product::factory()->create(['company_id' => $this->company->id]);
+        $this->product = Product::factory()->create([
+            'company_id' => $this->company->id,
+            'type' => 'goods',
+            'is_track_inventory' => true
+        ]);
         $this->warehouse = Warehouse::factory()->create(['company_id' => $this->company->id]);
         
         // Create stock with sufficient quantity
@@ -114,16 +135,14 @@ class SalesOrderStatusChangeTest extends TestCase
     {
         $this->actingAs($this->user);
         
-        // Test the controller method directly to bypass permission middleware
-        $controller = new \App\Http\Controllers\SalesOrderController();
-        $request = new \Illuminate\Http\Request();
-        $request->merge(['status' => 'accepted']);
+        // Test the status change through the route
+        $response = $this->post(route('sales-orders.update-status', $this->salesOrder), [
+            'status' => 'accepted'
+        ]);
         
-        // Mock the currentCompany method
-        $this->user->shouldReceive('getCurrentCompanyAttribute')
-            ->andReturn($this->company);
-        
-        $response = $controller->updateStatus($request, $this->salesOrder);
+        // Check response
+        $response->assertRedirect(route('sales-orders.index'));
+        $response->assertSessionHas('success');
         
         // Check sales order status
         $this->salesOrder->refresh();

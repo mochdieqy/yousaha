@@ -269,9 +269,50 @@ class SalesOrderController extends Controller
 
             // Handle status changes that require additional actions
             if (in_array($request->status, ['accepted', 'sent', 'done', 'cancel'])) {
+                // Check stock availability if status is accepted
+                if ($request->status === 'accepted') {
+                    $stockCheck = $this->checkStockAvailability($salesOrder, $company);
+                    
+                    if (!$stockCheck['available']) {
+                        // Change status to 'waiting' due to insufficient stock
+                        $salesOrder->update(['status' => 'waiting']);
+                        
+                        // Create status log for waiting status
+                        SalesOrderStatusLog::create([
+                            'sales_order_id' => $salesOrder->id,
+                            'status' => 'waiting',
+                            'changed_at' => now(),
+                        ]);
+
+                        DB::rollback();
+                        return redirect()->back()
+                            ->with('error', 'Cannot change sales order status to accepted. Insufficient stock available for products: ' . implode(', ', $stockCheck['insufficient_products']) . '. Status has been automatically changed to waiting.')
+                            ->withInput();
+                    }
+                }
+                
+                // Handle accepted status: create delivery and reserve stock
+                if ($request->status === 'accepted') {
+                    $this->processAcceptedSalesOrder($salesOrder, $company, $stockCheck['stock_data']);
+                }
+                
                 // Update stock if status is done
                 if ($request->status === 'done') {
+                    // Filter products that track inventory
+                    $inventoryProducts = [];
+                    $nonInventoryProducts = [];
+                    
                     foreach ($request->products as $product) {
+                        $productModel = Product::find($product['product_id']);
+                        if ($productModel && $productModel->shouldTrackInventory()) {
+                            $inventoryProducts[] = $product;
+                        } else {
+                            $nonInventoryProducts[] = $product;
+                        }
+                    }
+
+                    // Update stock only for inventory-tracking products
+                    foreach ($inventoryProducts as $product) {
                         $stock = Stock::where('company_id', $company->id)
                             ->where('warehouse_id', $request->warehouse_id)
                             ->where('product_id', $product['product_id'])
@@ -279,7 +320,9 @@ class SalesOrderController extends Controller
 
                         if ($stock) {
                             $stock->update([
-                                'quantity' => $stock->quantity - $product['quantity']
+                                'quantity_total' => $stock->quantity_total - $product['quantity'],
+                                'quantity_reserve' => max(0, $stock->quantity_reserve - $product['quantity']),
+                                'quantity_saleable' => max(0, $stock->quantity_saleable - $product['quantity'])
                             ]);
 
                             // Create stock history
@@ -296,32 +339,34 @@ class SalesOrderController extends Controller
                         }
                     }
 
-                    // Create delivery record
-                    $delivery = Delivery::create([
-                        'company_id' => $company->id,
-                        'warehouse_id' => $request->warehouse_id,
-                        'number' => 'DO-' . $company->id . '-' . str_pad($salesOrder->id, 6, '0', STR_PAD_LEFT),
-                        'customer_id' => $request->customer_id,
-                        'sales_order_id' => $salesOrder->id,
-                        'status' => 'done',
-                        'notes' => 'Auto-generated from sales order',
-                    ]);
+                    // Create delivery record only if there are inventory-tracking products
+                    if (!empty($inventoryProducts)) {
+                        $delivery = Delivery::create([
+                            'company_id' => $company->id,
+                            'warehouse_id' => $request->warehouse_id,
+                            'number' => 'DO-' . $company->id . '-' . str_pad($salesOrder->id, 6, '0', STR_PAD_LEFT),
+                            'customer_id' => $request->customer_id,
+                            'sales_order_id' => $salesOrder->id,
+                            'status' => 'done',
+                            'notes' => 'Auto-generated from sales order',
+                        ]);
 
-                    // Create delivery product lines
-                    foreach ($request->products as $product) {
-                        DeliveryProductLine::create([
+                        // Create delivery product lines only for inventory-tracking products
+                        foreach ($inventoryProducts as $product) {
+                            DeliveryProductLine::create([
+                                'delivery_id' => $delivery->id,
+                                'product_id' => $product['product_id'],
+                                'quantity' => $product['quantity'],
+                            ]);
+                        }
+
+                        // Create delivery status log
+                        DeliveryStatusLog::create([
                             'delivery_id' => $delivery->id,
-                            'product_id' => $product['product_id'],
-                            'quantity' => $product['quantity'],
+                            'status' => 'done',
+                            'changed_at' => now(),
                         ]);
                     }
-
-                    // Create delivery status log
-                    DeliveryStatusLog::create([
-                        'delivery_id' => $delivery->id,
-                        'status' => 'done',
-                        'changed_at' => now(),
-                    ]);
 
                     // Create income record
                     $income = Income::create([
@@ -343,20 +388,32 @@ class SalesOrderController extends Controller
                         'status' => 'posted',
                     ]);
 
-                            // Create general ledger details
-        GeneralLedgerDetail::create([
-            'general_ledger_id' => $generalLedger->id,
-            'account_id' => Account::where('company_id', $company->id)->where('type', 'income')->first()->id,
-            'type' => 'credit',
-            'value' => $salesOrder->total,
-        ]);
+                    // Create general ledger details
+                    // Find Sales Revenue account (4000) for credit entry
+                    $salesRevenueAccount = Account::where('company_id', $company->id)
+                        ->where('code', '4000')
+                        ->first();
+                    
+                    // Find Accounts Receivable account (1100) for debit entry
+                    $accountsReceivableAccount = Account::where('company_id', $company->id)
+                        ->where('code', '1100')
+                        ->first();
+                    
+                    if ($salesRevenueAccount && $accountsReceivableAccount) {
+                        GeneralLedgerDetail::create([
+                            'general_ledger_id' => $generalLedger->id,
+                            'account_id' => $salesRevenueAccount->id,
+                            'type' => 'credit',
+                            'value' => $salesOrder->total,
+                        ]);
 
-        GeneralLedgerDetail::create([
-            'general_ledger_id' => $generalLedger->id,
-            'account_id' => Account::where('company_id', $company->id)->where('type', 'asset')->first()->id,
-            'type' => 'debit',
-            'value' => $salesOrder->total,
-        ]);
+                        GeneralLedgerDetail::create([
+                            'general_ledger_id' => $generalLedger->id,
+                            'account_id' => $accountsReceivableAccount->id,
+                            'type' => 'debit',
+                            'value' => $salesOrder->total,
+                        ]);
+                    }
                 }
             }
 
@@ -369,8 +426,13 @@ class SalesOrderController extends Controller
 
             DB::commit();
 
+            $message = 'Sales order updated successfully.';
+            if ($request->status === 'accepted') {
+                $message .= ' Delivery has been created automatically.';
+            }
+
             return redirect()->route('sales-orders.index')
-                ->with('success', 'Sales order updated successfully.');
+                ->with('success', $message);
 
         } catch (\Exception $e) {
             DB::rollback();
@@ -525,6 +587,9 @@ class SalesOrderController extends Controller
                 $result = $this->handleAcceptedStatus($salesOrder, $company);
                 
                 if (!$result['success']) {
+                    // If stock is insufficient, the status has already been changed to 'waiting'
+                    // and the status log has been created, so we can commit and return
+                    DB::commit();
                     return redirect()->back()
                         ->with('error', $result['message'])
                         ->withInput();
@@ -536,20 +601,22 @@ class SalesOrderController extends Controller
                 $this->handleDoneStatus($salesOrder, $company);
             }
 
-            // Update sales order status
-            $salesOrder->update(['status' => $newStatus]);
+            // Update sales order status only if it wasn't already changed by handleAcceptedStatus
+            if ($salesOrder->status !== 'waiting') {
+                $salesOrder->update(['status' => $newStatus]);
 
-            // Create status log
-            SalesOrderStatusLog::create([
-                'sales_order_id' => $salesOrder->id,
-                'status' => $newStatus,
-                'changed_at' => now(),
-            ]);
+                // Create status log
+                SalesOrderStatusLog::create([
+                    'sales_order_id' => $salesOrder->id,
+                    'status' => $newStatus,
+                    'changed_at' => now(),
+                ]);
+            }
 
             DB::commit();
 
             $message = 'Sales order status updated successfully.';
-            if ($newStatus === 'accepted') {
+            if ($newStatus === 'accepted' && $salesOrder->status !== 'waiting') {
                 $message .= ' Delivery has been created automatically.';
             }
 
@@ -585,7 +652,7 @@ class SalesOrderController extends Controller
 
             return [
                 'success' => false,
-                'message' => 'Sales order status changed to waiting due to insufficient stock. Products: ' . implode(', ', $stockCheck['insufficient_products'])
+                'message' => 'Cannot change sales order status to accepted. Insufficient stock available for products: ' . implode(', ', $stockCheck['insufficient_products']) . '. Status has been automatically changed to waiting.'
             ];
         }
 
@@ -597,6 +664,7 @@ class SalesOrderController extends Controller
 
     /**
      * Check stock availability for sales order products.
+     * Only checks stock for products that track inventory.
      */
     private function checkStockAvailability(SalesOrder $salesOrder, $company)
     {
@@ -605,20 +673,24 @@ class SalesOrderController extends Controller
         $stock_data = [];
 
         foreach ($salesOrder->productLines as $productLine) {
-            $stock = Stock::where('company_id', $company->id)
-                ->where('warehouse_id', $salesOrder->warehouse_id)
-                ->where('product_id', $productLine->product_id)
-                ->first();
+            // Only check stock for products that track inventory
+            if ($productLine->product && $productLine->product->shouldTrackInventory()) {
+                $stock = Stock::where('company_id', $company->id)
+                    ->where('warehouse_id', $salesOrder->warehouse_id)
+                    ->where('product_id', $productLine->product_id)
+                    ->first();
 
-            if (!$stock || $stock->quantity_saleable < $productLine->quantity) {
-                $available = false;
-                $insufficient_products[] = $productLine->product->name;
-            } else {
-                $stock_data[$productLine->product_id] = [
-                    'stock' => $stock,
-                    'required_quantity' => $productLine->quantity
-                ];
+                if (!$stock || $stock->quantity_saleable < $productLine->quantity) {
+                    $available = false;
+                    $insufficient_products[] = $productLine->product->name;
+                } else {
+                    $stock_data[$productLine->product_id] = [
+                        'stock' => $stock,
+                        'required_quantity' => $productLine->quantity
+                    ];
+                }
             }
+            // For non-inventory tracking products, skip stock check
         }
 
         return [
@@ -633,65 +705,84 @@ class SalesOrderController extends Controller
      */
     private function processAcceptedSalesOrder(SalesOrder $salesOrder, $company, $stockData)
     {
-        // Create delivery
-        $delivery = Delivery::create([
-            'company_id' => $company->id,
-            'warehouse_id' => $salesOrder->warehouse_id,
-            'delivery_address' => $salesOrder->customer->address ?? 'Customer address',
-            'scheduled_at' => now()->addDays(1), // Schedule for tomorrow
-            'reference' => $salesOrder->number,
-            'status' => 'ready',
-            'sales_order_id' => $salesOrder->id,
-            'customer_id' => $salesOrder->customer_id,
-            'number' => 'DO-' . $company->id . '-' . str_pad($salesOrder->id, 6, '0', STR_PAD_LEFT),
-            'notes' => 'Auto-generated from accepted sales order ' . $salesOrder->number,
-        ]);
-
-        // Create delivery product lines
+        // Filter products that track inventory
+        $inventoryProductLines = [];
+        $nonInventoryProductLines = [];
+        
         foreach ($salesOrder->productLines as $productLine) {
-            DeliveryProductLine::create([
+            if ($productLine->product && $productLine->product->shouldTrackInventory()) {
+                $inventoryProductLines[] = $productLine;
+            } else {
+                $nonInventoryProductLines[] = $productLine;
+            }
+        }
+
+        // Create delivery only if there are inventory-tracking products
+        if (!empty($inventoryProductLines)) {
+            $delivery = Delivery::create([
+                'company_id' => $company->id,
+                'warehouse_id' => $salesOrder->warehouse_id,
+                'delivery_address' => $salesOrder->customer->address ?? 'Customer address',
+                'scheduled_at' => now()->addDays(1), // Schedule for tomorrow
+                'reference' => $salesOrder->number,
+                'status' => 'ready',
+                'sales_order_id' => $salesOrder->id,
+                'customer_id' => $salesOrder->customer_id,
+                'number' => 'DO-' . $company->id . '-' . str_pad($salesOrder->id, 6, '0', STR_PAD_LEFT),
+                'notes' => 'Auto-generated from accepted sales order ' . $salesOrder->number,
+            ]);
+
+            // Create delivery product lines only for inventory-tracking products
+            foreach ($inventoryProductLines as $productLine) {
+                DeliveryProductLine::create([
+                    'delivery_id' => $delivery->id,
+                    'product_id' => $productLine->product_id,
+                    'quantity' => $productLine->quantity,
+                ]);
+            }
+
+            // Create delivery status log
+            DeliveryStatusLog::create([
                 'delivery_id' => $delivery->id,
-                'product_id' => $productLine->product_id,
-                'quantity' => $productLine->quantity,
+                'status' => 'ready',
+                'changed_at' => now(),
             ]);
         }
 
-        // Create delivery status log
-        DeliveryStatusLog::create([
-            'delivery_id' => $delivery->id,
-            'status' => 'ready',
-            'changed_at' => now(),
-        ]);
-
         // Update stock: increase reserved quantity and decrease saleable quantity
+        // Only for inventory-tracking products
         foreach ($stockData as $productId => $data) {
             $stock = $data['stock'];
             $requiredQuantity = $data['required_quantity'];
 
-            $stock->update([
-                'quantity_reserve' => $stock->quantity_reserve + $requiredQuantity,
-                'quantity_saleable' => $stock->quantity_saleable - $requiredQuantity,
-            ]);
+            // Check if this product tracks inventory
+            $product = Product::find($productId);
+            if ($product && $product->shouldTrackInventory()) {
+                $stock->update([
+                    'quantity_reserve' => $stock->quantity_reserve + $requiredQuantity,
+                    'quantity_saleable' => $stock->quantity_saleable - $requiredQuantity,
+                ]);
 
-            // Create stock history for reservation
-            StockHistory::create([
-                'stock_id' => $stock->id,
-                'company_id' => $company->id,
-                'warehouse_id' => $salesOrder->warehouse_id,
-                'product_id' => $productId,
-                'quantity_total_before' => $stock->quantity_total,
-                'quantity_total_after' => $stock->quantity_total,
-                'quantity_reserve_before' => $stock->quantity_reserve,
-                'quantity_reserve_after' => $stock->quantity_reserve + $requiredQuantity,
-                'quantity_saleable_before' => $stock->quantity_saleable,
-                'quantity_saleable_after' => $stock->quantity_saleable - $requiredQuantity,
-                'quantity_incoming_before' => $stock->quantity_incoming,
-                'quantity_incoming_after' => $stock->quantity_incoming,
-                'type' => 'reserve',
-                'reference' => 'sales_order',
-                'date' => now()->toDateString(),
-                'notes' => 'Stock reserved for sales order ' . $salesOrder->number,
-            ]);
+                // Create stock history for reservation
+                StockHistory::create([
+                    'stock_id' => $stock->id,
+                    'company_id' => $company->id,
+                    'warehouse_id' => $salesOrder->warehouse_id,
+                    'product_id' => $productId,
+                    'quantity_total_before' => $stock->quantity_total,
+                    'quantity_total_after' => $stock->quantity_total,
+                    'quantity_reserve_before' => $stock->quantity_reserve,
+                    'quantity_reserve_after' => $stock->quantity_reserve + $requiredQuantity,
+                    'quantity_saleable_before' => $stock->quantity_saleable,
+                    'quantity_saleable_after' => $stock->quantity_saleable - $requiredQuantity,
+                    'quantity_incoming_before' => $stock->quantity_incoming,
+                    'quantity_incoming_after' => $stock->quantity_incoming,
+                    'type' => 'reserve',
+                    'reference' => 'sales_order',
+                    'date' => now()->toDateString(),
+                    'notes' => 'Stock reserved for sales order ' . $salesOrder->number,
+                ]);
+            }
         }
     }
 
@@ -700,11 +791,23 @@ class SalesOrderController extends Controller
      */
     private function handleDoneStatus(SalesOrder $salesOrder, $company)
     {
+        // Filter products that track inventory
+        $inventoryProductLines = [];
+        $nonInventoryProductLines = [];
+        
+        foreach ($salesOrder->productLines as $productLine) {
+            if ($productLine->product && $productLine->product->shouldTrackInventory()) {
+                $inventoryProductLines[] = $productLine;
+            } else {
+                $nonInventoryProductLines[] = $productLine;
+            }
+        }
+
         // Check if delivery already exists
         $existingDelivery = Delivery::where('sales_order_id', $salesOrder->id)->first();
         
-        if (!$existingDelivery) {
-            // Create delivery if it doesn't exist
+        if (!$existingDelivery && !empty($inventoryProductLines)) {
+            // Create delivery if it doesn't exist and there are inventory-tracking products
             $delivery = Delivery::create([
                 'company_id' => $company->id,
                 'warehouse_id' => $salesOrder->warehouse_id,
@@ -718,8 +821,8 @@ class SalesOrderController extends Controller
                 'notes' => 'Auto-generated from completed sales order ' . $salesOrder->number,
             ]);
 
-            // Create delivery product lines
-            foreach ($salesOrder->productLines as $productLine) {
+            // Create delivery product lines only for inventory-tracking products
+            foreach ($inventoryProductLines as $productLine) {
                 DeliveryProductLine::create([
                     'delivery_id' => $delivery->id,
                     'product_id' => $productLine->product_id,
@@ -733,7 +836,7 @@ class SalesOrderController extends Controller
                 'status' => 'done',
                 'changed_at' => now(),
             ]);
-        } else {
+        } else if ($existingDelivery) {
             // Update existing delivery status to done
             $existingDelivery->update(['status' => 'done']);
             
@@ -749,7 +852,8 @@ class SalesOrderController extends Controller
         }
 
         // Update stock: decrease reserved quantity and total quantity
-        foreach ($salesOrder->productLines as $productLine) {
+        // Only for inventory-tracking products
+        foreach ($inventoryProductLines as $productLine) {
             $stock = Stock::where('company_id', $company->id)
                 ->where('warehouse_id', $salesOrder->warehouse_id)
                 ->where('product_id', $productLine->product_id)
@@ -806,18 +910,30 @@ class SalesOrderController extends Controller
         ]);
 
         // Create general ledger details
-        GeneralLedgerDetail::create([
-            'general_ledger_id' => $generalLedger->id,
-            'account_id' => Account::where('company_id', $company->id)->where('type', 'income')->first()->id,
-            'type' => 'credit',
-            'value' => $salesOrder->total,
-        ]);
+        // Find Sales Revenue account (4000) for credit entry
+        $salesRevenueAccount = Account::where('company_id', $company->id)
+            ->where('code', '4000')
+            ->first();
+        
+        // Find Accounts Receivable account (1100) for debit entry
+        $accountsReceivableAccount = Account::where('company_id', $company->id)
+            ->where('code', '1100')
+            ->first();
+        
+        if ($salesRevenueAccount && $accountsReceivableAccount) {
+            GeneralLedgerDetail::create([
+                'general_ledger_id' => $generalLedger->id,
+                'account_id' => $salesRevenueAccount->id,
+                'type' => 'credit',
+                'value' => $salesOrder->total,
+            ]);
 
-        GeneralLedgerDetail::create([
-            'general_ledger_id' => $generalLedger->id,
-            'account_id' => Account::where('company_id', $company->id)->where('type', 'asset')->first()->id,
-            'type' => 'debit',
-            'value' => $salesOrder->total,
-        ]);
+            GeneralLedgerDetail::create([
+                'general_ledger_id' => $generalLedger->id,
+                'account_id' => $accountsReceivableAccount->id,
+                'type' => 'debit',
+                'value' => $salesOrder->total,
+            ]);
+        }
     }
 }

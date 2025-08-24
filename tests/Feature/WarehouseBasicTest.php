@@ -22,15 +22,8 @@ class WarehouseBasicTest extends TestCase
     {
         parent::setUp();
         
-        // Create permissions
-        Permission::create(['name' => 'warehouses.view']);
-        Permission::create(['name' => 'warehouses.create']);
-        Permission::create(['name' => 'warehouses.edit']);
-        Permission::create(['name' => 'warehouses.delete']);
-        
-        // Create role and assign permissions
-        $this->role = Role::create(['name' => 'warehouse-manager']);
-        $this->role->givePermissionTo([
+        // Create role with warehouse permissions
+        $this->role = $this->createTestRole('warehouse-manager', [
             'warehouses.view',
             'warehouses.create',
             'warehouses.edit',

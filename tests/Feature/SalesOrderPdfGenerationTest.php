@@ -28,20 +28,8 @@ class SalesOrderPdfGenerationTest extends TestCase
     {
         parent::setUp();
         
-        // Run permission seeder
-        $this->seed(\Database\Seeders\RolePermissionSeeder::class);
-        
-        // Create test data
-        $this->user = User::factory()->create();
-        $this->company = Company::factory()->create([
-            'owner' => $this->user->id
-        ]);
-        
-        // Set current company in session
-        session(['current_company_id' => $this->company->id]);
-        
-        // Assign sales order permissions to user
-        $this->user->givePermissionTo([
+        // Create role with sales order permissions
+        $this->role = $this->createTestRole('sales-manager', [
             'sales-orders.view',
             'sales-orders.create',
             'sales-orders.edit',
@@ -49,6 +37,18 @@ class SalesOrderPdfGenerationTest extends TestCase
             'sales-orders.generate-quotation',
             'sales-orders.generate-invoice'
         ]);
+        
+        // Create test data
+        $this->user = User::factory()->create();
+        $this->company = Company::factory()->create([
+            'owner' => $this->user->id
+        ]);
+        
+        // Assign role to user
+        $this->user->assignRole($this->role);
+        
+        // Set current company in session
+        session(['current_company_id' => $this->company->id]);
         
         $this->customer = Customer::factory()->create([
             'company_id' => $this->company->id
@@ -61,6 +61,26 @@ class SalesOrderPdfGenerationTest extends TestCase
         
         $this->warehouse = Warehouse::factory()->create([
             'company_id' => $this->company->id
+        ]);
+
+        // Create department and employee record so currentCompany works
+        $department = \App\Models\Department::create([
+            'company_id' => $this->company->id,
+            'name' => 'Test Department',
+            'description' => 'Test department for testing',
+        ]);
+        
+        \App\Models\Employee::create([
+            'company_id' => $this->company->id,
+            'user_id' => $this->user->id,
+            'department_id' => $department->id,
+            'number' => 'EMP001',
+            'position' => 'Test Position',
+            'level' => 'Staff',
+            'join_date' => now(),
+            'manager' => $this->user->id,
+            'work_location' => 'Office',
+            'work_arrangement' => 'WFO',
         ]);
 
         // Create a sales order

@@ -444,27 +444,27 @@ class PurchaseOrderController extends Controller
                 ]);
 
                 // Create general ledger details
-                // Find expense account (cost of goods sold or similar)
-                $expenseAccount = Account::where('company_id', $company->id)
-                    ->where('type', 'expense')
+                // Find Cost of Goods Sold account (5000) for debit entry
+                $costOfGoodsSoldAccount = Account::where('company_id', $company->id)
+                    ->where('code', '5000')
                     ->first();
                 
-                // Find liability account (accounts payable or similar)
-                $payableAccount = Account::where('company_id', $company->id)
-                    ->where('type', 'liability')
+                // Find Accounts Payable account (2000) for credit entry
+                $accountsPayableAccount = Account::where('company_id', $company->id)
+                    ->where('code', '2000')
                     ->first();
                 
-                if ($expenseAccount && $payableAccount) {
+                if ($costOfGoodsSoldAccount && $accountsPayableAccount) {
                     GeneralLedgerDetail::create([
                         'general_ledger_id' => $generalLedger->id,
-                        'account_id' => $expenseAccount->id,
+                        'account_id' => $costOfGoodsSoldAccount->id,
                         'type' => 'debit',
                         'value' => $purchaseOrder->total,
                     ]);
 
                     GeneralLedgerDetail::create([
                         'general_ledger_id' => $generalLedger->id,
-                        'account_id' => $payableAccount->id,
+                        'account_id' => $accountsPayableAccount->id,
                         'type' => 'credit',
                         'value' => $purchaseOrder->total,
                     ]);

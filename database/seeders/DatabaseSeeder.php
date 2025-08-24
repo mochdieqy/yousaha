@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             SupplierSeeder::class,
             CustomerSeeder::class,
             DeliverySeeder::class,
+            FinanceAccountSeeder::class,
         ]);
     }
 }

@@ -27,22 +27,35 @@ class DeliveryManagementTest extends TestCase
     {
         parent::setUp();
         
+        // Create role with delivery permissions
+        $this->role = $this->createTestRole('delivery-manager', [
+            'deliveries.view',
+            'deliveries.create',
+            'deliveries.edit',
+            'deliveries.delete'
+        ]);
+        
         // Create a user with delivery permissions
         $this->user = User::factory()->create();
-        $this->company = Company::factory()->create();
+        $this->company = Company::factory()->create(['owner' => $this->user->id]);
         $this->warehouse = Warehouse::factory()->create(['company_id' => $this->company->id]);
         $this->product = Product::factory()->create(['company_id' => $this->company->id]);
         
-        // Associate user with company
-        $this->user->companies()->attach($this->company->id);
-        $this->user->update(['current_company_id' => $this->company->id]);
+        // Assign role to user
+        $this->user->assignRole($this->role);
+        
+        // Set current company in session
+        session(['current_company_id' => $this->company->id]);
         
         // Create stock for the product
         Stock::factory()->create([
             'company_id' => $this->company->id,
             'warehouse_id' => $this->warehouse->id,
             'product_id' => $this->product->id,
-            'quantity' => 100
+            'quantity_total' => 100,
+            'quantity_reserve' => 0,
+            'quantity_saleable' => 100,
+            'quantity_incoming' => 0
         ]);
     }
 
@@ -86,7 +99,7 @@ class DeliveryManagementTest extends TestCase
         $this->assertDatabaseHas('deliveries', [
             'company_id' => $this->company->id,
             'warehouse_id' => $this->warehouse->id,
-            'status' => 'draft'
+            'status' => 'ready' // Status is automatically updated to 'ready' if stock is available
         ]);
         
         $this->assertDatabaseHas('delivery_product_lines', [
@@ -153,7 +166,7 @@ class DeliveryManagementTest extends TestCase
             'company_id' => $this->company->id,
             'warehouse_id' => $this->warehouse->id,
             'product_id' => $this->product->id,
-            'quantity' => 90 // 100 - 10
+            'quantity_total' => 90 // 100 - 10
         ]);
     }
 

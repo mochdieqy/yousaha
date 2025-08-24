@@ -185,6 +185,42 @@
                     </div>
                 </div>
 
+                <!-- Status Update Form -->
+                @can('sales-orders.edit')
+                @if(!in_array($salesOrder->status, ['done', 'cancel']))
+                <div class="mb-4">
+                    <h6 class="text-muted mb-3">Update Status</h6>
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <form action="{{ route('sales-orders.update-status', $salesOrder) }}" method="POST">
+                                @csrf
+                                <div class="row align-items-end">
+                                    <div class="col-md-4">
+                                        <label for="status" class="form-label fw-bold">New Status</label>
+                                        <select name="status" id="status" class="form-select" required>
+                                            <option value="">Select Status</option>
+                                            <option value="draft" {{ $salesOrder->status === 'draft' ? 'selected' : '' }}>Draft</option>
+                                            <option value="waiting" {{ $salesOrder->status === 'waiting' ? 'selected' : '' }}>Waiting</option>
+                                            <option value="accepted" {{ $salesOrder->status === 'accepted' ? 'selected' : '' }}>Accepted</option>
+                                            <option value="sent" {{ $salesOrder->status === 'sent' ? 'selected' : '' }}>Sent</option>
+                                            <option value="done" {{ $salesOrder->status === 'done' ? 'selected' : '' }}>Done</option>
+                                            <option value="cancel" {{ $salesOrder->status === 'cancel' ? 'selected' : '' }}>Cancel</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save me-1"></i>
+                                            Update Status
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                @endif
+                @endcan
+
                 <!-- Status History -->
                 <div class="mb-4">
                     <h6 class="text-muted mb-3">Status History</h6>
@@ -231,6 +267,27 @@
                                     </p>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
+                <!-- Status Update Information -->
+                @if(!in_array($salesOrder->status, ['done', 'cancel']))
+                <div class="mb-4">
+                    <h6 class="text-muted mb-3">Status Update Information</h6>
+                    <div class="card bg-info bg-opacity-10 border-info">
+                        <div class="card-body">
+                            <h6 class="card-title text-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Important Notes
+                            </h6>
+                            <ul class="mb-0">
+                                <li><strong>Accepted:</strong> Will check stock availability and create delivery if stock is sufficient</li>
+                                <li><strong>Done:</strong> Will complete the order, update stock, create delivery, income, and general ledger entries</li>
+                                <li><strong>Waiting:</strong> Status will automatically change to waiting if insufficient stock when trying to accept</li>
+                                <li><strong>Cancel:</strong> Will cancel the order and release any reserved stock</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -291,10 +348,30 @@ $(document).ready(function() {
         }
     });
     
-    // Auto-hide alerts after 5 seconds
-    setTimeout(function() {
-        $('.alert').fadeOut('slow');
-    }, 5000);
+    // Handle status update form submission
+    $('form[action*="update-status"]').on('submit', function(e) {
+        const status = $('#status').val();
+        if (!status) {
+            e.preventDefault();
+            alert('Please select a status to update to.');
+            return false;
+        }
+        
+        // Show confirmation for certain status changes
+        if (status === 'done') {
+            if (!confirm('Are you sure you want to mark this sales order as done? This will:\n- Update stock quantities\n- Create delivery record\n- Create income record\n- Create general ledger entries\n\nThis action cannot be easily undone.')) {
+                e.preventDefault();
+                return false;
+            }
+        } else if (status === 'cancel') {
+            if (!confirm('Are you sure you want to cancel this sales order? This will release any reserved stock.')) {
+                e.preventDefault();
+                return false;
+            }
+        }
+    });
+    
+
 });
 </script>
 

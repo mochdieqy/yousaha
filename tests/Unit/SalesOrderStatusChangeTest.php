@@ -59,7 +59,11 @@ class SalesOrderStatusChangeTest extends TestCase
         ]);
         
         $this->customer = Customer::factory()->create(['company_id' => $this->company->id]);
-        $this->product = Product::factory()->create(['company_id' => $this->company->id]);
+        $this->product = Product::factory()->create([
+            'company_id' => $this->company->id,
+            'type' => 'goods',
+            'is_track_inventory' => true
+        ]);
         $this->warehouse = Warehouse::factory()->create(['company_id' => $this->company->id]);
         
         // Create stock with sufficient quantity
@@ -209,6 +213,9 @@ class SalesOrderStatusChangeTest extends TestCase
             'quantity_saleable' => 5 // Less than required 10
         ]);
         
+        // Refresh the sales order to ensure relationships are loaded
+        $this->salesOrder->load(['productLines.product']);
+        
         $controller = new \App\Http\Controllers\SalesOrderController();
         
         // Use reflection to access private method
@@ -219,7 +226,7 @@ class SalesOrderStatusChangeTest extends TestCase
         $result = $method->invoke($controller, $this->salesOrder, $this->company);
         
         $this->assertFalse($result['success']);
-        $this->assertStringContainsString('insufficient stock', $result['message']);
+        $this->assertStringContainsString('Insufficient stock', $result['message']);
         
         // Check sales order status is changed to waiting
         $this->salesOrder->refresh();

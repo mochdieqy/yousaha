@@ -27,20 +27,38 @@ class WarehouseFactory extends Factory
             'Finished Goods Warehouse',
             'Transit Warehouse',
             'Bulk Storage',
-            'High Bay Warehouse'
+            'High Bay Warehouse',
+            'Production Warehouse',
+            'Quality Control Warehouse',
+            'Shipping Warehouse',
+            'Receiving Warehouse',
+            'Cross Dock Warehouse',
+            'Automated Warehouse',
+            'Manual Warehouse',
+            'Multi-Temperature Warehouse',
+            'Hazardous Materials Warehouse',
+            'Pharmaceutical Warehouse',
+            'Food Grade Warehouse',
+            'Textile Warehouse',
+            'Electronics Warehouse',
+            'Automotive Warehouse',
+            'Chemical Warehouse'
         ];
 
-        $warehouseCodes = [
-            'WH001', 'WH002', 'WH003', 'WH004', 'WH005',
-            'MAIN', 'DIST', 'STOR', 'REG', 'COLD',
-            'RAW', 'FG', 'TRANS', 'BULK', 'HIGH',
-            'TEST', 'DEV', 'PROD', 'BACKUP', 'ARCHIVE'
-        ];
+        // Generate dynamic codes to avoid unique conflicts
+        $code = 'WH' . str_pad($this->faker->numberBetween(1, 9999), 4, '0', STR_PAD_LEFT);
+        
+        // Generate dynamic names to avoid unique conflicts
+        $type = $this->faker->randomElement($warehouseTypes);
+        $city = $this->faker->city();
+        $suffix = $this->faker->optional(0.7)->randomElement(['Branch', 'Facility', 'Center', 'Hub', 'Station', 'Point']);
+        
+        $name = $suffix ? "{$type} - {$city} {$suffix}" : "{$type} - {$city}";
 
         return [
             'company_id' => Company::factory(),
-            'code' => $this->faker->unique()->randomElement($warehouseCodes),
-            'name' => $this->faker->unique()->randomElement($warehouseTypes) . ' ' . $this->faker->city(),
+            'code' => $code,
+            'name' => $name,
             'address' => $this->faker->optional(0.8)->address(),
         ];
     }

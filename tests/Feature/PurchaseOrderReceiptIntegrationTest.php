@@ -32,20 +32,26 @@ class PurchaseOrderReceiptIntegrationTest extends TestCase
     {
         parent::setUp();
         
-        // Create permissions
-        \Spatie\Permission\Models\Permission::create(['name' => 'purchase-orders.view']);
-        \Spatie\Permission\Models\Permission::create(['name' => 'purchase-orders.edit']);
-        \Spatie\Permission\Models\Permission::create(['name' => 'receipts.view']);
-        \Spatie\Permission\Models\Permission::create(['name' => 'receipts.edit']);
+        // Create role with purchase order and receipt permissions
+        $this->role = $this->createTestRole('purchase-manager', [
+            'purchase-orders.view',
+            'purchase-orders.edit',
+            'receipts.view',
+            'receipts.edit'
+        ]);
         
-        // Create Company Owner role
-        $companyOwnerRole = \Spatie\Permission\Models\Role::create(['name' => 'Company Owner']);
-        $companyOwnerRole->givePermissionTo(\Spatie\Permission\Models\Permission::all());
-        
-        // Create test data
+        // Create user and company
         $this->user = User::factory()->create();
-        $this->company = Company::factory()->create(['owner' => $this->user->id]);
-        $this->user->assignRole('Company Owner');
+        $this->company = Company::factory()->create();
+        
+        // Assign role to user
+        $this->user->assignRole($this->role);
+        
+        // Set current company for user by making user own the company
+        $this->company->owner = $this->user->id;
+        $this->company->save();
+
+        // Create test data
         $this->supplier = Supplier::factory()->create(['company_id' => $this->company->id]);
         $this->warehouse = Warehouse::factory()->create(['company_id' => $this->company->id]);
         $this->product = Product::factory()->create(['company_id' => $this->company->id]);

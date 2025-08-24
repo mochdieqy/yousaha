@@ -20,15 +20,24 @@ class ProductStockTrackingTest extends TestCase
     {
         parent::setUp();
         
-        // Create permissions
-        Permission::create(['name' => 'products.view']);
-        Permission::create(['name' => 'products.create']);
-        Permission::create(['name' => 'products.edit']);
-        Permission::create(['name' => 'products.delete']);
+        // Create role with product permissions
+        $this->role = $this->createTestRole('product-manager', [
+            'products.view',
+            'products.create',
+            'products.edit',
+            'products.delete'
+        ]);
         
-        // Create Company Owner role
-        $companyOwnerRole = Role::create(['name' => 'Company Owner']);
-        $companyOwnerRole->givePermissionTo(Permission::all());
+        // Create user and company
+        $this->user = User::factory()->create();
+        $this->company = Company::factory()->create();
+        
+        // Assign role to user
+        $this->user->assignRole($this->role);
+        
+        // Set current company for user by making user own the company
+        $this->company->owner = $this->user->id;
+        $this->company->save();
     }
 
     /** @test */
