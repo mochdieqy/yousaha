@@ -35,6 +35,23 @@ use App\Models\Asset;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * TransactionDataSeeder
+ * 
+ * This seeder creates comprehensive transaction data for the Yousaha ERP system
+ * including purchase orders, sales orders, receipts, deliveries, expenses, incomes,
+ * assets, and internal transfers for the year 2024.
+ * 
+ * IMPORTANT: All transaction dates are explicitly set to ensure they fall within 2024.
+ * This includes:
+ * - created_at and updated_at timestamps for all models
+ * - transaction dates for financial records
+ * - stock movement dates
+ * - asset purchase dates
+ * 
+ * The seeder includes comprehensive date validation to ensure no transactions
+ * are created outside the 2024 timeframe.
+ */
 class TransactionDataSeeder extends Seeder
 {
     /**
@@ -95,6 +112,18 @@ class TransactionDataSeeder extends Seeder
         }
         
         return $newDate;
+    }
+
+    /**
+     * Ensure a date is within 2024, if not, adjust it
+     */
+    private function ensureDateIn2024($date)
+    {
+        if ($date->year !== 2024) {
+            $this->command->warn("Date {$date->format('Y-m-d H:i:s')} is outside 2024. Adjusting to December 31, 2024.");
+            return Carbon::create(2024, 12, 31, 23, 59, 59);
+        }
+        return $date;
     }
 
     /**
@@ -260,11 +289,8 @@ class TransactionDataSeeder extends Seeder
         for ($i = 0; $i < $recordsCount; $i++) {
             $date = $this->safeAddTime($startDate, 'days', rand(0, $endDate->day - 1));
             
-            // Validate that the date is within 2024
-            if ($date->year !== 2024) {
-                $this->command->warn("Generated date {$date->format('Y-m-d H:i:s')} is outside 2024. Adjusting to December 31, 2024.");
-                $date = Carbon::create(2024, 12, 31, 23, 59, 59);
-            }
+            // Ensure the date is within 2024
+            $date = $this->ensureDateIn2024($date);
             
             // Create purchase order
             $purchaseOrder = $this->createPurchaseOrder($company, $date, $warehouses, $suppliers, $products);
@@ -386,6 +412,9 @@ class TransactionDataSeeder extends Seeder
         $warehouse = $warehouses->random();
         $supplier = $suppliers->random();
         
+        // Ensure the date is within 2024
+        $date = $this->ensureDateIn2024($date);
+        
         // Add seasonal variation to purchase quantities
         $month = $date->month;
         $seasonalMultiplier = 1.0;
@@ -410,6 +439,11 @@ class TransactionDataSeeder extends Seeder
             'status' => 'completed',
             'deadline' => $this->safeAddTime($date, 'days', rand(1, 30)),
         ]);
+
+        // Explicitly set timestamps to ensure they are in 2024
+        $purchaseOrder->created_at = $date;
+        $purchaseOrder->updated_at = $date;
+        $purchaseOrder->save();
 
         // Create product lines
         $total = 0;
@@ -448,6 +482,9 @@ class TransactionDataSeeder extends Seeder
         $warehouse = Warehouse::find($purchaseOrder->warehouse_id);
         $supplier = $suppliers->random();
         
+        // Ensure the date is within 2024
+        $date = $this->ensureDateIn2024($date);
+        
         $receipt = Receipt::create([
             'company_id' => $company->id,
             'warehouse_id' => $warehouse->id,
@@ -456,6 +493,11 @@ class TransactionDataSeeder extends Seeder
             'reference' => $purchaseOrder->number,
             'status' => 'completed',
         ]);
+
+        // Explicitly set timestamps to ensure they are in 2024
+        $receipt->created_at = $date;
+        $receipt->updated_at = $date;
+        $receipt->save();
         
         // Create product lines based on purchase order
         foreach ($purchaseOrder->productLines as $poLine) {
@@ -480,6 +522,9 @@ class TransactionDataSeeder extends Seeder
     {
         $warehouse = $warehouses->random();
         $customer = $customers->random();
+        
+        // Ensure the date is within 2024
+        $date = $this->ensureDateIn2024($date);
         
         // Find products with available stock in this warehouse
         $availableProducts = [];
@@ -530,6 +575,11 @@ class TransactionDataSeeder extends Seeder
             'status' => 'completed',
             'deadline' => $this->safeAddTime($date, 'days', rand(1, 30)),
         ]);
+
+        // Explicitly set timestamps to ensure they are in 2024
+        $salesOrder->created_at = $date;
+        $salesOrder->updated_at = $date;
+        $salesOrder->save();
 
         // Create product lines with available stock constraints
         $total = 0;
@@ -591,6 +641,9 @@ class TransactionDataSeeder extends Seeder
         // Use the same warehouse as the sales order for consistency
         $warehouse = Warehouse::find($salesOrder->warehouse_id);
         
+        // Ensure the date is within 2024
+        $date = $this->ensureDateIn2024($date);
+        
         $delivery = Delivery::create([
             'company_id' => $company->id,
             'warehouse_id' => $warehouse->id,
@@ -599,6 +652,11 @@ class TransactionDataSeeder extends Seeder
             'reference' => $salesOrder->number,
             'status' => 'completed',
         ]);
+
+        // Explicitly set timestamps to ensure they are in 2024
+        $delivery->created_at = $date;
+        $delivery->updated_at = $date;
+        $delivery->save();
         
         // Create product lines based on sales order
         foreach ($salesOrder->productLines as $soLine) {
@@ -639,6 +697,9 @@ class TransactionDataSeeder extends Seeder
 
     private function createExpense($company, $date, $accounts, $suppliers)
     {
+        // Ensure the date is within 2024
+        $date = $this->ensureDateIn2024($date);
+        
         $expenseTypes = [
             'Office Supplies' => [50000, 500000],
             'Utilities' => [200000, 1000000],
@@ -683,6 +744,11 @@ class TransactionDataSeeder extends Seeder
             'payment_account_id' => $paymentAccount ? $paymentAccount->id : null,
             'description' => "Payment for {$type}",
         ]);
+
+        // Explicitly set timestamps to ensure they are in 2024
+        $expense->created_at = $date;
+        $expense->updated_at = $date;
+        $expense->save();
         
         // Create expense detail with account relationship
         if ($expenseAccount) {
@@ -704,6 +770,9 @@ class TransactionDataSeeder extends Seeder
 
     private function createIncome($company, $date, $accounts, $customers)
     {
+        // Ensure the date is within 2024
+        $date = $this->ensureDateIn2024($date);
+        
         $incomeTypes = [
             'Interest Income' => [100000, 1000000],
             'Rental Income' => [500000, 3000000],
@@ -743,6 +812,11 @@ class TransactionDataSeeder extends Seeder
             'receipt_account_id' => $receiptAccount ? $receiptAccount->id : null,
             'description' => "Receipt from {$type}",
         ]);
+
+        // Explicitly set timestamps to ensure they are in 2024
+        $income->created_at = $date;
+        $income->updated_at = $date;
+        $income->save();
         
         // Create income detail with account relationship
         if ($incomeAccount) {
@@ -763,6 +837,9 @@ class TransactionDataSeeder extends Seeder
 
     private function updateStock($company, $date, $warehouses, $products, $purchaseOrder, $receipt, $salesOrder, $delivery, &$availableStock)
     {
+        // Ensure the date is within 2024
+        $date = $this->ensureDateIn2024($date);
+        
         foreach ($warehouses as $warehouse) {
             foreach ($products->where('is_track_inventory', true) as $product) {
                 // Get or create stock record
@@ -776,6 +853,10 @@ class TransactionDataSeeder extends Seeder
                     'quantity_saleable' => 0,
                     'quantity_incoming' => 0,
                 ]);
+
+                // Explicitly set timestamps to ensure they are in 2024
+                $stock->created_at = $date;
+                $stock->updated_at = $date;
                 
                 // Calculate stock changes based on transactions
                 $incomingQty = 0;
@@ -847,7 +928,7 @@ class TransactionDataSeeder extends Seeder
                         $reference = 'ADJUSTMENT-' . $date->format('Ymd');
                     }
                     
-                    StockHistory::create([
+                    $stockHistory = StockHistory::create([
                         'stock_id' => $stock->id,
                         'company_id' => $company->id,
                         'warehouse_id' => $warehouse->id,
@@ -868,6 +949,11 @@ class TransactionDataSeeder extends Seeder
                         'reference_id' => $referenceId,
                         'notes' => $incomingQty > 0 ? 'Goods received' : 'Goods delivered',
                     ]);
+
+                    // Explicitly set timestamps to ensure they are in 2024
+                    $stockHistory->created_at = $date;
+                    $stockHistory->updated_at = $date;
+                    $stockHistory->save();
                 }
             }
         }
@@ -894,6 +980,9 @@ class TransactionDataSeeder extends Seeder
 
     private function createGLEntry($company, $date, $type, $total, $reference, $accounts, $details, $description = null)
     {
+        // Ensure the date is within 2024
+        $date = $this->ensureDateIn2024($date);
+        
         $gl = GeneralLedger::create([
             'company_id' => $company->id,
             'number' => 'GL-' . $date->format('Ymd') . '-' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT),
@@ -905,6 +994,11 @@ class TransactionDataSeeder extends Seeder
             'description' => $description ?: "Automated entry for {$reference}",
             'status' => 'posted',
         ]);
+
+        // Explicitly set timestamps to ensure they are in 2024
+        $gl->created_at = $date;
+        $gl->updated_at = $date;
+        $gl->save();
         
         foreach ($details as $detail) {
             $account = $accounts->where('code', $detail['account'])->first();
@@ -975,6 +1069,9 @@ class TransactionDataSeeder extends Seeder
         // Use provided date or current date, and add offset for transfer timing
         $transferDate = $endDate ? $this->safeAddTime($endDate, 'hours', rand(1, 4)) : Carbon::create(2024, 12, 31)->subHours(rand(1, 4));
         
+        // Ensure the transfer date is within 2024
+        $transferDate = $this->ensureDateIn2024($transferDate);
+        
         // Refresh account balances from database
         $cashAccount->refresh();
         $receivableAccount->refresh();
@@ -1008,6 +1105,11 @@ class TransactionDataSeeder extends Seeder
                     'fee_charged_to' => 'out',
                     'note' => 'Automatic cash balancing transfer from accounts receivable',
                 ]);
+
+                // Explicitly set timestamps to ensure they are in 2024
+                $internalTransfer->created_at = $transferDate;
+                $internalTransfer->updated_at = $transferDate;
+                $internalTransfer->save();
                 
                 // Create GL entry for the automatic transfer
                 $this->createGLEntry($company, $transferDate, 'transfer', $transferAmount, $internalTransfer->number, $accounts, [
@@ -1068,6 +1170,9 @@ class TransactionDataSeeder extends Seeder
                 // Create transfer date that is after the transaction date (add 1-4 hours)
                 $transferDate = $this->safeAddTime($date, 'hours', rand(1, 4));
                 
+                // Ensure the transfer date is within 2024
+                $transferDate = $this->ensureDateIn2024($transferDate);
+                
                 $this->command->info("Transfer scheduled for: " . $transferDate->format('Y-m-d H:i:s'));
                 
                 // Create automatic internal transfer
@@ -1082,6 +1187,11 @@ class TransactionDataSeeder extends Seeder
                     'fee_charged_to' => 'out',
                     'note' => 'Automatic cash balancing transfer from accounts receivable after transaction',
                 ]);
+
+                // Explicitly set timestamps to ensure they are in 2024
+                $internalTransfer->created_at = $transferDate;
+                $internalTransfer->updated_at = $transferDate;
+                $internalTransfer->save();
                 
                 // Create GL entry for the automatic transfer
                 $this->createGLEntry($company, $transferDate, 'transfer', $transferAmount, $internalTransfer->number, $accounts, [
@@ -1129,6 +1239,9 @@ class TransactionDataSeeder extends Seeder
         // Create emergency income transaction
         $incomeDate = $this->safeAddTime($date, 'hours', rand(1, 4)); // Emergency income happens after the transaction
         
+        // Ensure the income date is within 2024
+        $incomeDate = $this->ensureDateIn2024($incomeDate);
+        
         $income = Income::create([
             'company_id' => $company->id,
             'number' => 'EMG-' . $incomeDate->format('Ymd') . '-' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT),
@@ -1142,6 +1255,11 @@ class TransactionDataSeeder extends Seeder
             'receipt_account_id' => $cashAccount->id,
             'description' => 'Emergency income to balance cash account',
         ]);
+
+        // Explicitly set timestamps to ensure they are in 2024
+        $income->created_at = $incomeDate;
+        $income->updated_at = $incomeDate;
+        $income->save();
         
         // Create income detail
         if ($incomeAccount) {
@@ -1175,6 +1293,9 @@ class TransactionDataSeeder extends Seeder
         if ($accounts->count() < 2) {
             return;
         }
+
+        // Ensure the date is within 2024
+        $date = $this->ensureDateIn2024($date);
 
         // Define different types of financial transfers
         $transferTypes = [
@@ -1237,6 +1358,11 @@ class TransactionDataSeeder extends Seeder
             'fee_charged_to' => 'out', // Fee charged to source account (if any)
             'note' => $typeConfig['description'],
         ]);
+
+        // Explicitly set timestamps to ensure they are in 2024
+        $internalTransfer->created_at = $date;
+        $internalTransfer->updated_at = $date;
+        $internalTransfer->save();
         
         // Create GL entry for internal transfer
         $this->createGLEntry($company, $date, 'transfer', $totalValue, $internalTransfer->number, $accounts, [
@@ -1326,6 +1452,9 @@ class TransactionDataSeeder extends Seeder
      */
     private function createAsset($company, $date, $accounts, $suppliers)
     {
+        // Ensure the date is within 2024
+        $date = $this->ensureDateIn2024($date);
+        
         $assetTypes = [
             'Office Equipment' => [5000000, 50000000],
             'Computer Hardware' => [2000000, 25000000],
@@ -1355,7 +1484,7 @@ class TransactionDataSeeder extends Seeder
             $paymentAccount = $accounts->where('type', 'asset')->where('id', '!=', $assetAccount?->id)->first();
             
             if (!$assetAccount || !$paymentAccount) {
-                $this->command->warn("Skipping asset creation: Required accounts not found for {$type}");
+                $this->command->error("Skipping asset creation: Required accounts not found for {$type}");
                 $this->command->info("Available account types: " . $accounts->pluck('type')->unique()->implode(', '));
                 return null; // Required accounts not found
             }
@@ -1380,6 +1509,11 @@ class TransactionDataSeeder extends Seeder
                 'location' => fake()->city(),
                 'reference' => 'AUTO-' . $date->format('Ymd'), // Reference for automated creation
             ]);
+
+            // Explicitly set timestamps to ensure they are in 2024
+            $asset->created_at = $date;
+            $asset->updated_at = $date;
+            $asset->save();
             
             $this->command->info("Successfully created asset: {$type} with number {$asset->number}");
             
@@ -1442,6 +1576,9 @@ class TransactionDataSeeder extends Seeder
      */
     private function createAssetMaintenanceExpense($company, $date, $accounts, $suppliers, $asset, $amount)
     {
+        // Ensure the date is within 2024
+        $date = $this->ensureDateIn2024($date);
+        
         $maintenanceTypes = [
             'Preventive Maintenance' => [0.05, 0.15], // 5-15% of asset value
             'Repair Service' => [0.02, 0.08], // 2-8% of asset value
@@ -1480,6 +1617,11 @@ class TransactionDataSeeder extends Seeder
             'payment_account_id' => $paymentAccount ? $paymentAccount->id : null,
             'description' => "{$type} service for asset {$asset->name}",
         ]);
+
+        // Explicitly set timestamps to ensure they are in 2024
+        $expense->created_at = $date;
+        $expense->updated_at = $date;
+        $expense->save();
         
         // Create expense detail
         if ($expenseAccount) {
@@ -1506,6 +1648,9 @@ class TransactionDataSeeder extends Seeder
      */
     private function createEquityTransaction($company, $date, $accounts)
     {
+        // Ensure the date is within 2024
+        $date = $this->ensureDateIn2024($date);
+        
         $equityTypes = [
             'Capital Injection' => [10000000, 50000000],
             'Dividend Payment' => [5000000, 20000000],
@@ -1630,6 +1775,18 @@ class TransactionDataSeeder extends Seeder
             ->whereYear('created_at', '!=', 2024)
             ->count();
         
+        // Check receipts
+        $receiptCount = Receipt::where('company_id', $company->id)->count();
+        $receiptInvalidDates = Receipt::where('company_id', $company->id)
+            ->whereYear('created_at', '!=', 2024)
+            ->count();
+        
+        // Check deliveries
+        $deliveryCount = Delivery::where('company_id', $company->id)->count();
+        $deliveryInvalidDates = Delivery::where('company_id', $company->id)
+            ->whereYear('created_at', '!=', 2024)
+            ->count();
+        
         // Check internal transfers
         $itCount = InternalTransfer::where('company_id', $company->id)->count();
         $itInvalidDates = InternalTransfer::where('company_id', $company->id)
@@ -1642,12 +1799,45 @@ class TransactionDataSeeder extends Seeder
             ->whereYear('date', '!=', 2024)
             ->count();
         
+        // Check expenses
+        $expenseCount = Expense::where('company_id', $company->id)->count();
+        $expenseInvalidDates = Expense::where('company_id', $company->id)
+            ->whereYear('created_at', '!=', 2024)
+            ->count();
+        
+        // Check incomes
+        $incomeCount = Income::where('company_id', $company->id)->count();
+        $incomeInvalidDates = Income::where('company_id', $company->id)
+            ->whereYear('created_at', '!=', 2024)
+            ->count();
+        
+        // Check assets
+        $assetCount = Asset::where('company_id', $company->id)->count();
+        $assetInvalidDates = Asset::where('company_id', $company->id)
+            ->whereYear('created_at', '!=', 2024)
+            ->count();
+        
+        // Check stock history
+        $stockHistoryCount = StockHistory::where('company_id', $company->id)->count();
+        $stockHistoryInvalidDates = StockHistory::where('company_id', $company->id)
+            ->whereYear('created_at', '!=', 2024)
+            ->count();
+        
         $this->command->info("Purchase Orders: {$poCount} total, {$poInvalidDates} outside 2024");
         $this->command->info("Sales Orders: {$soCount} total, {$soInvalidDates} outside 2024");
+        $this->command->info("Receipts: {$receiptCount} total, {$receiptInvalidDates} outside 2024");
+        $this->command->info("Deliveries: {$deliveryCount} total, {$deliveryInvalidDates} outside 2024");
         $this->command->info("Internal Transfers: {$itCount} total, {$itInvalidDates} outside 2024");
         $this->command->info("General Ledgers: {$glCount} total, {$glInvalidDates} outside 2024");
+        $this->command->info("Expenses: {$expenseCount} total, {$expenseInvalidDates} outside 2024");
+        $this->command->info("Incomes: {$incomeCount} total, {$incomeInvalidDates} outside 2024");
+        $this->command->info("Assets: {$assetCount} total, {$assetInvalidDates} outside 2024");
+        $this->command->info("Stock History: {$stockHistoryCount} total, {$stockHistoryInvalidDates} outside 2024");
         
-        $totalInvalid = $poInvalidDates + $soInvalidDates + $itInvalidDates + $glInvalidDates;
+        $totalInvalid = $poInvalidDates + $soInvalidDates + $receiptInvalidDates + $deliveryInvalidDates + 
+                       $itInvalidDates + $glInvalidDates + $expenseInvalidDates + $incomeInvalidDates + 
+                       $assetInvalidDates + $stockHistoryInvalidDates;
+        
         if ($totalInvalid === 0) {
             $this->command->info("✅ All transaction dates are within 2024");
         } else {
