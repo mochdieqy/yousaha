@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class EmailVerification extends Model
+class PasswordResetToken extends Model
 {
     use HasFactory;
 
@@ -14,7 +14,28 @@ class EmailVerification extends Model
      *
      * @var string
      */
-    protected $table = 'email_verifications';
+    protected $table = 'password_reset_tokens';
+
+    /**
+     * The primary key for the model.
+     *
+     * @var string
+     */
+    protected $primaryKey = 'email';
+
+    /**
+     * Indicates if the IDs are auto-incrementing.
+     *
+     * @var bool
+     */
+    public $incrementing = false;
+
+    /**
+     * The data type of the auto-incrementing ID.
+     *
+     * @var string
+     */
+    protected $keyType = 'string';
 
     /**
      * Indicates if the model should be timestamped.
@@ -44,7 +65,7 @@ class EmailVerification extends Model
     ];
 
     /**
-     * Check if the verification token is expired (default: 24 hours).
+     * Check if the reset token is expired (default: 24 hours).
      */
     public function isExpired($hours = 24)
     {
@@ -52,7 +73,7 @@ class EmailVerification extends Model
     }
 
     /**
-     * Check if the verification token is still valid.
+     * Check if the reset token is still valid.
      */
     public function isValid($hours = 24)
     {
@@ -60,15 +81,15 @@ class EmailVerification extends Model
     }
 
     /**
-     * Generate a new verification token.
+     * Generate a new reset token.
      */
     public static function generateToken()
     {
-        return bin2hex(random_bytes(32));
+        return \Illuminate\Support\Str::random(64);
     }
 
     /**
-     * Create a new email verification record.
+     * Create a new password reset token record.
      */
     public static function createForEmail($email)
     {

@@ -1,251 +1,678 @@
 # Master Data Management Sequence Diagrams
 
-## Product Management
+This document contains sequence diagrams for core business data management flows in the Yousaha ERP system.
 
-### Show Product List
+## 📦 Product Management Flow
 
-![Show Product List Sequence Diagram](images/Show%20Product%20List.png)
-```
-title Show Product List
+### Product Listing Process
+**Description**: Display paginated product list with search and filtering
 
-User->Application: Sign In
-Application->User: Show home page
-User->Application: Click master data
-Application->User: Show master data page
-User->Application: Click product
-Application->DB: Get product list
-DB->Application: Return product list
-Application->User: Show product list page
-```
-### Upsert Product
+```sequence
+title Product Listing Flow
 
-![Upsert Product Sequence Diagram](images/Upsert%20Product.png)
-```
-title Upsert Product
+User->Frontend: Access products page
+Frontend->ProductController: GET /products
+ProductController->Auth: Check company access
+Auth->ProductController: Company status
 
-User->Application: Sign In
-Application->User: Show home page
-User->Application: Click master data
-Application->User: Show master data page
-User->Application: Click product
-Application->DB: Get product list
-DB->Application: Return product list
-Application->User: Show product list page
-
-alt Update
-    User->Application: Click edit
-    Application->DB: Get product
-    DB->Application: Return product
-    Application->Application: Auto form fill
-else Insert
-    User->Application: Click create
-end
-
-Application->User: Show product form page
-User->Application: Input form
-Application->DB: Upsert product
-DB->Application: Return status
-
-alt Upsert failed
-    Application->User: Show error message
-else Upsert success
-    Application->User: Show successful upsert product message
+alt No company access
+    ProductController->Frontend: Redirect to company choice
+    Frontend->User: Company setup required
+else Company access granted
+    ProductController->Product: Query products by company
+    Product->ProductController: Product list
+    ProductController->Frontend: Return product view
+    Frontend->User: Display product list with pagination
 end
 ```
-### Delete Product
 
-![Delete Product Sequence Diagram](images/Delete%20Product.png)
+**Key Features**:
+- Company-based data isolation
+- Pagination (15 items per page)
+- Search functionality
+- Type filtering (goods, service, combo)
+
+### Product Creation Process
+**Description**: Create new product with validation and business rules
+
+```sequence
+title Product Creation Flow
+
+User->Frontend: Access create product form
+Frontend->ProductController: GET /products/create
+ProductController->Auth: Check company access
+Auth->ProductController: Company status
+
+alt No company access
+    ProductController->Frontend: Redirect to company choice
+    Frontend->User: Company setup required
+else Company access granted
+    ProductController->Frontend: Return create form
+    Frontend->User: Display product creation form
+end
+
+User->Frontend: Submit product data
+Frontend->ProductController: POST /products
+ProductController->Validator: Validate product data
+Validator->ProductController: Validation result
+
+alt Validation fails
+    ProductController->Frontend: Return with errors
+    Frontend->User: Display error messages
+else Validation passes
+    ProductController->Product: Create product record
+    Product->ProductController: Product created
+    ProductController->Frontend: Success redirect
+    Frontend->User: Redirect to product list
+end
 ```
-title Delete Product
 
-User->Application: Sign In
-Application->User: Show home page
-User->Application: Click master data
-Application->User: Show master data page
-User->Application: Click product
-Application->DB: Get product list
-DB->Application: Return product list
-Application->User: Show product list page
-User->Application: Click delete
-Application->User: Show confirmation pop up
-User->Application: Click button
+**Key Features**:
+- Comprehensive validation rules
+- Business logic validation
+- Company association
+- Success confirmation
 
-alt User click cancel
-    Application->User: Close confirmation pop up
-else User click delete
-    Application->DB: Delete product
-    DB->Application: Return status
+### Product Editing Process
+**Description**: Edit existing product with validation and access control
+
+```sequence
+title Product Edit Flow
+
+User->Frontend: Access edit product form
+Frontend->ProductController: GET /products/{id}/edit
+ProductController->Auth: Check company access
+Auth->ProductController: Company status
+
+alt No company access
+    ProductController->Frontend: Redirect to company choice
+    Frontend->User: Company setup required
+else Company access granted
+    ProductController->Product: Get product by ID
+    Product->ProductController: Product data
     
-    alt Delete failed
-        Application->User: Show error message
-    else Delete success
-        Application->User: Show successful delete product message
+    alt Product not found
+        ProductController->Frontend: Return 404 error
+        Frontend->User: Display not found message
+    else Product found
+        ProductController->Product: Verify company ownership
+        Product->ProductController: Ownership status
+        
+        alt Wrong company
+            ProductController->Frontend: Return 403 error
+            Frontend->User: Display access denied
+        else Correct company
+            ProductController->Frontend: Return edit form
+            Frontend->User: Display edit form with data
+        end
     end
 end
 ```
-## Customer Management
 
-### Show Customer List
+**Key Features**:
+- Company ownership verification
+- Product data retrieval
+- Form pre-population
+- Access control
 
-![Show Customer List Sequence Diagram](images/Show%20Customer%20List.png)
-```
-title Show Customer List
+### Product Update Process
+**Description**: Save product changes with validation
 
-User->Application: Sign In
-Application->User: Show home page
-User->Application: Click master data
-Application->User: Show master data page
-User->Application: Click customer
-Application->DB: Get customer list
-DB->Application: Return customer list
-Application->User: Show customer list page
-```
-### Upsert Customer
+```sequence
+title Product Update Flow
 
-![Upsert Customer Sequence Diagram](images/Upsert%20Customer.png)
-```
-title Upsert Customer
+User->Frontend: Submit product updates
+Frontend->ProductController: PUT /products/{id}
+ProductController->Auth: Check company access
+Auth->ProductController: Company status
 
-User->Application: Sign In
-Application->User: Show home page
-User->Application: Click master data
-Application->User: Show master data page
-User->Application: Click customer
-Application->DB: Get customer list
-DB->Application: Return customer list
-Application->User: Show customer list page
-
-alt Update
-    User->Application: Click edit
-    Application->DB: Get customer
-    DB->Application: Return customer
-    Application->Application: Auto form fill
-else Insert
-    User->Application: Click create
-end
-
-Application->User: Show customer form page
-User->Application: Input form
-Application->DB: Upsert customer
-DB->Application: Return status
-
-alt Upsert failed
-    Application->User: Show error message
-else Upsert success
-    Application->User: Show successful upsert customer message
-end
-```
-### Delete Customer
-
-![Delete Customer Sequence Diagram](images/Delete%20Customer.png)
-```
-title Delete Customer
-
-User->Application: Sign In
-Application->User: Show home page
-User->Application: Click master data
-Application->User: Show master data page
-User->Application: Click customer
-Application->DB: Get customer list
-DB->Application: Return customer list
-Application->User: Show customer list page
-User->Application: Click delete
-Application->User: Show confirmation pop up
-User->Application: Click button
-
-alt User click cancel
-    Application->User: Close confirmation pop up
-else User click delete
-    Application->DB: Delete customer
-    DB->Application: Return status
+alt No company access
+    ProductController->Frontend: Redirect to company choice
+    Frontend->User: Company setup required
+else Company access granted
+    ProductController->Product: Get product by ID
+    Product->ProductController: Product data
     
-    alt Delete failed
-        Application->User: Show error message
-    else Delete success
-        Application->User: Show successful delete customer message
+    alt Product not found
+        ProductController->Frontend: Return 404 error
+        Frontend->User: Display not found message
+    else Product found
+        ProductController->Product: Verify company ownership
+        Product->ProductController: Ownership status
+        
+        alt Wrong company
+            ProductController->Frontend: Return 403 error
+            Frontend->User: Display access denied
+        else Correct company
+            ProductController->Validator: Validate update data
+            Validator->ProductController: Validation result
+            
+            alt Validation fails
+                ProductController->Frontend: Return with errors
+                Frontend->User: Display error messages
+            else Validation passes
+                ProductController->Product: Update product fields
+                Product->ProductController: Changes saved
+                ProductController->Frontend: Success redirect
+                Frontend->User: Redirect to product list
+            end
+        end
     end
 end
 ```
-## Supplier Management
 
-### Show Supplier List
+**Key Features**:
+- Company ownership verification
+- Data validation
+- Secure update process
+- Success confirmation
 
-![Show Supplier List Sequence Diagram](images/Show%20Supplier%20List.png)
-```
-title Show Supplier List
+### Product Deletion Process
+**Description**: Delete product with dependency checking
 
-User->Application: Sign In
-Application->User: Show home page
-User->Application: Click master data
-Application->User: Show master data page
-User->Application: Click supplier
-Application->DB: Get supplier list
-DB->Application: Return supplier list
-Application->User: Show supplier list page
-```
-### Upsert Supplier
+```sequence
+title Product Deletion Flow
 
-![Upsert Supplier Sequence Diagram](images/Upsert%20Supplier.png)
-```
-title Upsert Supplier
+User->Frontend: Request product deletion
+Frontend->ProductController: DELETE /products/{id}
+ProductController->Auth: Check company access
+Auth->ProductController: Company status
 
-User->Application: Sign In
-Application->User: Show home page
-User->Application: Click master data
-Application->User: Show master data page
-User->Application: Click supplier
-Application->DB: Get supplier list
-DB->Application: Return supplier list
-Application->User: Show supplier list page
-
-alt Update
-    User->Application: Click edit
-    Application->DB: Get supplier
-    DB->Application: Return supplier
-    Application->Application: Auto form fill
-else Insert
-    User->Application: Click create
-end
-
-Application->User: Show supplier form page
-User->Application: Input form
-Application->DB: Upsert supplier
-DB->Application: Return status
-
-alt Upsert failed
-    Application->User: Show error message
-else Upsert success
-    Application->User: Show successful upsert supplier message
-end
-```
-### Delete Supplier
-
-![Delete Supplier Sequence Diagram](images/Delete%20Supplier.png)
-```
-title Delete Supplier
-
-User->Application: Sign In
-Application->User: Show home page
-User->Application: Click master data
-Application->User: Show master data page
-User->Application: Click supplier
-Application->DB: Get supplier list
-DB->Application: Return supplier list
-Application->User: Show supplier list page
-User->Application: Click delete
-Application->User: Show confirmation pop up
-User->Application: Click button
-
-alt User click cancel
-    Application->User: Close confirmation pop up
-else User click delete
-    Application->DB: Delete supplier
-    DB->Application: Return status
+alt No company access
+    ProductController->Frontend: Redirect to company choice
+    Frontend->User: Company setup required
+else Company access granted
+    ProductController->Product: Get product by ID
+    Product->ProductController: Product data
     
-    alt Delete failed
-        Application->User: Show error message
-    else Delete success
-        Application->User: Show successful delete supplier message
+    alt Product not found
+        ProductController->Frontend: Return 404 error
+        Frontend->User: Display not found message
+    else Product found
+        ProductController->Product: Verify company ownership
+        Product->ProductController: Ownership status
+        
+        alt Wrong company
+            ProductController->Frontend: Return 403 error
+            Frontend->User: Display access denied
+        else Correct company
+            ProductController->Product: Check dependencies
+            Product->ProductController: Dependency status
+            
+            alt Dependencies exist
+                ProductController->Frontend: Return with error
+                Frontend->User: Display dependency error
+            else No dependencies
+                ProductController->Product: Delete product
+                Product->ProductController: Deletion complete
+                ProductController->Frontend: Success redirect
+                Frontend->User: Redirect to product list
+            end
+        end
     end
 end
 ```
+
+**Key Features**:
+- Dependency checking
+- Transaction safety
+- Company ownership verification
+- Success confirmation
+
+## 👥 Customer Management Flow
+
+### Customer Listing Process
+**Description**: Display customer list with company isolation
+
+```sequence
+title Customer Listing Flow
+
+User->Frontend: Access customers page
+Frontend->CustomerController: GET /customers
+CustomerController->Auth: Check company access
+Auth->CustomerController: Company status
+
+alt No company access
+    CustomerController->Frontend: Redirect to company choice
+    Frontend->User: Company setup required
+else Company access granted
+    CustomerController->Customer: Query customers by company
+    Customer->CustomerController: Customer list
+    CustomerController->Frontend: Return customer view
+    Frontend->User: Display customer list
+end
+```
+
+**Key Features**:
+- Company-based data isolation
+- Customer data display
+- Access control
+
+### Customer Creation Process
+**Description**: Create new customer with validation
+
+```sequence
+title Customer Creation Flow
+
+User->Frontend: Access create customer form
+Frontend->CustomerController: GET /customers/create
+CustomerController->Auth: Check company access
+Auth->CustomerController: Company status
+
+alt No company access
+    CustomerController->Frontend: Redirect to company choice
+    Frontend->User: Company setup required
+else Company access granted
+    CustomerController->Frontend: Return create form
+    Frontend->User: Display customer creation form
+end
+
+User->Frontend: Submit customer data
+Frontend->CustomerController: POST /customers
+CustomerController->Validator: Validate customer data
+Validator->CustomerController: Validation result
+
+alt Validation fails
+    CustomerController->Frontend: Return with errors
+    Frontend->User: Display error messages
+else Validation passes
+    CustomerController->Customer: Create customer record
+    Customer->CustomerController: Customer created
+    CustomerController->Frontend: Success redirect
+    Frontend->User: Redirect to customer list
+end
+```
+
+**Key Features**:
+- Customer data validation
+- Company association
+- Success confirmation
+
+### Customer Editing Process
+**Description**: Edit existing customer with access control
+
+```sequence
+title Customer Edit Flow
+
+User->Frontend: Access edit customer form
+Frontend->CustomerController: GET /customers/{id}/edit
+CustomerController->Auth: Check company access
+Auth->CustomerController: Company status
+
+alt No company access
+    CustomerController->Frontend: Redirect to company choice
+    Frontend->User: Company setup required
+else Company access granted
+    CustomerController->Customer: Get customer by ID
+    Customer->CustomerController: Customer data
+    
+    alt Customer not found
+        CustomerController->Frontend: Return 404 error
+        Frontend->User: Display not found message
+    else Customer found
+        CustomerController->Customer: Verify company ownership
+        Customer->CustomerController: Ownership status
+        
+        alt Wrong company
+            CustomerController->Frontend: Return 403 error
+            Frontend->User: Display access denied
+        else Correct company
+            CustomerController->Frontend: Return edit form
+            Frontend->User: Display edit form with data
+        end
+    end
+end
+```
+
+**Key Features**:
+- Company ownership verification
+- Customer data retrieval
+- Form pre-population
+
+### Customer Update Process
+**Description**: Save customer changes with validation
+
+```sequence
+title Customer Update Flow
+
+User->Frontend: Submit customer updates
+Frontend->CustomerController: PUT /customers/{id}
+CustomerController->Auth: Check company access
+Auth->CustomerController: Company status
+
+alt No company access
+    CustomerController->Frontend: Redirect to company choice
+    Frontend->User: Company setup required
+else Company access granted
+    CustomerController->Customer: Get customer by ID
+    Customer->CustomerController: Customer data
+    
+    alt Customer not found
+        CustomerController->Frontend: Return 404 error
+        Frontend->User: Display not found message
+    else Customer found
+        CustomerController->Customer: Verify company ownership
+        Customer->CustomerController: Ownership status
+        
+        alt Wrong company
+            CustomerController->Frontend: Return 403 error
+            Frontend->User: Display access denied
+        else Correct company
+            CustomerController->Validator: Validate update data
+            Validator->CustomerController: Validation result
+            
+            alt Validation fails
+                CustomerController->Frontend: Return with errors
+                Frontend->User: Display error messages
+            else Validation passes
+                CustomerController->Customer: Update customer fields
+                Customer->CustomerController: Changes saved
+                CustomerController->Frontend: Success redirect
+                Frontend->User: Redirect to customer list
+            end
+        end
+    end
+end
+```
+
+**Key Features**:
+- Company ownership verification
+- Data validation
+- Secure update process
+
+## 🏭 Supplier Management Flow
+
+### Supplier Listing Process
+**Description**: Display supplier list with company isolation
+
+```sequence
+title Supplier Listing Flow
+
+User->Frontend: Access suppliers page
+Frontend->SupplierController: GET /suppliers
+SupplierController->Auth: Check company access
+Auth->SupplierController: Company status
+
+alt No company access
+    SupplierController->Frontend: Redirect to company choice
+    Frontend->User: Company setup required
+else Company access granted
+    SupplierController->Supplier: Query suppliers by company
+    Supplier->SupplierController: Supplier list
+    SupplierController->Frontend: Return supplier view
+    Frontend->User: Display supplier list
+end
+```
+
+**Key Features**:
+- Company-based data isolation
+- Supplier data display
+- Access control
+
+### Supplier Creation Process
+**Description**: Create new supplier with validation
+
+```sequence
+title Supplier Creation Flow
+
+User->Frontend: Access create supplier form
+Frontend->SupplierController: GET /suppliers/create
+SupplierController->Auth: Check company access
+Auth->SupplierController: Company status
+
+alt No company access
+    SupplierController->Frontend: Redirect to company choice
+    Frontend->User: Company setup required
+else Company access granted
+    SupplierController->Frontend: Return create form
+    Frontend->User: Display supplier creation form
+end
+
+User->Frontend: Submit supplier data
+Frontend->SupplierController: POST /suppliers
+SupplierController->Validator: Validate supplier data
+Validator->SupplierController: Validation result
+
+alt Validation fails
+    SupplierController->Frontend: Return with errors
+    Frontend->User: Display error messages
+else Validation passes
+    SupplierController->Supplier: Create supplier record
+    Supplier->SupplierController: Supplier created
+    SupplierController->Frontend: Success redirect
+    Frontend->User: Redirect to supplier list
+end
+```
+
+**Key Features**:
+- Supplier data validation
+- Company association
+- Success confirmation
+
+### Supplier Editing Process
+**Description**: Edit existing supplier with access control
+
+```sequence
+title Supplier Edit Flow
+
+User->Frontend: Access edit supplier form
+Frontend->SupplierController: GET /suppliers/{id}/edit
+SupplierController->Auth: Check company access
+Auth->SupplierController: Company status
+
+alt No company access
+    SupplierController->Frontend: Redirect to company choice
+    Frontend->User: Company setup required
+else Company access granted
+    SupplierController->Supplier: Get supplier by ID
+    Supplier->SupplierController: Supplier data
+    
+    alt Supplier not found
+        SupplierController->Frontend: Return 404 error
+        Frontend->User: Display not found message
+    else Supplier found
+        SupplierController->Supplier: Verify company ownership
+        Supplier->SupplierController: Ownership status
+        
+        alt Wrong company
+            SupplierController->Frontend: Return 403 error
+            Frontend->User: Display access denied
+        else Correct company
+            SupplierController->Frontend: Return edit form
+            Frontend->User: Display edit form with data
+        end
+    end
+end
+```
+
+**Key Features**:
+- Company ownership verification
+- Supplier data retrieval
+- Form pre-population
+
+### Supplier Update Process
+**Description**: Save supplier changes with validation
+
+```sequence
+title Supplier Update Flow
+
+User->Frontend: Submit supplier updates
+Frontend->SupplierController: PUT /suppliers/{id}
+SupplierController->Auth: Check company access
+Auth->SupplierController: Company status
+
+alt No company access
+    SupplierController->Frontend: Redirect to company choice
+    Frontend->User: Company setup required
+else Company access granted
+    SupplierController->Supplier: Get supplier by ID
+    Supplier->SupplierController: Supplier data
+    
+    alt Supplier not found
+        SupplierController->Frontend: Return 404 error
+        Frontend->User: Display not found message
+    else Supplier found
+        SupplierController->Supplier: Verify company ownership
+        Supplier->SupplierController: Ownership status
+        
+        alt Wrong company
+            SupplierController->Frontend: Return 403 error
+            Frontend->User: Display access denied
+        else Correct company
+            SupplierController->Validator: Validate update data
+            Validator->SupplierController: Validation result
+            
+            alt Validation fails
+                SupplierController->Frontend: Return with errors
+                Frontend->User: Display error messages
+            else Validation passes
+                SupplierController->Supplier: Update supplier fields
+                Supplier->SupplierController: Changes saved
+                SupplierController->Frontend: Success redirect
+                Frontend->User: Redirect to supplier list
+            end
+        end
+    end
+end
+```
+
+**Key Features**:
+- Company ownership verification
+- Data validation
+- Secure update process
+
+## 🏗️ Warehouse Management Flow
+
+### Warehouse Listing Process
+**Description**: Display warehouse list with company isolation
+
+```sequence
+title Warehouse Listing Flow
+
+User->Frontend: Access warehouses page
+Frontend->WarehouseController: GET /warehouses
+WarehouseController->Auth: Check company access
+Auth->WarehouseController: Company status
+
+alt No company access
+    WarehouseController->Frontend: Redirect to company choice
+    Frontend->User: Company setup required
+else Company access granted
+    WarehouseController->Warehouse: Query warehouses by company
+    Warehouse->WarehouseController: Warehouse list
+    WarehouseController->Frontend: Return warehouse view
+    Frontend->User: Display warehouse list
+end
+```
+
+**Key Features**:
+- Company-based data isolation
+- Warehouse data display
+- Access control
+
+### Warehouse Creation Process
+**Description**: Create new warehouse with validation
+
+```sequence
+title Warehouse Creation Flow
+
+User->Frontend: Access create warehouse form
+Frontend->WarehouseController: GET /warehouses/create
+WarehouseController->Auth: Check company access
+Auth->WarehouseController: Company status
+
+alt No company access
+    WarehouseController->Frontend: Redirect to company choice
+    Frontend->User: Company setup required
+else Company access granted
+    WarehouseController->Frontend: Return create form
+    Frontend->User: Display warehouse creation form
+end
+
+User->Frontend: Submit warehouse data
+Frontend->WarehouseController: POST /warehouses
+WarehouseController->Validator: Validate warehouse data
+Validator->WarehouseController: Validation result
+
+alt Validation fails
+    WarehouseController->Frontend: Return with errors
+    Frontend->User: Display error messages
+else Validation passes
+    WarehouseController->Warehouse: Create warehouse record
+    Warehouse->WarehouseController: Warehouse created
+    WarehouseController->Frontend: Success redirect
+    Frontend->User: Redirect to warehouse list
+end
+```
+
+**Key Features**:
+- Warehouse data validation
+- Company association
+- Success confirmation
+
+## 🔐 Access Control
+
+### Company-Based Isolation
+- All data scoped to user's company
+- Automatic company association
+- Cross-company access prevention
+- Permission enforcement
+
+### Data Ownership Verification
+- Company ownership checking
+- Access control validation
+- Secure data operations
+- Error handling
+
+## 📊 Data Validation
+
+### Product Validation Rules
+- Required fields: name, SKU, type, price
+- SKU uniqueness per company
+- Type validation (goods, service, combo)
+- Business logic validation
+- Inventory tracking rules
+
+### Customer/Supplier Validation
+- Required contact information
+- Company association
+- Data integrity checks
+- Business rule enforcement
+
+### Warehouse Validation
+- Location information
+- Company association
+- Capacity management
+- Operational rules
+
+## 🔄 Business Logic
+
+### Product Management Rules
+- Service products cannot track inventory
+- SKU uniqueness enforcement
+- Type-based validation
+- Dependency checking for deletion
+
+### Data Relationships
+- Company-based isolation
+- Referential integrity
+- Cascade operations
+- Data consistency
+
+## 📱 User Experience
+
+### Form Handling
+- Input validation
+- Error messaging
+- Success feedback
+- Data persistence
+
+### Navigation Flow
+- Intuitive data access
+- Clear success/error states
+- Consistent messaging
+- Responsive design
+
+---
+
+**Note**: Master data management ensures data integrity, company isolation, and proper validation across all business entities in the system.

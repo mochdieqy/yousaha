@@ -1,13 +1,11 @@
 @extends('layouts.auth')
 
-@section('stylesheet')
-@endsection
-
-@section('title', 'Login - Yousaha ERP')
+@section('title', 'Resend Verification - Yousaha ERP')
 
 @section('content')
-    <form method="POST" action="{{ route('auth.sign-in-process') }}">
+    <form method="POST" action="{{ route('auth.resend-verification-process') }}">
         {{ csrf_field() }}
+        
         <div class="form-group mb-0">
             <label for="email">Email</label>
             <input type="email" 
@@ -17,34 +15,22 @@
                    id="email" 
                    placeholder="Email"
                    value="{{ old('email') }}"
-                   required>
+                   required 
+                   autofocus>
         </div>
         @error('email')
             <small class="text-danger">{{ $message }}</small>
         @enderror
 
-        <div class="form-group mb-0 mt-2">
-            <label for="password">Password</label>
-            <input type="password" 
-                   name="password" 
-                   class="form-control @error('password') is-invalid @enderror" 
-                   id="password" 
-                   placeholder="Password"
-                   required>
-        </div>
-        @error('password')
-            <small class="text-danger">{{ $message }}</small>
-        @enderror
-
-        <button type="submit" class="btn btn-dark btn-block mt-4">Login</button>
+        <button type="submit" class="btn btn-dark btn-block mt-4">Resend Verification Email</button>
     </form>
     
     <p class="text-center mt-2 mb-0">
-        <a href="{{ route('auth.sign-up') }}">Create Account</a>
+        <a href="{{ route('auth.sign-in') }}">Back to Login</a>
     </p>
     
     <p class="text-center mt-2 mb-0">
-        <a href="{{ route('auth.forgot-password') }}">Forgot Password?</a>
+        <a href="{{ route('auth.sign-up') }}">Create Account</a>
     </p>
 
     <p class="text-center mt-4 mb-0">

@@ -38,16 +38,48 @@
             <img src="{{ asset('favicon/android-icon-144x144.png') }}" width="100px"/>
         </div>
 
-        @if(Session::has('message'))
-          <div class="alert alert-success" role="alert">
-            {{ Session::get('message') }}
-          </div>
+        <!-- Global Error Messages -->
+        @if(session('error'))
+        <div class="row mb-3">
+            <div class="col-12">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            </div>
+        </div>
         @endif
 
-        @if($errors->first('message'))
-            <div class="alert alert-danger" role="alert">
-                {{ $errors->first('message') }}
+        <!-- Global Success Messages -->
+        @if(session('success'))
+        <div class="row mb-3">
+            <div class="col-12">
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
+            </div>
+        </div>
+        @endif
+
+        <!-- Global Validation Errors -->
+        @if($errors->any())
+        <div class="row mb-3">
+            <div class="col-12">
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Please fix the following errors:</strong>
+                <ul class="mb-0 mt-2">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            </div>
+        </div>
         @endif
 
         @yield('content')

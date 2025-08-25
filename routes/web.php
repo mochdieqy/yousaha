@@ -23,12 +23,29 @@ Route::post('/', [AuthController::class, 'SignInProcess'])->name('auth.sign-in-p
 Route::get('sign-out', [AuthController::class, 'SignOut'])->name('auth.sign-out');
 Route::get('sign-up', [AuthController::class, 'SignUp'])->name('auth.sign-up');
 Route::post('sign-up', [AuthController::class, 'SignUpProcess'])->name('auth.sign-up-process');
+
+// Email verification routes
+Route::get('verify-email/{token}', [AuthController::class, 'verifyEmail'])->name('auth.verify-email');
+Route::get('resend-verification', [AuthController::class, 'showResendVerification'])->name('auth.resend-verification');
+Route::post('resend-verification', [AuthController::class, 'resendVerification'])->name('auth.resend-verification-process');
+
+// Forgot password routes
+Route::get('forgot-password', [AuthController::class, 'showForgotPassword'])->name('auth.forgot-password');
+Route::post('forgot-password', [AuthController::class, 'forgotPassword'])->name('auth.forgot-password-process');
+Route::get('reset-password/{token}', [AuthController::class, 'showResetPassword'])->name('auth.reset-password');
+Route::post('reset-password/{token}', [AuthController::class, 'resetPassword'])->name('auth.reset-password-process');
+
 Route::get('about', [AdditionalPageController::class, 'About'])->name('additional-page.about');
 Route::get('terms', [AdditionalPageController::class, 'Terms'])->name('additional-page.terms');
 Route::get('privacy', [AdditionalPageController::class, 'Privacy'])->name('additional-page.privacy');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('home', [HomeController::class, 'Home'])->name('home');
+    
+    // Profile management routes
+    Route::get('profile', [AuthController::class, 'showProfile'])->name('auth.profile');
+    Route::post('profile/update', [AuthController::class, 'updateProfile'])->name('auth.profile-update');
+    Route::post('profile/password', [AuthController::class, 'updatePassword'])->name('auth.password-update');
     
     // Company management routes
     Route::get('company/choice', [HomeController::class, 'companyChoice'])->name('company.choice');

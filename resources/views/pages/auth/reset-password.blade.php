@@ -1,50 +1,47 @@
 @extends('layouts.auth')
 
-@section('stylesheet')
-@endsection
-
-@section('title', 'Login - Yousaha ERP')
+@section('title', 'Reset Password - Yousaha ERP')
 
 @section('content')
-    <form method="POST" action="{{ route('auth.sign-in-process') }}">
+    <form method="POST" action="{{ route('auth.reset-password-process', $token) }}">
         {{ csrf_field() }}
+        
         <div class="form-group mb-0">
-            <label for="email">Email</label>
-            <input type="email" 
-                   name="email" 
-                   autocomplete="email" 
-                   class="form-control @error('email') is-invalid @enderror" 
-                   id="email" 
-                   placeholder="Email"
-                   value="{{ old('email') }}"
-                   required>
-        </div>
-        @error('email')
-            <small class="text-danger">{{ $message }}</small>
-        @enderror
-
-        <div class="form-group mb-0 mt-2">
-            <label for="password">Password</label>
+            <label for="password">New Password</label>
             <input type="password" 
                    name="password" 
                    class="form-control @error('password') is-invalid @enderror" 
                    id="password" 
-                   placeholder="Password"
-                   required>
+                   placeholder="New Password"
+                   required 
+                   autofocus>
         </div>
         @error('password')
             <small class="text-danger">{{ $message }}</small>
         @enderror
 
-        <button type="submit" class="btn btn-dark btn-block mt-4">Login</button>
+        <div class="form-group mb-0 mt-2">
+            <label for="password_confirmation">Confirm New Password</label>
+            <input type="password" 
+                   name="password_confirmation" 
+                   class="form-control @error('password_confirmation') is-invalid @enderror" 
+                   id="password_confirmation" 
+                   placeholder="Confirm New Password"
+                   required>
+        </div>
+        @error('password_confirmation')
+            <small class="text-danger">{{ $message }}</small>
+        @enderror
+
+        <button type="submit" class="btn btn-dark btn-block mt-4">Reset Password</button>
     </form>
     
     <p class="text-center mt-2 mb-0">
-        <a href="{{ route('auth.sign-up') }}">Create Account</a>
+        <a href="{{ route('auth.sign-in') }}">Back to Login</a>
     </p>
     
     <p class="text-center mt-2 mb-0">
-        <a href="{{ route('auth.forgot-password') }}">Forgot Password?</a>
+        <a href="{{ route('auth.sign-up') }}">Create Account</a>
     </p>
 
     <p class="text-center mt-4 mb-0">

@@ -235,9 +235,24 @@
       </a>
       
       <div class="ms-auto">
-        <span class="text-light me-3">
-          <i class="fas fa-user me-1"></i>{{ Auth::user()->name }}
-        </span>
+        <div class="dropdown">
+          <button class="btn btn-link text-light text-decoration-none dropdown-toggle" 
+                  type="button" 
+                  id="userDropdown" 
+                  data-bs-toggle="dropdown" 
+                  aria-expanded="false">
+            <i class="fas fa-user me-1"></i>{{ Auth::user()->name }}
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+            <li><a class="dropdown-item" href="{{ route('auth.profile') }}">
+              <i class="fas fa-user-edit me-2"></i>Profile Settings
+            </a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{{ route('auth.sign-out') }}">
+              <i class="fas fa-sign-out-alt me-2"></i>Sign Out
+            </a></li>
+          </ul>
+        </div>
       </div>
     </div>
   </nav>

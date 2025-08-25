@@ -1,59 +1,67 @@
 # Yousaha ERP - Sequence Diagrams
 
-This directory contains sequence diagrams organized by functional modules. All diagrams are formatted for [websequencediagrams.com](https://www.websequencediagrams.com/) and include visual diagram images for easy reference.
+This directory contains sequence diagrams organized by functional modules. All diagrams are formatted for [websequencediagrams.com](https://www.websequencediagrams.com/) and include comprehensive documentation for easy reference.
 
 ## 📋 Sequence Diagram Categories
 
 ### 🔐 [Authentication](authentication.md)
 User authentication and account management flows:
-- **Sign Up** - User registration with email verification
-- **Sign In** - User login with validation
-- **Forgot Password** - Password reset workflow
+- **User Registration** - Complete registration with email verification
+- **User Login** - Authentication with verification check
+- **Email Verification** - Token-based email verification
+- **Password Reset** - Secure password reset workflow
+- **Profile Management** - User profile and password updates
 
 ### 🏢 [Company Management](company-management.md)
 Company setup and profile management:
-- **Create Company** - Initial company setup after registration
-- **Update Company** - Company profile modifications
+- **Company Choice** - User selection between create/join
+- **Company Creation** - Initial company setup with finance accounts
+- **Company Editing** - Company profile modifications
+- **Employee Invitation** - Employee invitation system
 
 ### 📊 [Master Data Management](master-data.md)
 Core business data management:
-- **Product Management** - CRUD operations for products
+- **Product Management** - CRUD operations with business rules
 - **Customer Management** - Customer data management
 - **Supplier Management** - Supplier data management
+- **Warehouse Management** - Warehouse setup and management
 
 ### 📦 [Inventory Management](inventory-management.md)
 Complete inventory and warehouse operations:
-- **Warehouse Management** - Warehouse setup and management
+- **Warehouse Management** - Warehouse CRUD operations
 - **Stock Management** - Stock tracking and adjustments
 - **Receipt Management** - Goods receiving processes
 - **Delivery Management** - Goods issue and delivery
 
 ### 💰 [Sales Management](sales-management.md)
 Sales order processing and document generation:
-- **Sales Order Management** - Sales order lifecycle
+- **Sales Order Management** - Complete sales order lifecycle
+- **Status Management** - Status-based workflow control
 - **Document Generation** - Quotation and invoice creation
 
 ### 🛒 [Purchase Management](purchase-management.md)
-Purchase order processing:
-- **Purchase Order Management** - Purchase order lifecycle
+Purchase order processing and management:
+- **Purchase Order Management** - Complete purchase order lifecycle
+- **Status Management** - Status-based workflow control
+- **Receipt Integration** - Seamless order-to-receipt flow
 
 ### 💼 [Finance Management](finance-management.md)
 Complete financial management system:
-- **Chart of Accounts** - Account management
+- **Chart of Accounts** - Account management with protection
 - **General Ledger** - Double-entry bookkeeping
-- **Expense Management** - Expense tracking
-- **Income Management** - Income recording
+- **Expense Management** - Expense tracking and GL integration
+- **Income Management** - Income recording and GL integration
 - **Internal Transfer Management** - Inter-account transfers
-- **Asset Management** - Asset tracking
-- **Financial Reports** - Report generation and exports
+- **Financial Reports** - Report generation and PDF export
 
 ### 👥 [Human Resources](human-resources.md)
 HR management and employee operations:
-- **Department Management** - Department setup
-- **Employee Management** - Employee data management
-- **Attendance Management** - Clock in/out and attendance tracking
+- **Department Management** - Department setup and management
+- **Employee Management** - Employee lifecycle management
+- **Attendance Management** - Clock in/out and time tracking
 - **Time Off Management** - Leave requests and approvals
-- **AI-Powered Evaluation** - Annual performance evaluations
+- **Payroll Management** - Salary calculation and processing
+- **AI-Powered Evaluation** - Performance evaluations with AI
 
 ## 🔄 Process Flow Overview
 
@@ -76,8 +84,11 @@ HR management and employee operations:
 ## 📝 Diagram Format
 
 Each sequence diagram includes:
-- **Visual diagram image** for quick reference and presentation
+- **Comprehensive documentation** with detailed descriptions
 - **Source code** in websequencediagrams.com format for editing
+- **Key features** highlighting important functionality
+- **Business logic** explanations
+- **Integration points** with other systems
 
 All sequence diagrams use the websequencediagrams.com format:
 ```
@@ -93,6 +104,7 @@ else Alternative
     System->Actor: Error Response
 end
 ```
+
 ## 🔍 Key Features Demonstrated
 
 ### Transaction Management
@@ -134,12 +146,11 @@ end
 
 ## 📊 Diagram Statistics
 
-- **Total Sequences**: 54 individual sequence diagrams
-- **Visual Images**: 72+ diagram images included
+- **Total Sequences**: 50+ individual sequence diagrams
 - **Modules Covered**: 8 major functional areas  
 - **Process Types**: CRUD operations, workflows, integrations
 - **Error Scenarios**: Comprehensive error handling coverage
-- **Format Support**: Both visual (PNG) and editable (text) formats
+- **Format Support**: Both documentation and editable (text) formats
 
 ## 🔗 Related Documentation
 
@@ -150,4 +161,4 @@ end
 
 ---
 
-**Note**: These sequence diagrams represent the complete business process flows for the Yousaha ERP system and serve as the foundation for system implementation and testing.
+**Note**: These sequence diagrams represent the complete business process flows for the Yousaha ERP system and serve as the foundation for system implementation and testing. All diagrams are based on the current implementation in the Controllers and Views.
