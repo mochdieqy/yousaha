@@ -447,12 +447,16 @@
                     </div>
                     <div class="card-body">
                         <div class="row">
+                            @can('ai-evaluation.view')
                             <div class="col-md-6 mb-2">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-robot text-muted me-2"></i>
-                                    <span>AI Evaluation</span>
-                                </div>
+                                <a href="{{ route('ai-evaluation.index') }}" class="text-decoration-none">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-robot text-muted me-2"></i>
+                                        <span>AI Evaluation</span>
+                                    </div>
+                                </a>
                             </div>
+                            @endcan
                             @can('company.manage-employee-roles')
                             <div class="col-md-6 mb-2">
                                 <a href="{{ route('employee-roles.index') }}" class="text-decoration-none">

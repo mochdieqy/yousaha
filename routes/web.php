@@ -505,4 +505,22 @@ Route::middleware(['auth'])->group(function () {
         Route::post('employee-roles', [App\Http\Controllers\EmployeeRoleController::class, 'store'])->name('employee-roles.store');
         Route::delete('employee-roles/{employee}', [App\Http\Controllers\EmployeeRoleController::class, 'destroy'])->name('employee-roles.destroy');
     });
+
+    // AI Evaluation Management
+    Route::middleware(['permission:ai-evaluation.view'])->group(function () {
+        Route::get('ai-evaluation', [App\Http\Controllers\AIEvaluationController::class, 'index'])->name('ai-evaluation.index');
+        Route::get('ai-evaluation/create', [App\Http\Controllers\AIEvaluationController::class, 'create'])->name('ai-evaluation.create');
+        Route::post('ai-evaluation', [App\Http\Controllers\AIEvaluationController::class, 'store'])->name('ai-evaluation.store');
+        Route::get('ai-evaluation/{evaluation}', [App\Http\Controllers\AIEvaluationController::class, 'show'])->name('ai-evaluation.show');
+    });
+
+    Route::middleware(['permission:ai-evaluation.edit'])->group(function () {
+        Route::get('ai-evaluation/{evaluation}/edit', [App\Http\Controllers\AIEvaluationController::class, 'edit'])->name('ai-evaluation.edit');
+        Route::put('ai-evaluation/{evaluation}', [App\Http\Controllers\AIEvaluationController::class, 'update'])->name('ai-evaluation.update');
+        Route::post('ai-evaluation/{evaluation}/regenerate', [App\Http\Controllers\AIEvaluationController::class, 'regenerate'])->name('ai-evaluation.regenerate');
+    });
+
+    Route::middleware(['permission:ai-evaluation.delete'])->group(function () {
+        Route::delete('ai-evaluation/{evaluation}', [App\Http\Controllers\AIEvaluationController::class, 'destroy'])->name('ai-evaluation.destroy');
+    });
 });

@@ -76,6 +76,25 @@ class TransactionDataSeeder extends Seeder
         
         // Log summary statistics
         $this->logSummaryStatistics($company);
+        
+        // Show final account balances
+        $this->showFinalAccountBalances($company, $accounts);
+    }
+
+    /**
+     * Safely add time to a date without exceeding 2024
+     */
+    private function safeAddTime($date, $unit, $amount)
+    {
+        $maxDate = Carbon::create(2024, 12, 31, 23, 59, 59);
+        $newDate = $date->copy()->add($unit, $amount);
+        
+        // If the new date exceeds 2024, cap it at December 31, 2024
+        if ($newDate->year > 2024) {
+            return $maxDate;
+        }
+        
+        return $newDate;
     }
 
     /**
@@ -121,6 +140,32 @@ class TransactionDataSeeder extends Seeder
         $this->command->info("Total Expense Value: IDR " . number_format($totalExpenseValue, 0, ',', '.'));
         $this->command->info("Total Income Value: IDR " . number_format($totalIncomeValue, 0, ',', '.'));
         $this->command->info("Total Transfer Value: IDR " . number_format($totalTransferValue, 0, ',', '.'));
+        
+        // Count automatic cash balancing transactions
+        $autoTransfers = InternalTransfer::where('company_id', $company->id)
+            ->where('note', 'like', '%Automatic cash balancing%')
+            ->count();
+        $emergencyIncomes = Income::where('company_id', $company->id)
+            ->where('note', 'like', '%Emergency income%')
+            ->count();
+        
+        if ($autoTransfers > 0 || $emergencyIncomes > 0) {
+            $this->command->info("=== CASH BALANCING SUMMARY ===");
+            $this->command->info("Automatic Cash Transfers: {$autoTransfers} (from Accounts Receivable to Cash)");
+            $this->command->info("Emergency Income Transactions: {$emergencyIncomes} (when both cash and receivables were low)");
+            
+            // Calculate total value of automatic transfers
+            $totalAutoTransferValue = InternalTransfer::where('company_id', $company->id)
+                ->where('note', 'like', '%Automatic cash balancing%')
+                ->sum('value');
+            $this->command->info("Total Auto-Transfer Value: IDR " . number_format($totalAutoTransferValue, 0, ',', '.'));
+            
+            // Calculate total value of emergency incomes
+            $totalEmergencyIncomeValue = Income::where('company_id', $company->id)
+                ->where('note', 'like', '%Emergency income%')
+                ->sum('total');
+            $this->command->info("Total Emergency Income Value: IDR " . number_format($totalEmergencyIncomeValue, 0, ',', '.'));
+        }
         
         $this->command->info('=== END SUMMARY ===');
     }
@@ -213,7 +258,13 @@ class TransactionDataSeeder extends Seeder
         }
         
         for ($i = 0; $i < $recordsCount; $i++) {
-            $date = $startDate->copy()->addDays(rand(0, $endDate->day - 1));
+            $date = $this->safeAddTime($startDate, 'days', rand(0, $endDate->day - 1));
+            
+            // Validate that the date is within 2024
+            if ($date->year !== 2024) {
+                $this->command->warn("Generated date {$date->format('Y-m-d H:i:s')} is outside 2024. Adjusting to December 31, 2024.");
+                $date = Carbon::create(2024, 12, 31, 23, 59, 59);
+            }
             
             // Create purchase order
             $purchaseOrder = $this->createPurchaseOrder($company, $date, $warehouses, $suppliers, $products);
@@ -265,10 +316,13 @@ class TransactionDataSeeder extends Seeder
             
             // Create general ledger entries
             $this->createGeneralLedgerEntries($company, $date, $accounts, $purchaseOrder, $receipt, $salesOrder, $delivery);
+            
+            // Check and balance cash account after each transaction to prevent negative balance
+            $this->checkAndBalanceCash($company, $accounts, $date);
         }
         
         // Update account balances after all transactions are created
-        $this->updateAccountBalances($company, $accounts);
+        $this->updateAccountBalances($company, $accounts, $endDate);
         
         // Log final stock levels for this month
         $this->logFinalStockLevels($availableStock, $warehouses, $products, $month, $year);
@@ -354,7 +408,7 @@ class TransactionDataSeeder extends Seeder
             'activities' => fake()->sentence(),
             'total' => 0,
             'status' => 'completed',
-            'deadline' => $date->copy()->addDays(rand(1, 30)),
+            'deadline' => $this->safeAddTime($date, 'days', rand(1, 30)),
         ]);
 
         // Create product lines
@@ -398,7 +452,7 @@ class TransactionDataSeeder extends Seeder
             'company_id' => $company->id,
             'warehouse_id' => $warehouse->id,
             'receive_from' => $supplier->id,
-            'scheduled_at' => $date->copy()->addHours(rand(9, 17)),
+            'scheduled_at' => $this->safeAddTime($date, 'hours', rand(9, 17)),
             'reference' => $purchaseOrder->number,
             'status' => 'completed',
         ]);
@@ -474,7 +528,7 @@ class TransactionDataSeeder extends Seeder
             'activities' => fake()->sentence(),
             'total' => 0,
             'status' => 'completed',
-            'deadline' => $date->copy()->addDays(rand(1, 30)),
+            'deadline' => $this->safeAddTime($date, 'days', rand(1, 30)),
         ]);
 
         // Create product lines with available stock constraints
@@ -541,7 +595,7 @@ class TransactionDataSeeder extends Seeder
             'company_id' => $company->id,
             'warehouse_id' => $warehouse->id,
             'delivery_address' => fake()->address(),
-            'scheduled_at' => $date->copy()->addHours(rand(9, 17)),
+            'scheduled_at' => $this->safeAddTime($date, 'hours', rand(9, 17)),
             'reference' => $salesOrder->number,
             'status' => 'completed',
         ]);
@@ -620,7 +674,7 @@ class TransactionDataSeeder extends Seeder
             'company_id' => $company->id,
             'number' => 'EXP-' . $date->format('Ymd') . '-' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT),
             'date' => $date,
-            'due_date' => $date->copy()->addDays(rand(1, 30)),
+            'due_date' => $this->safeAddTime($date, 'days', rand(1, 30)),
             'total' => $amount,
             'paid' => true,
             'status' => 'paid',
@@ -680,7 +734,7 @@ class TransactionDataSeeder extends Seeder
             'company_id' => $company->id,
             'number' => 'INC-' . $date->format('Ymd') . '-' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT),
             'date' => $date,
-            'due_date' => $date->copy()->addDays(rand(1, 30)),
+            'due_date' => $this->safeAddTime($date, 'days', rand(1, 30)),
             'total' => $amount,
             'paid' => true,
             'status' => 'received',
@@ -871,7 +925,7 @@ class TransactionDataSeeder extends Seeder
     /**
      * Update account balances based on all transactions
      */
-    private function updateAccountBalances($company, $accounts)
+    private function updateAccountBalances($company, $accounts, $endDate)
     {
         $this->command->info('Updating account balances...');
         
@@ -899,7 +953,217 @@ class TransactionDataSeeder extends Seeder
             $this->command->info("Updated {$account->name} ({$account->code}) balance: IDR " . number_format($balance, 0, ',', '.'));
         }
         
+        // Check if cash account is negative and transfer from accounts receivable if needed
+        $this->balanceCashAccount($company, $accounts, $endDate);
+        
         $this->command->info('Account balances updated successfully!');
+    }
+
+    /**
+     * Balance cash account by transferring from accounts receivable if negative
+     */
+    private function balanceCashAccount($company, $accounts, $endDate = null)
+    {
+        $cashAccount = $accounts->where('code', '1000')->first(); // Cash account
+        $receivableAccount = $accounts->where('code', '1100')->first(); // Accounts Receivable
+        
+        if (!$cashAccount || !$receivableAccount) {
+            $this->command->warn('Cash or Accounts Receivable account not found. Skipping cash balancing.');
+            return;
+        }
+        
+        // Use provided date or current date, and add offset for transfer timing
+        $transferDate = $endDate ? $this->safeAddTime($endDate, 'hours', rand(1, 4)) : Carbon::create(2024, 12, 31)->subHours(rand(1, 4));
+        
+        // Refresh account balances from database
+        $cashAccount->refresh();
+        $receivableAccount->refresh();
+        
+        $cashBalance = $cashAccount->balance;
+        $receivableBalance = $receivableAccount->balance;
+        
+        $this->command->info("Current cash balance: IDR " . number_format($cashBalance, 0, ',', '.'));
+        $this->command->info("Current accounts receivable balance: IDR " . number_format($receivableBalance, 0, ',', '.'));
+        
+        // If cash is negative and we have receivables to collect
+        if ($cashBalance < 0 && $receivableBalance > 0) {
+            $transferAmount = abs($cashBalance) + rand(1000000, 5000000); // Transfer negative amount plus buffer
+            
+            // Don't transfer more than available receivables
+            $transferAmount = min($transferAmount, $receivableBalance);
+            
+            // Ensure we have enough receivables to cover the transfer
+            if ($transferAmount > 0) {
+                $this->command->info("Cash account is negative. Transferring IDR " . number_format($transferAmount, 0, ',', '.') . " from Accounts Receivable to Cash.");
+                
+                // Create automatic internal transfer
+                $internalTransfer = InternalTransfer::create([
+                    'company_id' => $company->id,
+                    'number' => 'AUTO-CASH-' . $transferDate->format('Ymd') . '-' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT),
+                    'date' => $transferDate,
+                    'account_in' => $cashAccount->id, // Cash receives the transfer
+                    'account_out' => $receivableAccount->id, // Receivables provides the transfer
+                    'value' => $transferAmount,
+                    'fee' => 0,
+                    'fee_charged_to' => 'out',
+                    'note' => 'Automatic cash balancing transfer from accounts receivable',
+                ]);
+                
+                // Create GL entry for the automatic transfer
+                $this->createGLEntry($company, $transferDate, 'transfer', $transferAmount, $internalTransfer->number, $accounts, [
+                    ['account' => '1000', 'type' => 'debit', 'value' => $transferAmount, 'description' => 'Cash received from accounts receivable collection'],
+                    ['account' => '1100', 'type' => 'credit', 'value' => $transferAmount, 'description' => 'Accounts receivable collected and transferred to cash'],
+                ], "Automatic cash balancing transfer");
+                
+                // Update account balances after the transfer
+                $cashAccount->update(['balance' => $cashBalance + $transferAmount]);
+                $receivableAccount->update(['balance' => $receivableBalance - $transferAmount]);
+                
+                $this->command->info("Successfully transferred IDR " . number_format($transferAmount, 0, ',', '.') . " from Accounts Receivable to Cash.");
+                $this->command->info("New cash balance: IDR " . number_format($cashAccount->balance, 0, ',', '.'));
+                $this->command->info("New accounts receivable balance: IDR " . number_format($receivableAccount->balance, 0, ',', '.'));
+                
+            } else {
+                $this->command->warn("Not enough accounts receivable to balance cash account.");
+            }
+        } elseif ($cashBalance < 0 && $receivableBalance <= 0) {
+            $this->command->warn("Cash account is negative (IDR " . number_format($cashBalance, 0, ',', '.') . ") but no accounts receivable available for transfer.");
+            $this->command->info("Consider creating additional income or equity transactions to balance cash.");
+        } else {
+            $this->command->info("Cash account is balanced (IDR " . number_format($cashBalance, 0, ',', '.') . "). No transfer needed.");
+        }
+    }
+
+    /**
+     * Check and balance cash account after each transaction to prevent negative balance
+     */
+    private function checkAndBalanceCash($company, $accounts, $date)
+    {
+        $cashAccount = $accounts->where('code', '1000')->first(); // Cash account
+        $receivableAccount = $accounts->where('code', '1100')->first(); // Accounts Receivable
+        
+        if (!$cashAccount || !$receivableAccount) {
+            return; // Skip if required accounts not found
+        }
+        
+        // Refresh account balances from database
+        $cashAccount->refresh();
+        $receivableAccount->refresh();
+        
+        $cashBalance = $cashAccount->balance;
+        $receivableBalance = $receivableAccount->balance;
+        
+        // If cash is negative and we have receivables to collect
+        if ($cashBalance < 0 && $receivableBalance > 0) {
+            $transferAmount = abs($cashBalance) + rand(500000, 2000000); // Transfer negative amount plus buffer
+            
+            // Don't transfer more than available receivables
+            $transferAmount = min($transferAmount, $receivableBalance);
+            
+            // Ensure we have enough receivables to cover the transfer
+            if ($transferAmount > 0) {
+                $this->command->info("Cash went negative after transaction at: " . $date->format('Y-m-d H:i:s'));
+                $this->command->info("Auto-transferring IDR " . number_format($transferAmount, 0, ',', '.') . " from Accounts Receivable to Cash.");
+                
+                // Create transfer date that is after the transaction date (add 1-4 hours)
+                $transferDate = $this->safeAddTime($date, 'hours', rand(1, 4));
+                
+                $this->command->info("Transfer scheduled for: " . $transferDate->format('Y-m-d H:i:s'));
+                
+                // Create automatic internal transfer
+                $internalTransfer = InternalTransfer::create([
+                    'company_id' => $company->id,
+                    'number' => 'AUTO-TXN-' . $transferDate->format('Ymd') . '-' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT),
+                    'date' => $transferDate,
+                    'account_in' => $cashAccount->id, // Cash receives the transfer
+                    'account_out' => $receivableAccount->id, // Receivables provides the transfer
+                    'value' => $transferAmount,
+                    'fee' => 0,
+                    'fee_charged_to' => 'out',
+                    'note' => 'Automatic cash balancing transfer from accounts receivable after transaction',
+                ]);
+                
+                // Create GL entry for the automatic transfer
+                $this->createGLEntry($company, $transferDate, 'transfer', $transferAmount, $internalTransfer->number, $accounts, [
+                    ['account' => '1000', 'type' => 'debit', 'value' => $transferAmount, 'description' => 'Cash received from accounts receivable collection'],
+                    ['account' => '1100', 'type' => 'credit', 'value' => $transferAmount, 'description' => 'Accounts receivable collected and transferred to cash'],
+                ], "Automatic cash balancing transfer after transaction");
+                
+                // Update account balances after the transfer
+                $cashAccount->update(['balance' => $cashBalance + $transferAmount]);
+                $receivableAccount->update(['balance' => $receivableBalance - $transferAmount]);
+                
+                $this->command->info("Successfully balanced cash account. New cash balance: IDR " . number_format($cashAccount->balance, 0, ',', '.'));
+                $this->command->info("Transfer completed at: " . $transferDate->format('Y-m-d H:i:s'));
+            }
+        } elseif ($cashBalance < 0 && $receivableBalance <= 0) {
+            // If both cash and receivables are low, create emergency income
+            $this->command->info("Cash went negative at: " . $date->format('Y-m-d H:i:s') . " but no receivables available. Creating emergency income.");
+            $this->createEmergencyIncome($company, $date, $accounts, abs($cashBalance));
+        }
+    }
+
+    /**
+     * Create emergency income when both cash and receivables are low
+     */
+    private function createEmergencyIncome($company, $date, $accounts, $requiredAmount)
+    {
+        $this->command->info("Both cash and receivables are low. Creating emergency income transaction for IDR " . number_format($requiredAmount, 0, ',', '.'));
+        
+        // Add buffer to the required amount
+        $incomeAmount = $requiredAmount + rand(1000000, 5000000);
+        
+        // Get appropriate accounts
+        $cashAccount = $accounts->where('code', '1000')->first(); // Cash
+        $incomeAccount = $accounts->where('code', '4100')->first(); // Other Income
+        
+        if (!$incomeAccount) {
+            $incomeAccount = $accounts->where('type', 'income')->first();
+        }
+        
+        if (!$cashAccount || !$incomeAccount) {
+            $this->command->warn("Cannot create emergency income: Required accounts not found");
+            return;
+        }
+        
+        // Create emergency income transaction
+        $incomeDate = $this->safeAddTime($date, 'hours', rand(1, 4)); // Emergency income happens after the transaction
+        
+        $income = Income::create([
+            'company_id' => $company->id,
+            'number' => 'EMG-' . $incomeDate->format('Ymd') . '-' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT),
+            'date' => $incomeDate,
+            'due_date' => $this->safeAddTime($incomeDate, 'days', rand(1, 30)),
+            'total' => $incomeAmount,
+            'paid' => true,
+            'status' => 'received',
+            'note' => 'Emergency income for cash balancing',
+            'customer_id' => null, // No specific customer for emergency income
+            'receipt_account_id' => $cashAccount->id,
+            'description' => 'Emergency income to balance cash account',
+        ]);
+        
+        // Create income detail
+        if ($incomeAccount) {
+            IncomeDetail::create([
+                'income_id' => $income->id,
+                'account_id' => $incomeAccount->id,
+                'value' => $incomeAmount,
+                'description' => 'Emergency income for cash balancing',
+            ]);
+        }
+        
+        // Create GL entry
+        $this->createGLEntry($company, $incomeDate, 'income', $incomeAmount, $income->number, $accounts, [
+            ['account' => '1000', 'type' => 'debit', 'value' => $incomeAmount, 'description' => 'Emergency cash injection'],
+            ['account' => '4100', 'type' => 'credit', 'value' => $incomeAmount, 'description' => 'Emergency income received'],
+        ], "Emergency income for cash balancing");
+        
+        // Update account balances
+        $cashAccount->update(['balance' => $cashAccount->balance + $incomeAmount]);
+        
+        $this->command->info("Created emergency income: IDR " . number_format($incomeAmount, 0, ',', '.') . ". New cash balance: IDR " . number_format($cashAccount->balance, 0, ',', '.'));
+        $this->command->info("Emergency income received at: " . $incomeDate->format('Y-m-d H:i:s'));
     }
 
     /**
@@ -1207,7 +1471,7 @@ class TransactionDataSeeder extends Seeder
             'company_id' => $company->id,
             'number' => 'MNT-' . $date->format('Ymd') . '-' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT),
             'date' => $date,
-            'due_date' => $date->copy()->addDays(rand(1, 30)),
+            'due_date' => $this->safeAddTime($date, 'days', rand(1, 30)),
             'total' => $maintenanceAmount,
             'paid' => true,
             'status' => 'paid',
@@ -1306,5 +1570,90 @@ class TransactionDataSeeder extends Seeder
     private function getAccounts($company)
     {
         return Account::where('company_id', $company->id)->get();
+    }
+
+    /**
+     * Show final account balances after all seeding is complete
+     */
+    private function showFinalAccountBalances($company, $accounts)
+    {
+        $this->command->info('=== FINAL ACCOUNT BALANCES ===');
+        
+        // Group accounts by type for better organization
+        $accountTypes = ['asset', 'liability', 'equity', 'revenue', 'expense'];
+        
+        foreach ($accountTypes as $type) {
+            $typeAccounts = $accounts->where('type', $type);
+            if ($typeAccounts->count() > 0) {
+                $this->command->info("--- {$type} ACCOUNTS ---");
+                foreach ($typeAccounts as $account) {
+                    $balance = $account->balance;
+                    $status = $balance >= 0 ? '✓' : '⚠';
+                    $this->command->info("{$status} {$account->name} ({$account->code}): IDR " . number_format($balance, 0, ',', '.'));
+                }
+            }
+        }
+        
+        // Highlight cash account status
+        $cashAccount = $accounts->where('code', '1000')->first();
+        if ($cashAccount) {
+            $this->command->info('');
+            if ($cashAccount->balance >= 0) {
+                $this->command->info("✅ Cash account is balanced: IDR " . number_format($cashAccount->balance, 0, ',', '.'));
+            } else {
+                $this->command->warn("❌ Cash account is still negative: IDR " . number_format($cashAccount->balance, 0, ',', '.'));
+            }
+        }
+        
+        // Validate that all transaction dates are within 2024
+        $this->validateAllDatesIn2024($company);
+        
+        $this->command->info('=== END FINAL BALANCES ===');
+    }
+
+    /**
+     * Validate that all transaction dates are within 2024
+     */
+    private function validateAllDatesIn2024($company)
+    {
+        $this->command->info('=== DATE VALIDATION SUMMARY ===');
+        
+        // Check purchase orders
+        $poCount = PurchaseOrder::where('company_id', $company->id)->count();
+        $poInvalidDates = PurchaseOrder::where('company_id', $company->id)
+            ->whereYear('created_at', '!=', 2024)
+            ->count();
+        
+        // Check sales orders
+        $soCount = SalesOrder::where('company_id', $company->id)->count();
+        $soInvalidDates = SalesOrder::where('company_id', $company->id)
+            ->whereYear('created_at', '!=', 2024)
+            ->count();
+        
+        // Check internal transfers
+        $itCount = InternalTransfer::where('company_id', $company->id)->count();
+        $itInvalidDates = InternalTransfer::where('company_id', $company->id)
+            ->whereYear('date', '!=', 2024)
+            ->count();
+        
+        // Check general ledgers
+        $glCount = GeneralLedger::where('company_id', $company->id)->count();
+        $glInvalidDates = GeneralLedger::where('company_id', $company->id)
+            ->whereYear('date', '!=', 2024)
+            ->count();
+        
+        $this->command->info("Purchase Orders: {$poCount} total, {$poInvalidDates} outside 2024");
+        $this->command->info("Sales Orders: {$soCount} total, {$soInvalidDates} outside 2024");
+        $this->command->info("Internal Transfers: {$itCount} total, {$itInvalidDates} outside 2024");
+        $this->command->info("General Ledgers: {$glCount} total, {$glInvalidDates} outside 2024");
+        
+        $totalInvalid = $poInvalidDates + $soInvalidDates + $itInvalidDates + $glInvalidDates;
+        if ($totalInvalid === 0) {
+            $this->command->info("✅ All transaction dates are within 2024");
+        } else {
+            $this->command->warn("⚠️  {$totalInvalid} transactions have dates outside 2024");
+        }
+        
+        $this->command->info('=== END DATE VALIDATION ===');
     }
 }

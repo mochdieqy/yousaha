@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
             InitialStockSeeder::class,
             EmployeeSeeder::class,
             TransactionDataSeeder::class,
+            AIEvaluationSeeder::class,
         ]);
     }
 }

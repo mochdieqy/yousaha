@@ -25,6 +25,7 @@ class RolePermissionSeeder extends Seeder
         $this->createFinancePermissions();
         $this->createHRPermissions();
         $this->createCompanyPermissions();
+        $this->createAIEvaluationPermissions();
 
         // Create roles
         $this->createRoles();
@@ -184,6 +185,15 @@ class RolePermissionSeeder extends Seeder
         Permission::create(['name' => 'company.manage-employee-roles']);
     }
 
+    private function createAIEvaluationPermissions()
+    {
+        // AI Evaluation permissions
+        Permission::create(['name' => 'ai-evaluation.view']);
+        Permission::create(['name' => 'ai-evaluation.create']);
+        Permission::create(['name' => 'ai-evaluation.edit']);
+        Permission::create(['name' => 'ai-evaluation.delete']);
+    }
+
     private function createRoles()
     {
         // Company Owner - Has all permissions
@@ -199,6 +209,7 @@ class RolePermissionSeeder extends Seeder
             'incomes.view', 'incomes.create', 'incomes.edit',
             'internal-transfers.view', 'internal-transfers.create', 'internal-transfers.edit',
             'assets.view', 'assets.create', 'assets.edit',
+            'ai-evaluation.view', 'ai-evaluation.create',
             'company.view'
         ]);
 
@@ -210,6 +221,7 @@ class RolePermissionSeeder extends Seeder
             'sales-orders.view', 'sales-orders.create', 'sales-orders.edit', 'sales-orders.approve',
             'sales-orders.generate-quotation', 'sales-orders.generate-invoice',
             'deliveries.view', 'deliveries.create', 'deliveries.edit',
+            'ai-evaluation.view', 'ai-evaluation.create',
             'company.view'
         ]);
 
@@ -220,6 +232,7 @@ class RolePermissionSeeder extends Seeder
             'suppliers.view', 'suppliers.create', 'suppliers.edit',
             'purchase-orders.view', 'purchase-orders.create', 'purchase-orders.edit', 'purchase-orders.approve',
             'receipts.view', 'receipts.create', 'receipts.edit',
+            'ai-evaluation.view', 'ai-evaluation.create',
             'company.view'
         ]);
 
@@ -242,6 +255,7 @@ class RolePermissionSeeder extends Seeder
             'attendances.view', 'attendances.create', 'attendances.edit', 'attendances.approve',
             'time-offs.view', 'time-offs.create', 'time-offs.edit', 'time-offs.approve',
             'payrolls.view', 'payrolls.create', 'payrolls.edit',
+            'ai-evaluation.view', 'ai-evaluation.create',
             'company.view', 'company.manage-employees', 'company.invite-employees'
         ]);
 
@@ -273,6 +287,7 @@ class RolePermissionSeeder extends Seeder
             'employees.view',
             'attendances.view',
             'time-offs.view',
+            'ai-evaluation.view',
             'company.view'
         ]);
     }
