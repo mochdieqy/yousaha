@@ -307,20 +307,6 @@
                         </div>
                     </div>
                     
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="alert {{ ($totalAssets == ($totalLiabilities + $totalEquity)) ? 'alert-success' : 'alert-warning' }}">
-                                <h6 class="mb-0">
-                                    <i class="fas {{ ($totalAssets == ($totalLiabilities + $totalEquity)) ? 'fa-check-circle' : 'fa-exclamation-triangle' }} me-2"></i>
-                                    @if($totalAssets == ($totalLiabilities + $totalEquity))
-                                        Balance Sheet is balanced: Assets = Liabilities + Equity
-                                    @else
-                                        Balance Sheet is not balanced. Please review the data.
-                                    @endif
-                                </h6>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>

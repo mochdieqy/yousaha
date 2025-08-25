@@ -279,17 +279,6 @@
             </div>
         </div>
         
-        <div style="margin-top: 20px; text-align: center;">
-            @if($totalAssets == ($totalLiabilities + $totalEquity))
-                <div style="color: #28a745; font-weight: bold; font-size: 12px;">
-                    ✓ Balance Sheet is balanced: Assets = Liabilities + Equity
-                </div>
-            @else
-                <div style="color: #dc3545; font-weight: bold; font-size: 12px;">
-                    ⚠ Balance Sheet is not balanced. Please review the data.
-                </div>
-            @endif
-        </div>
     </div>
 
     <div class="footer">
