@@ -63,15 +63,36 @@ class FinancialReportController extends Controller
             ->orderBy('code')
             ->get();
 
+        // Get revenue and expense accounts for net income calculation
+        $revenueAccounts = Account::where('company_id', $company->id)
+            ->where('type', 'revenue')
+            ->orderBy('code')
+            ->get();
+
+        $expenseAccounts = Account::where('company_id', $company->id)
+            ->where('type', 'expense')
+            ->orderBy('code')
+            ->get();
+
         // Calculate balances for the period
         $this->calculateAccountBalances($assets, $startDate, $endDate);
         $this->calculateAccountBalances($liabilities, $startDate, $endDate);
         $this->calculateAccountBalances($equity, $startDate, $endDate);
+        $this->calculateAccountBalances($revenueAccounts, $startDate, $endDate);
+        $this->calculateAccountBalances($expenseAccounts, $startDate, $endDate);
 
-        // Calculate totals
+        // Calculate net income from revenue and expenses
+        $totalRevenue = $revenueAccounts->sum('period_balance');
+        $totalExpenses = $expenseAccounts->sum('period_balance');
+        $netIncome = $totalRevenue - $totalExpenses;
+
+        // Calculate totals with proper accounting sign conventions
+        // Assets: positive (what we own)
+        // Liabilities: negative (what we owe)
+        // Equity: positive (what we own minus what we owe)
         $totalAssets = $assets->sum('period_balance');
-        $totalLiabilities = $liabilities->sum('period_balance');
-        $totalEquity = $equity->sum('period_balance');
+        $totalLiabilities = -abs($liabilities->sum('period_balance')); // Make liabilities negative for balance sheet
+        $totalEquity = $equity->sum('period_balance') + $netIncome; // Include net income in equity
 
         $data = [
             'company' => $company,
@@ -80,9 +101,12 @@ class FinancialReportController extends Controller
             'assets' => $assets,
             'liabilities' => $liabilities,
             'equity' => $equity,
+            'revenueAccounts' => $revenueAccounts,
+            'expenseAccounts' => $expenseAccounts,
             'totalAssets' => $totalAssets,
             'totalLiabilities' => $totalLiabilities,
             'totalEquity' => $totalEquity,
+            'netIncome' => $netIncome,
         ];
 
         if ($request->format === 'pdf') {
@@ -223,26 +247,10 @@ class FinancialReportController extends Controller
     {
         foreach ($accounts as $account) {
             // Get opening balance (balance before start date)
-            $openingBalance = GeneralLedgerDetail::whereHas('generalLedger', function ($query) use ($startDate) {
-                $query->where('company_id', auth()->user()->currentCompany->id)
-                    ->where('date', '<', $startDate);
-            })
-            ->where('account_id', $account->id)
-            ->get()
-            ->sum(function ($detail) use ($account) {
-                return AccountBalanceService::calculateEntryImpact($detail, $account->type);
-            });
+            $openingBalance = AccountBalanceService::calculateOpeningBalance($account, $startDate);
 
             // Get period transactions
-            $periodTransactions = GeneralLedgerDetail::whereHas('generalLedger', function ($query) use ($startDate, $endDate) {
-                $query->where('company_id', auth()->user()->currentCompany->id)
-                    ->whereBetween('date', [$startDate, $endDate]);
-            })
-            ->where('account_id', $account->id)
-            ->get()
-            ->sum(function ($detail) use ($account) {
-                return AccountBalanceService::calculateEntryImpact($detail, $account->type);
-            });
+            $periodTransactions = AccountBalanceService::calculateBalanceFromGeneralLedgerInRange($account, $startDate, $endDate);
 
             // Calculate period balance
             $account->opening_balance = $openingBalance;

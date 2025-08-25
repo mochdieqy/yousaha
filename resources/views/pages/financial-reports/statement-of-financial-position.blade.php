@@ -134,9 +134,9 @@
                                 <tr>
                                     <td><strong>{{ $liability->code }}</strong></td>
                                     <td>{{ $liability->name }}</td>
-                                    <td class="text-end">{{ number_format($liability->opening_balance, 2) }}</td>
-                                    <td class="text-end">{{ number_format($liability->period_balance - $liability->opening_balance, 2) }}</td>
-                                    <td class="text-end"><strong>{{ number_format($liability->period_balance, 2) }}</strong></td>
+                                    <td class="text-end">{{ number_format(-abs($liability->opening_balance), 2) }}</td>
+                                    <td class="text-end">{{ number_format(-abs($liability->period_balance - $liability->opening_balance), 2) }}</td>
+                                    <td class="text-end"><strong>{{ number_format(-abs($liability->period_balance), 2) }}</strong></td>
                                 </tr>
                                 @empty
                                 <tr>
@@ -240,6 +240,72 @@
                     </div>
                     
                     <hr>
+                    
+                    <!-- Net Income Calculation Section -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">Net Income Calculation (Included in Equity)</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card border-info">
+                                        <div class="card-header bg-info text-white">
+                                            <h6 class="mb-0">Revenue</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            @foreach($revenueAccounts as $revenue)
+                                                <div class="d-flex justify-content-between">
+                                                    <span>{{ $revenue->name }}</span>
+                                                    <span class="text-success">{{ number_format($revenue->period_balance, 2) }}</span>
+                                                </div>
+                                            @endforeach
+                                            <hr>
+                                            <div class="d-flex justify-content-between fw-bold">
+                                                <span>Total Revenue</span>
+                                                <span class="text-success">{{ number_format($revenueAccounts->sum('period_balance'), 2) }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card border-warning">
+                                        <div class="card-header bg-warning text-dark">
+                                            <h6 class="mb-0">Expenses</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            @foreach($expenseAccounts as $expense)
+                                                <div class="d-flex justify-content-between">
+                                                    <span>{{ $expense->name }}</span>
+                                                    <span class="text-danger">{{ number_format($expense->period_balance, 2) }}</span>
+                                                </div>
+                                            @endforeach
+                                            <hr>
+                                            <div class="d-flex justify-content-between fw-bold">
+                                                <span>Total Expenses</span>
+                                                <span class="text-danger">{{ number_format($expenseAccounts->sum('period_balance'), 2) }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <div class="card border-success">
+                                        <div class="card-header bg-success text-white">
+                                            <h6 class="mb-0">Net Income</h6>
+                                        </div>
+                                        <div class="card-body text-center">
+                                            <h4 class="text-{{ $netIncome >= 0 ? 'success' : 'danger' }}">
+                                                {{ number_format($netIncome, 2) }}
+                                            </h4>
+                                            <small class="text-muted">
+                                                Net Income = Total Revenue - Total Expenses
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     
                     <div class="row">
                         <div class="col-12">

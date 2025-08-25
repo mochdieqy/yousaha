@@ -190,9 +190,9 @@
             <tr>
                 <td><strong>{{ $liability->code }}</strong></td>
                 <td>{{ $liability->name }}</td>
-                <td class="text-end">{{ number_format($liability->opening_balance, 2) }}</td>
-                <td class="text-end">{{ number_format($liability->period_balance - $liability->opening_balance, 2) }}</td>
-                <td class="text-end"><strong>{{ number_format($liability->period_balance, 2) }}</strong></td>
+                <td class="text-end">{{ number_format(-abs($liability->opening_balance), 2) }}</td>
+                <td class="text-end">{{ number_format(-abs($liability->period_balance - $liability->opening_balance), 2) }}</td>
+                <td class="text-end"><strong>{{ number_format(-abs($liability->period_balance), 2) }}</strong></td>
             </tr>
             @empty
             <tr>
@@ -257,6 +257,25 @@
             <div class="summary-item">
                 <div class="summary-value text-success">{{ number_format($totalEquity, 2) }}</div>
                 <div class="summary-label">Total Equity</div>
+            </div>
+        </div>
+        
+        <!-- Net Income Calculation -->
+        <div style="margin-top: 20px; border-top: 1px solid #ddd; padding-top: 20px;">
+            <h4 style="text-align: center; margin-bottom: 15px;">Net Income Calculation (Included in Equity)</h4>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <div style="flex: 1; text-align: center;">
+                    <div style="font-weight: bold; color: #28a745;">Total Revenue</div>
+                    <div style="font-size: 14px;">{{ number_format($revenueAccounts->sum('period_balance'), 2) }}</div>
+                </div>
+                <div style="flex: 1; text-align: center;">
+                    <div style="font-weight: bold; color: #dc3545;">Total Expenses</div>
+                    <div style="font-size: 14px;">{{ number_format($expenseAccounts->sum('period_balance'), 2) }}</div>
+                </div>
+                <div style="flex: 1; text-align: center;">
+                    <div style="font-weight: bold; color: #007bff;">Net Income</div>
+                    <div style="font-size: 16px; color: {{ $netIncome >= 0 ? '#28a745' : '#dc3545' }};">{{ number_format($netIncome, 2) }}</div>
+                </div>
             </div>
         </div>
         

@@ -76,9 +76,9 @@
                                     </td>
                                     <td class="text-end">
                                         @if($account->type === 'Asset' || $account->type === 'Expense')
-                                            <span class="text-danger">Rp {{ number_format($account->balance, 0, ',', '.') }}</span>
+                                            <span class="text-danger">Rp {{ number_format($account->calculated_balance, 0, ',', '.') }}</span>
                                         @else
-                                            <span class="text-success">Rp {{ number_format($account->balance, 0, ',', '.') }}</span>
+                                            <span class="text-success">Rp {{ number_format($account->calculated_balance, 0, ',', '.') }}</span>
                                         @endif
                                     </td>
                                     <td>

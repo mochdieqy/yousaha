@@ -10,67 +10,6 @@ use Illuminate\Support\Facades\Log;
 class AccountBalanceService
 {
     /**
-     * Update account balance based on a transaction
-     */
-    public static function updateAccountBalance(Account $account, float $amount, string $entryType): void
-    {
-        try {
-            $currentBalance = $account->balance;
-            $newBalance = self::calculateNewBalance($account->type, $currentBalance, $amount, $entryType);
-            
-            $account->update(['balance' => $newBalance]);
-            
-            Log::info("Updated account {$account->code} ({$account->type}) balance: {$currentBalance} -> {$newBalance} ({$entryType} {$amount})");
-            
-        } catch (\Exception $e) {
-            Log::error("Failed to update account balance for {$account->code}: " . $e->getMessage());
-            throw $e;
-        }
-    }
-
-    /**
-     * Calculate new balance based on account type and entry type
-     */
-    private static function calculateNewBalance(string $accountType, float $currentBalance, float $amount, string $entryType): float
-    {
-        $isDebit = $entryType === 'debit';
-        
-        switch (strtolower($accountType)) {
-            case 'asset':
-            case 'expense':
-                // Assets and Expenses increase with debit, decrease with credit
-                return $isDebit ? $currentBalance + $amount : $currentBalance - $amount;
-                
-            case 'liability':
-            case 'equity':
-            case 'revenue':
-                // Liabilities, Equity, and Revenue decrease with debit, increase with credit
-                return $isDebit ? $currentBalance - $amount : $currentBalance + $amount;
-                
-            default:
-                Log::warning("Unknown account type: {$accountType}, using default calculation");
-                return $isDebit ? $currentBalance + $amount : $currentBalance - $amount;
-        }
-    }
-
-    /**
-     * Recalculate balance for a specific account from general ledger
-     */
-    public static function recalculateAccountBalance(Account $account): void
-    {
-        try {
-            $balance = self::calculateBalanceFromGeneralLedger($account);
-            $account->update(['balance' => $balance]);
-            
-            Log::info("Recalculated account {$account->code} ({$account->type}) balance: {$balance}");
-            
-        } catch (\Exception $e) {
-            Log::error("Failed to recalculate balance for account {$account->code}: " . $e->getMessage());
-            throw $e;
-        }
-    }
-
-    /**
      * Calculate balance from general ledger for a specific account
      */
     public static function calculateBalanceFromGeneralLedger(Account $account): float
@@ -124,72 +63,40 @@ class AccountBalanceService
     }
 
     /**
-     * Recalculate all account balances for a company
+     * Calculate balance from general ledger for a specific account within a date range
      */
-    public static function recalculateAllAccountBalances(int $companyId): void
+    public static function calculateBalanceFromGeneralLedgerInRange(Account $account, $startDate, $endDate): float
     {
-        try {
-            $accounts = Account::where('company_id', $companyId)->get();
-            
-            foreach ($accounts as $account) {
-                self::recalculateAccountBalance($account);
-            }
-            
-            Log::info("Recalculated all account balances for company {$companyId}");
-            
-        } catch (\Exception $e) {
-            Log::error("Failed to recalculate all account balances for company {$companyId}: " . $e->getMessage());
-            throw $e;
+        $glDetails = GeneralLedgerDetail::whereHas('generalLedger', function($query) use ($account, $startDate, $endDate) {
+            $query->where('company_id', $account->company_id)
+                  ->whereBetween('date', [$startDate, $endDate]);
+        })->where('account_id', $account->id)->get();
+
+        $balance = 0;
+
+        foreach ($glDetails as $detail) {
+            $balance += self::calculateEntryImpact($detail, $account->type);
         }
+
+        return $balance;
     }
 
     /**
-     * Update account balances for a general ledger transaction
+     * Calculate opening balance (balance before a specific date)
      */
-    public static function updateBalancesForTransaction(int $companyId, array $entries): void
+    public static function calculateOpeningBalance(Account $account, $date): float
     {
-        try {
-            DB::beginTransaction();
-            
-            foreach ($entries as $entry) {
-                $account = Account::find($entry['account_id']);
-                if ($account && $account->company_id === $companyId) {
-                    self::updateAccountBalance($account, $entry['value'], $entry['type']);
-                }
-            }
-            
-            DB::commit();
-            
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error("Failed to update balances for transaction: " . $e->getMessage());
-            throw $e;
-        }
-    }
+        $glDetails = GeneralLedgerDetail::whereHas('generalLedger', function($query) use ($account, $date) {
+            $query->where('company_id', $account->company_id)
+                  ->where('date', '<', $date);
+        })->where('account_id', $account->id)->get();
 
-    /**
-     * Reverse account balances for a deleted transaction
-     */
-    public static function reverseBalancesForTransaction(int $companyId, array $entries): void
-    {
-        try {
-            DB::beginTransaction();
-            
-            foreach ($entries as $entry) {
-                $account = Account::find($entry['account_id']);
-                if ($account && $account->company_id === $companyId) {
-                    // Reverse the entry type
-                    $reversedType = $entry['type'] === 'debit' ? 'credit' : 'debit';
-                    self::updateAccountBalance($account, $entry['value'], $reversedType);
-                }
-            }
-            
-            DB::commit();
-            
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error("Failed to reverse balances for transaction: " . $e->getMessage());
-            throw $e;
+        $balance = 0;
+
+        foreach ($glDetails as $detail) {
+            $balance += self::calculateEntryImpact($detail, $account->type);
         }
+
+        return $balance;
     }
 }

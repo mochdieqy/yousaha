@@ -19,7 +19,6 @@ class Account extends Model
         'code',
         'name',
         'type',
-        'balance',
     ];
 
     /**
@@ -28,7 +27,7 @@ class Account extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'balance' => 'decimal:2',
+        // No casts needed since we're using calculated balances
     ];
 
     /**
@@ -153,5 +152,14 @@ class Account extends Model
         }
         
         return null;
+    }
+
+    /**
+     * Get the calculated balance from general ledger transactions.
+     * This provides real-time balance calculation instead of using the stored balance field.
+     */
+    public function getCalculatedBalanceAttribute(): float
+    {
+        return \App\Services\AccountBalanceService::calculateBalanceFromGeneralLedger($this);
     }
 }

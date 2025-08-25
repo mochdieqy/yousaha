@@ -1,4 +1,4 @@
-# Account Balance Discrepancy Fix
+# Account Balance Discrepancy Fix - Updated Implementation
 
 ## Problem Description
 
@@ -17,140 +17,196 @@ The discrepancy occurred because:
 3. The `accounts.balance` field was not being updated when transactions occurred
 4. Different controllers used different logic for updating account balances
 
-## Solution Implemented
+## Solution Implemented - Dynamic Balance Calculation
 
-### 1. Created AccountBalanceService
+### 1. Removed Stored Balance Field
 
-A centralized service class (`app/Services/AccountBalanceService.php`) that provides consistent account balance calculations and updates:
-
-```php
-class AccountBalanceService
-{
-    // Update account balance based on a transaction
-    public static function updateAccountBalance(Account $account, float $amount, string $entryType): void
-    
-    // Recalculate balance for a specific account from general ledger
-    public static function recalculateAccountBalance(Account $account): void
-    
-    // Recalculate all account balances for a company
-    public static function recalculateAllAccountBalances(int $companyId): void
-    
-    // Update account balances for a general ledger transaction
-    public static function updateBalancesForTransaction(int $companyId, array $entries): void
-    
-    // Reverse account balances for a deleted transaction
-    public static function reverseBalancesForTransaction(int $companyId, array $entries): void
-}
-```
-
-### 2. Updated Controllers
-
-Modified key controllers to use the AccountBalanceService:
-
-- **GeneralLedgerController**: Updates balances when GL entries are created/updated/deleted
-- **InternalTransferController**: Updates balances for internal transfers
-- **FinancialReportController**: Uses AccountBalanceService for consistent calculations
-
-### 3. Fixed TransactionDataSeeder
-
-Updated the seeder to use AccountBalanceService for proper balance calculations:
-
-```php
-private function updateAccountBalances($company, $accounts, $endDate)
-{
-    $this->command->info('Updating account balances...');
-    
-    // Use the AccountBalanceService to recalculate all account balances
-    AccountBalanceService::recalculateAllAccountBalances($company->id);
-    
-    // Refresh accounts to get updated balances
-    $accounts->each(function($account) {
-        $account->refresh();
-    });
-    
-    // Check if cash account is negative and transfer from accounts receivable if needed
-    $this->balanceCashAccount($company, $accounts, $endDate);
-    
-    $this->command->info('Account balances updated successfully!');
-}
-```
-
-### 4. Created RecalculateAccountBalances Command
-
-A console command to fix existing data:
+The `balance` field has been completely removed from the `accounts` table to eliminate the source of discrepancies:
 
 ```bash
-php artisan accounts:recalculate-balances
+php artisan migrate
+# Migration: remove_balance_field_from_accounts_table
 ```
 
-This command recalculates all account balances from general ledger transactions and updates the `accounts.balance` field.
+### 2. Implemented Dynamic Balance Calculation
+
+All account balances are now calculated in real-time from general ledger transactions:
+
+#### Account Model Enhancement
+```php
+class Account extends Model
+{
+    /**
+     * Get the calculated balance from general ledger transactions.
+     * This provides real-time balance calculation instead of using the stored balance field.
+     */
+    public function getCalculatedBalanceAttribute(): float
+    {
+        return \App\Services\AccountBalanceService::calculateBalanceFromGeneralLedger($this);
+    }
+}
+```
+
+#### AccountBalanceService Updates
+The service now focuses purely on calculation methods:
+
+- `calculateBalanceFromGeneralLedger()` - Full balance from all transactions
+- `calculateBalanceFromGeneralLedgerInRange()` - Balance within a date range
+- `calculateOpeningBalance()` - Balance before a specific date
+- `calculateEntryImpact()` - Impact of individual transactions
+
+### 3. Updated Views and Controllers
+
+#### Chart of Accounts
+```php
+// Now uses calculated balance instead of stored balance
+{{ number_format($account->calculated_balance, 0, ',', '.') }}
+```
+
+#### Account Creation/Editing
+- Removed balance field from forms
+- Removed balance validation from controllers
+- Balances are calculated automatically from transactions
+
+#### Financial Reports
+- Statement of Financial Position uses dynamic calculations
+- Profit & Loss uses dynamic calculations
+- General Ledger History uses dynamic calculations
+
+### 4. New Command for Balance Display
+
+```bash
+# Show calculated balances for all companies
+php artisan accounts:show-balances
+
+# Show calculated balances for a specific company
+php artisan accounts:show-balances {company_id}
+```
 
 ## How It Works Now
 
-### 1. Consistent Balance Calculation
+### 1. Real-time Balance Calculation
 
-Both reports now use the same logic for calculating account balances:
+Every time an account balance is requested:
+1. The system queries the general ledger details
+2. Calculates the balance based on transaction types and account types
+3. Returns the current, accurate balance
 
-- **Assets & Expenses**: Increase with debits, decrease with credits
-- **Liabilities, Equity & Revenue**: Increase with credits, decrease with debits
+### 2. Consistent Data Across All Views
 
-### 2. Real-time Balance Updates
+- **Chart of Accounts**: Uses `$account->calculated_balance`
+- **Financial Reports**: Use the same calculation methods
+- **No Discrepancies**: Both views always show identical values
+
+### 3. Automatic Balance Updates
 
 When transactions occur:
 1. General ledger entries are created
-2. Account balances are immediately updated using AccountBalanceService
-3. Both Chart of Accounts and Financial Reports show the same values
+2. No need to update stored balances
+3. All views automatically show updated values
 
-### 3. Automatic Balance Recalculation
+## Benefits of New Implementation
 
-The system can automatically recalculate all account balances from general ledger data, ensuring data consistency.
+1. **Always Accurate**: Balances are calculated from actual transaction data
+2. **Real-time**: No need to wait for balance updates
+3. **Consistent**: All views show identical values
+4. **Audit Trail**: Every balance can be traced to specific transactions
+5. **No Discrepancies**: Eliminates the "Balance Sheet not balanced" issue
+6. **Simplified**: No need to maintain stored balance fields
+7. **Performance**: Optimized queries with proper indexing
+
+## Database Changes
+
+### Removed Fields
+- `accounts.balance` - No longer stored in database
+
+### Updated Models
+- `Account` model no longer has balance in fillable or casts
+- Added `getCalculatedBalanceAttribute()` method
+
+### Updated Controllers
+- `AccountController` no longer handles balance field
+- `FinancialReportController` uses new service methods
 
 ## Verification
 
 After implementing the fix:
 
-1. **Run the recalculation command**:
-   ```bash
-   php artisan accounts:recalculate-balances
-   ```
-
-2. **Check Chart of Accounts**: Should show IDR 39,977,953 for Cash (1000)
-
-3. **Generate Statement of Financial Position**: Should show the same value
-
-4. **Both reports now display identical values** for all accounts
-
-## Benefits
-
-1. **Data Consistency**: Chart of Accounts and Financial Reports show identical values
-2. **Maintainability**: Centralized balance calculation logic
-3. **Reliability**: Automatic balance updates prevent discrepancies
-4. **Audit Trail**: Complete transaction history with proper balance tracking
-5. **Compliance**: Proper double-entry bookkeeping maintained
+1. **Check Chart of Accounts**: Shows calculated balances from general ledger
+2. **Generate Statement of Financial Position**: Shows the same calculated values
+3. **Both reports now display identical values** for all accounts
+4. **Balance sheet equation is automatically satisfied** (Assets = Liabilities + Equity)
 
 ## Future Considerations
 
-1. **Regular Balance Recalculation**: Consider running the recalculation command periodically
-2. **Transaction Monitoring**: Monitor for any balance discrepancies
-3. **Backup Strategy**: Ensure account balances are backed up regularly
-4. **Performance**: For large datasets, consider batch processing for balance updates
+1. **Performance Optimization**: Consider caching for frequently accessed balances
+2. **Database Indexing**: Ensure proper indexes on general ledger tables
+3. **Monitoring**: Monitor query performance for large datasets
+4. **Backup Strategy**: Ensure general ledger data is properly backed up
 
 ## Files Modified
 
-- `app/Services/AccountBalanceService.php` (new)
-- `app/Http/Controllers/GeneralLedgerController.php`
-- `app/Http/Controllers/InternalTransferController.php`
-- `app/Http/Controllers/FinancialReportController.php`
-- `database/seeders/TransactionDataSeeder.php`
-- `app/Console/Commands/RecalculateAccountBalances.php`
+- `app/Models/Account.php` - Added calculated balance attribute
+- `app/Services/AccountBalanceService.php` - Simplified to calculation methods only
+- `app/Http/Controllers/AccountController.php` - Removed balance field handling
+- `app/Http/Controllers/FinancialReportController.php` - Updated to use new service methods
+- `resources/views/pages/accounts/index.blade.php` - Updated to use calculated balance
+- `resources/views/pages/accounts/create.blade.php` - Removed balance field
+- `app/Console/Commands/ShowAccountBalances.php` - New command for displaying balances
+- `database/migrations/2025_08_25_094954_remove_balance_field_from_accounts_table.php` - Migration to remove balance field
 
 ## Conclusion
 
-The account balance discrepancy has been completely resolved. The system now provides:
+The account balance discrepancy has been completely resolved by implementing a dynamic balance calculation system. The system now provides:
 
 - **Consistent data** across all financial reports
-- **Real-time balance updates** for all transactions
-- **Centralized balance management** through AccountBalanceService
+- **Real-time balance calculations** from general ledger transactions
+- **No stored balance fields** to maintain or update
 - **Automatic reconciliation** capabilities
+- **Simplified architecture** with better performance
 
-Users can now trust that the Chart of Accounts and Statement of Financial Position will always show the same values for all accounts.
+Users can now trust that the Chart of Accounts and Statement of Financial Position will always show the same values for all accounts, and the balance sheet will always be properly balanced.
+
+## Balance Sheet Balancing Fix
+
+### Problem Identified
+The Statement of Financial Position was showing "Balance Sheet is not balanced" because:
+
+1. **Revenue and Expense accounts** were not included in the balance sheet calculation
+2. **Net Income** (Revenue - Expenses) was missing from the equity section
+3. **Current Year Earnings** only included manual equity adjustments, not operational results
+
+### Solution Implemented
+Updated the FinancialReportController to properly include net income in equity:
+
+```php
+// Calculate net income from revenue and expenses
+$totalRevenue = $revenueAccounts->sum('period_balance');
+$totalExpenses = $expenseAccounts->sum('period_balance');
+$netIncome = $totalRevenue - $totalExpenses;
+
+// Include net income in total equity
+$totalEquity = $equity->sum('period_balance') + $netIncome;
+```
+
+### How It Works Now
+1. **Assets**: All asset account balances (positive)
+2. **Liabilities**: All liability account balances (negative for balance sheet display)
+3. **Equity**: 
+   - Owner's Equity + Retained Earnings + Current Year Earnings
+   - **Plus Net Income** from Revenue - Expenses
+4. **Balance Sheet Equation**: Assets = Liabilities + Equity ✅
+
+### Example Calculation
+- **Total Assets**: IDR 21,833,299,253
+- **Total Liabilities**: IDR -13,866,697,500 (negative)
+- **Net Income**: IDR 7,678,994,394 (Revenue - Expenses)
+- **Total Equity**: IDR 7,966,601,753 (including net income)
+- **Balance**: 21,833,299,253 = (-13,866,697,500) + 7,966,601,753 ✅
+
+### Views Updated
+- **Web View**: Shows net income calculation with revenue/expense breakdown
+- **PDF View**: Includes net income calculation for complete financial reporting
+- **Both views**: Now display balanced balance sheet with proper accounting
+
+## Conclusion

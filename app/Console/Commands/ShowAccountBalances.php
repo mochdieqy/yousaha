@@ -7,21 +7,21 @@ use App\Models\Company;
 use App\Models\Account;
 use App\Services\AccountBalanceService;
 
-class RecalculateAccountBalances extends Command
+class ShowAccountBalances extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'accounts:recalculate-balances {company_id? : The ID of the company to recalculate balances for}';
+    protected $signature = 'accounts:show-balances {company_id? : The ID of the company to show balances for}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Recalculate all account balances from general ledger transactions';
+    protected $description = 'Show calculated account balances from general ledger transactions';
 
     /**
      * Execute the console command.
@@ -37,7 +37,7 @@ class RecalculateAccountBalances extends Command
                 return 1;
             }
             
-            $this->recalculateCompanyBalances($company);
+            $this->showCompanyBalances($company);
         } else {
             $companies = Company::all();
             
@@ -47,36 +47,34 @@ class RecalculateAccountBalances extends Command
             }
             
             foreach ($companies as $company) {
-                $this->recalculateCompanyBalances($company);
+                $this->showCompanyBalances($company);
             }
         }
         
-        $this->info('Account balance recalculation completed successfully!');
+        $this->info('Account balance display completed successfully!');
         return 0;
     }
 
     /**
-     * Recalculate balances for a specific company
+     * Show calculated balances for a specific company
      */
-    private function recalculateCompanyBalances(Company $company)
+    private function showCompanyBalances(Company $company)
     {
-        $this->info("Recalculating account balances for company: {$company->name}");
+        $this->info("Showing calculated account balances for company: {$company->name}");
         
         try {
-            // Use the AccountBalanceService to recalculate all balances
-            AccountBalanceService::recalculateAllAccountBalances($company->id);
-            
-            // Get updated accounts to show results
+            // Get accounts to show calculated balances
             $accounts = Account::where('company_id', $company->id)->get();
             
-            $this->info("Successfully recalculated balances for {$accounts->count()} accounts:");
+            $this->info("Showing calculated balances for {$accounts->count()} accounts:");
             
             foreach ($accounts as $account) {
-                $this->line("  {$account->code} - {$account->name}: IDR " . number_format($account->balance, 0, ',', '.'));
+                $calculatedBalance = \App\Services\AccountBalanceService::calculateBalanceFromGeneralLedger($account);
+                $this->line("  {$account->code} - {$account->name}: IDR " . number_format($calculatedBalance, 0, ',', '.'));
             }
             
         } catch (\Exception $e) {
-            $this->error("Failed to recalculate balances for company {$company->name}: " . $e->getMessage());
+            $this->error("Failed to calculate balances for company {$company->name}: " . $e->getMessage());
         }
         
         $this->newLine();

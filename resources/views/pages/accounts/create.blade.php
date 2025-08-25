@@ -66,16 +66,6 @@
                             @enderror
                         </div>
 
-                        <div class="mb-3">
-                            <label for="balance" class="form-label">Opening Balance</label>
-                            <input type="number" step="0.01" class="form-control @error('balance') is-invalid @enderror" 
-                                   id="balance" name="balance" value="{{ old('balance', '0.00') }}">
-                            <div class="form-text">Enter the opening balance for this account (default: 0.00)</div>
-                            @error('balance')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
                         <div class="d-flex justify-content-between">
                             <a href="{{ route('accounts.index') }}" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left me-1"></i>Back

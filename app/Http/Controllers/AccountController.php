@@ -64,7 +64,6 @@ class AccountController extends Controller
             'code' => 'required|string|max:20|unique:accounts,code,NULL,id,company_id,' . $company->id,
             'name' => 'required|string|max:100',
             'type' => 'required|in:Asset,Liability,Equity,Revenue,Expense',
-            'balance' => 'required|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -77,7 +76,6 @@ class AccountController extends Controller
                 'code' => $request->code,
                 'name' => $request->name,
                 'type' => $request->type,
-                'balance' => $request->balance,
             ]);
 
             return redirect()->route('accounts.index')
@@ -143,7 +141,6 @@ class AccountController extends Controller
             'code' => 'required|string|max:20|unique:accounts,code,' . $account->id . ',id,company_id,' . $company->id,
             'name' => 'required|string|max:100',
             'type' => 'required|in:Asset,Liability,Equity,Revenue,Expense',
-            'balance' => 'required|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -155,7 +152,6 @@ class AccountController extends Controller
                 'code' => $request->code,
                 'name' => $request->name,
                 'type' => $request->type,
-                'balance' => $request->balance,
             ]);
 
             return redirect()->route('accounts.index')
