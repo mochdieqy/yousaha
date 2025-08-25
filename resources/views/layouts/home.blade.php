@@ -152,57 +152,6 @@
       <p>Mini ERP System</p>
     </div>
     <div class="list-group list-group-flush">
-      <!-- ERP Modules -->
-      @can('products.view')
-      <a href="{{ route('products.index') }}" class="list-group-item" style="background-color: #007bff; border: none;">
-        <i class="fas fa-boxes"></i> Products
-      </a>
-      @endcan
-      
-      @can('customers.view')
-      <a href="#" class="list-group-item" style="background-color: #007bff; border: none;">
-        <i class="fas fa-users"></i> Customers
-      </a>
-      @endcan
-      
-      @can('suppliers.view')
-      <a href="{{ route('suppliers.index') }}" class="list-group-item" style="background-color: #007bff; border: none;">
-        <i class="fas fa-building"></i> Suppliers
-      </a>
-      @endcan
-      
-      @can('warehouses.view')
-      <a href="{{ route('warehouses.index') }}" class="list-group-item" style="background-color: #007bff; border: none;">
-        <i class="fas fa-warehouse"></i> Warehouses
-      </a>
-      @endcan
-      
-      @can('sales-orders.view')
-      <a href="#" class="list-group-item" style="background-color: #007bff; border: none;">
-        <i class="fas fa-chart-line"></i> Sales Orders
-      </a>
-      @endcan
-      
-      @can('purchase-orders.view')
-      <a href="#" class="list-group-item" style="background-color: #007bff; border: none;">
-        <i class="fas fa-shopping-cart"></i> Purchase Orders
-      </a>
-      @endcan
-      
-      @can('general-ledger.view')
-      <a href="#" class="list-group-item" style="background-color: #007bff; border: none;">
-        <i class="fas fa-dollar-sign"></i> Finance
-      </a>
-      @endcan
-      
-      @can('employees.view')
-      <a href="#" class="list-group-item" style="background-color: #007bff; border: none;">
-        <i class="fas fa-users-cog"></i> HR
-      </a>
-      @endcan
-      
-      <hr style="border-color: rgba(255,255,255,0.2); margin: 15px 0;">
-      
       <!-- Additional Pages -->
       <a href="{{ route('additional-page.about') }}" class="list-group-item" style="background-color: #007bff; border: none;">
         <i class="fas fa-info-circle"></i> About Us

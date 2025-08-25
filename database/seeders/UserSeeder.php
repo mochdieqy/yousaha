@@ -54,6 +54,7 @@ class UserSeeder extends Seeder
             'marital_status' => 'married',
             'identity_number' => '1234567890',
             'address' => 'Jl. Owner Street No. 1, Jakarta',
+            'verify_at' => now(),
         ]);
 
         $role = Role::where('name', 'Company Owner')->first();
@@ -77,6 +78,7 @@ class UserSeeder extends Seeder
             'marital_status' => 'married',
             'identity_number' => '1234567891',
             'address' => 'Jl. Finance Street No. 2, Jakarta',
+            'verify_at' => now(),
         ]);
 
         $role = Role::where('name', 'Finance Manager')->first();
@@ -100,6 +102,7 @@ class UserSeeder extends Seeder
             'marital_status' => 'single',
             'identity_number' => '1234567892',
             'address' => 'Jl. Sales Street No. 3, Jakarta',
+            'verify_at' => now(),
         ]);
 
         $role = Role::where('name', 'Sales Manager')->first();
@@ -123,6 +126,7 @@ class UserSeeder extends Seeder
             'marital_status' => 'married',
             'identity_number' => '1234567893',
             'address' => 'Jl. Purchase Street No. 4, Jakarta',
+            'verify_at' => now(),
         ]);
 
         $role = Role::where('name', 'Purchase Manager')->first();
@@ -146,6 +150,7 @@ class UserSeeder extends Seeder
             'marital_status' => 'single',
             'identity_number' => '1234567894',
             'address' => 'Jl. Inventory Street No. 5, Jakarta',
+            'verify_at' => now(),
         ]);
 
         $role = Role::where('name', 'Inventory Manager')->first();
@@ -169,6 +174,7 @@ class UserSeeder extends Seeder
             'marital_status' => 'married',
             'identity_number' => '1234567895',
             'address' => 'Jl. HR Street No. 6, Jakarta',
+            'verify_at' => now(),
         ]);
 
         $role = Role::where('name', 'HR Manager')->first();
@@ -192,6 +198,7 @@ class UserSeeder extends Seeder
             'marital_status' => 'single',
             'identity_number' => '1234567896',
             'address' => 'Jl. Employee Street No. 7, Jakarta',
+            'verify_at' => now(),
         ]);
 
         $role = Role::where('name', 'Employee')->first();
@@ -215,6 +222,7 @@ class UserSeeder extends Seeder
             'marital_status' => 'single',
             'identity_number' => '1234567897',
             'address' => 'Jl. Viewer Street No. 8, Jakarta',
+            'verify_at' => now(),
         ]);
 
         $role = Role::where('name', 'Viewer')->first();
