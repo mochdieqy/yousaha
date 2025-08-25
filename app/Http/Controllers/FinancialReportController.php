@@ -11,6 +11,7 @@ use App\Models\GeneralLedgerDetail;
 use App\Models\Company;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use App\Services\AccountBalanceService;
 
 class FinancialReportController extends Controller
 {
@@ -229,9 +230,7 @@ class FinancialReportController extends Controller
             ->where('account_id', $account->id)
             ->get()
             ->sum(function ($detail) use ($account) {
-                $impact = $this->calculateEntryImpact($detail, $account->type);
-                \Log::info("Opening balance calculation for {$account->code} ({$account->type}): {$detail->type} {$detail->value} = {$impact}");
-                return $impact;
+                return AccountBalanceService::calculateEntryImpact($detail, $account->type);
             });
 
             // Get period transactions
@@ -242,53 +241,12 @@ class FinancialReportController extends Controller
             ->where('account_id', $account->id)
             ->get()
             ->sum(function ($detail) use ($account) {
-                $impact = $this->calculateEntryImpact($detail, $account->type);
-                \Log::info("Period transaction calculation for {$account->code} ({$account->type}): {$detail->type} {$detail->value} = {$impact}");
-                return $impact;
+                return AccountBalanceService::calculateEntryImpact($detail, $account->type);
             });
 
             // Calculate period balance
             $account->opening_balance = $openingBalance;
             $account->period_balance = $openingBalance + $periodTransactions;
-            
-            \Log::info("Account {$account->code} ({$account->type}): Opening={$openingBalance}, Period={$periodTransactions}, Final={$account->period_balance}");
-        }
-    }
-
-    /**
-     * Calculate the impact of a general ledger entry on an account balance
-     * Based on account type and entry type (debit/credit)
-     */
-    private function calculateEntryImpact($detail, $accountType)
-    {
-        $value = $detail->value;
-        $isDebit = $detail->type === 'debit';
-        
-        switch (strtolower($accountType)) {
-            case 'asset':
-                // Assets increase with debits, decrease with credits
-                return $isDebit ? $value : -$value;
-                
-            case 'liability':
-                // Liabilities increase with credits, decrease with debits
-                return $isDebit ? -$value : $value;
-                
-            case 'equity':
-                // Equity increases with credits, decreases with debits
-                return $isDebit ? -$value : $value;
-                
-            case 'revenue':
-                // Revenue increases with credits, decreases with debits
-                return $isDebit ? -$value : $value;
-                
-            case 'expense':
-                // Expenses increase with debits, decrease with credits
-                return $isDebit ? $value : -$value;
-                
-            default:
-                // Default behavior (old logic) - log for debugging
-                \Log::warning("Unknown account type: {$accountType}, using default calculation");
-                return $isDebit ? $value : -$value;
         }
     }
 }

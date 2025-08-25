@@ -7,8 +7,9 @@ use App\Models\GeneralLedgerDetail;
 use App\Models\Account;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use App\Services\AccountBalanceService;
 
 class GeneralLedgerController extends Controller
 {
@@ -47,7 +48,17 @@ class GeneralLedgerController extends Controller
             ->orderBy('code')
             ->get();
 
-        return view('pages.general-ledger.create', compact('accounts'));
+        $generalLedgerTypes = [
+            'adjustment' => 'Adjustment',
+            'transfer' => 'Transfer',
+            'expense' => 'Expense',
+            'income' => 'Income',
+            'asset' => 'Asset',
+            'equity' => 'Equity',
+            'other' => 'Other',
+        ];
+
+        return view('pages.general-ledger.create', compact('accounts', 'generalLedgerTypes'));
     }
 
     /**
@@ -55,32 +66,28 @@ class GeneralLedgerController extends Controller
      */
     public function store(Request $request)
     {
-        $company = Auth::user()->currentCompany;
-        
-        if (!$company) {
-            return redirect()->route('company.choice')->with('error', 'Please select a company first.');
-        }
-
         $validator = Validator::make($request->all(), [
             'number' => 'required|string|max:50',
             'type' => 'required|string|max:50',
             'date' => 'required|date',
-            'note' => 'nullable|string|max:500',
+            'note' => 'nullable|string|max:255',
             'total' => 'required|numeric|min:0',
             'reference' => 'nullable|string|max:100',
             'description' => 'nullable|string|max:500',
-            'status' => 'required|string|max:50',
+            'status' => 'required|in:draft,posted',
             'entries' => 'required|array|min:2',
             'entries.*.account_id' => 'required|exists:accounts,id',
             'entries.*.type' => 'required|in:debit,credit',
             'entries.*.value' => 'required|numeric|min:0',
-            'entries.*.description' => 'nullable|string|max:500',
+            'entries.*.description' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
+        $company = Auth::user()->currentCompany;
+        
         // Validate that debits equal credits
         $debitTotal = 0;
         $creditTotal = 0;
@@ -127,6 +134,11 @@ class GeneralLedgerController extends Controller
                 ]);
             }
 
+            // Update account balances if status is posted
+            if ($request->status === 'posted') {
+                AccountBalanceService::updateBalancesForTransaction($company->id, $request->entries);
+            }
+
             DB::commit();
 
             return redirect()->route('general-ledger.index')
@@ -151,7 +163,7 @@ class GeneralLedgerController extends Controller
             abort(403);
         }
 
-        $generalLedger->load(['details.account', 'company']);
+        $generalLedger->load(['details.account']);
 
         return view('pages.general-ledger.show', compact('generalLedger'));
     }
@@ -171,9 +183,19 @@ class GeneralLedgerController extends Controller
             ->orderBy('code')
             ->get();
 
-        $generalLedger->load('details');
+        $generalLedgerTypes = [
+            'adjustment' => 'Adjustment',
+            'transfer' => 'Transfer',
+            'expense' => 'Expense',
+            'income' => 'Income',
+            'asset' => 'Asset',
+            'equity' => 'Equity',
+            'other' => 'Other',
+        ];
 
-        return view('pages.general-ledger.edit', compact('generalLedger', 'accounts'));
+        $generalLedger->load(['details']);
+
+        return view('pages.general-ledger.edit', compact('generalLedger', 'accounts', 'generalLedgerTypes'));
     }
 
     /**
@@ -183,7 +205,7 @@ class GeneralLedgerController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $generalLedger->company_id !== $company->id) {
+        if ($company->id !== $generalLedger->company_id) {
             abort(403);
         }
 
@@ -191,16 +213,16 @@ class GeneralLedgerController extends Controller
             'number' => 'required|string|max:50',
             'type' => 'required|string|max:50',
             'date' => 'required|date',
-            'note' => 'nullable|string|max:500',
+            'note' => 'nullable|string|max:255',
             'total' => 'required|numeric|min:0',
             'reference' => 'nullable|string|max:100',
             'description' => 'nullable|string|max:500',
-            'status' => 'required|string|max:50',
+            'status' => 'required|in:draft,posted',
             'entries' => 'required|array|min:2',
             'entries.*.account_id' => 'required|exists:accounts,id',
             'entries.*.type' => 'required|in:debit,credit',
             'entries.*.value' => 'required|numeric|min:0',
-            'entries.*.description' => 'nullable|string|max:500',
+            'entries.*.description' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -227,6 +249,19 @@ class GeneralLedgerController extends Controller
 
         try {
             DB::beginTransaction();
+
+            // If the general ledger was posted, reverse the old balances first
+            if ($generalLedger->status === 'posted') {
+                $oldEntries = $generalLedger->details->map(function($detail) {
+                    return [
+                        'account_id' => $detail->account_id,
+                        'type' => $detail->type,
+                        'value' => $detail->value,
+                    ];
+                })->toArray();
+                
+                AccountBalanceService::reverseBalancesForTransaction($company->id, $oldEntries);
+            }
 
             $generalLedger->update([
                 'number' => $request->number,
@@ -255,6 +290,11 @@ class GeneralLedgerController extends Controller
                 ]);
             }
 
+            // Update account balances if status is posted
+            if ($request->status === 'posted') {
+                AccountBalanceService::updateBalancesForTransaction($company->id, $request->entries);
+            }
+
             DB::commit();
 
             return redirect()->route('general-ledger.index')
@@ -275,17 +315,27 @@ class GeneralLedgerController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $generalLedger->company_id !== $company->id) {
+        if ($company->id !== $generalLedger->company_id) {
             abort(403);
         }
 
         try {
             DB::beginTransaction();
 
-            // Delete general ledger details first
-            $generalLedger->details()->delete();
-            
-            // Delete the general ledger
+            // If the general ledger was posted, reverse the balances first
+            if ($generalLedger->status === 'posted') {
+                $entries = $generalLedger->details->map(function($detail) {
+                    return [
+                        'account_id' => $detail->account_id,
+                        'type' => $detail->type,
+                        'value' => $detail->value,
+                    ];
+                })->toArray();
+                
+                AccountBalanceService::reverseBalancesForTransaction($company->id, $entries);
+            }
+
+            // Delete the general ledger (this will cascade to details)
             $generalLedger->delete();
 
             DB::commit();
@@ -301,7 +351,7 @@ class GeneralLedgerController extends Controller
     }
 
     /**
-     * Export general ledger for a specific period
+     * Export general ledger data
      */
     public function export(Request $request)
     {
@@ -311,24 +361,27 @@ class GeneralLedgerController extends Controller
             return redirect()->route('company.choice')->with('error', 'Please select a company first.');
         }
 
-        $validator = Validator::make($request->all(), [
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-        ]);
+        $query = GeneralLedger::where('company_id', $company->id)
+            ->with(['details.account'])
+            ->orderBy('date', 'desc');
 
-        if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator);
+        // Apply filters if provided
+        if ($request->filled('start_date')) {
+            $query->where('date', '>=', $request->start_date);
         }
 
-        $generalLedgers = GeneralLedger::where('company_id', $company->id)
-            ->whereBetween('date', [$request->start_date, $request->end_date])
-            ->with(['details.account'])
-            ->orderBy('date')
-            ->orderBy('number')
-            ->get();
+        if ($request->filled('end_date')) {
+            $query->where('date', '<=', $request->end_date);
+        }
 
-        // Generate CSV content
-        $filename = 'general_ledger_' . $request->start_date . '_to_' . $request->end_date . '.csv';
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        $generalLedgers = $query->get();
+
+        // Generate CSV export
+        $filename = 'general-ledger-' . now()->format('Y-m-d') . '.csv';
         
         $headers = [
             'Content-Type' => 'text/csv',
@@ -339,21 +392,17 @@ class GeneralLedgerController extends Controller
             $file = fopen('php://output', 'w');
             
             // CSV headers
-            fputcsv($file, ['Date', 'Number', 'Type', 'Account', 'Debit', 'Credit', 'Description', 'Reference']);
+            fputcsv($file, ['Date', 'Number', 'Type', 'Description', 'Total', 'Status']);
             
             foreach ($generalLedgers as $ledger) {
-                foreach ($ledger->details as $detail) {
-                    fputcsv($file, [
-                        $ledger->date->format('Y-m-d'),
-                        $ledger->number,
-                        $ledger->type,
-                        $detail->account->code . ' - ' . $detail->account->name,
-                        $detail->type === 'debit' ? $detail->value : '',
-                        $detail->type === 'credit' ? $detail->value : '',
-                        $detail->description ?? '',
-                        $ledger->reference ?? '',
-                    ]);
-                }
+                fputcsv($file, [
+                    $ledger->date->format('Y-m-d'),
+                    $ledger->number,
+                    $ledger->type,
+                    $ledger->description,
+                    $ledger->total,
+                    $ledger->status,
+                ]);
             }
             
             fclose($file);

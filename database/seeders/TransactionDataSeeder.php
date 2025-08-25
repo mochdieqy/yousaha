@@ -34,6 +34,7 @@ use App\Models\InternalTransfer;
 use App\Models\Asset;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Services\AccountBalanceService;
 
 /**
  * TransactionDataSeeder
@@ -457,11 +458,16 @@ class TransactionDataSeeder extends Seeder
             $lineTotal = $quantity * $cost;
             $total += $lineTotal;
             
-            PurchaseOrderProductLine::create([
+            $poLine = PurchaseOrderProductLine::create([
                 'purchase_order_id' => $purchaseOrder->id,
                 'product_id' => $product->id,
                 'quantity' => $quantity,
             ]);
+            
+            // Explicitly set timestamps to ensure they are in 2024
+            $poLine->created_at = $date;
+            $poLine->updated_at = $date;
+            $poLine->save();
         }
         
         $purchaseOrder->update(['total' => $total]);
@@ -501,11 +507,16 @@ class TransactionDataSeeder extends Seeder
         
         // Create product lines based on purchase order
         foreach ($purchaseOrder->productLines as $poLine) {
-            ReceiptProductLine::create([
+            $receiptLine = ReceiptProductLine::create([
                 'receipt_id' => $receipt->id,
                 'product_id' => $poLine->product_id,
                 'quantity' => $poLine->quantity,
             ]);
+            
+            // Explicitly set timestamps to ensure they are in 2024
+            $receiptLine->created_at = $date;
+            $receiptLine->updated_at = $date;
+            $receiptLine->save();
         }
         
         // Create status log
@@ -617,11 +628,16 @@ class TransactionDataSeeder extends Seeder
             $lineTotal = $quantity * $price;
             $total += $lineTotal;
             
-            SalesOrderProductLine::create([
+            $soLine = SalesOrderProductLine::create([
                 'sales_order_id' => $salesOrder->id,
                 'product_id' => $product->id,
                 'quantity' => $quantity,
             ]);
+            
+            // Explicitly set timestamps to ensure they are in 2024
+            $soLine->created_at = $date;
+            $soLine->updated_at = $date;
+            $soLine->save();
         }
         
         $salesOrder->update(['total' => $total]);
@@ -660,11 +676,16 @@ class TransactionDataSeeder extends Seeder
         
         // Create product lines based on sales order
         foreach ($salesOrder->productLines as $soLine) {
-            DeliveryProductLine::create([
+            $deliveryLine = DeliveryProductLine::create([
                 'delivery_id' => $delivery->id,
                 'product_id' => $soLine->product_id,
                 'quantity' => $soLine->quantity,
             ]);
+            
+            // Explicitly set timestamps to ensure they are in 2024
+            $deliveryLine->created_at = $date;
+            $deliveryLine->updated_at = $date;
+            $deliveryLine->save();
         }
         
         // Create status log
@@ -752,13 +773,18 @@ class TransactionDataSeeder extends Seeder
         
         // Create expense detail with account relationship
         if ($expenseAccount) {
-            ExpenseDetail::create([
+            $expenseDetail = ExpenseDetail::create([
                 'expense_id' => $expense->id,
                 'account_id' => $expenseAccount->id,
                 'value' => $amount,
                 'status' => 'approved',
                 'description' => $type,
             ]);
+            
+            // Explicitly set timestamps to ensure they are in 2024
+            $expenseDetail->created_at = $date;
+            $expenseDetail->updated_at = $date;
+            $expenseDetail->save();
         }
         
         // Create GL entry
@@ -820,12 +846,17 @@ class TransactionDataSeeder extends Seeder
         
         // Create income detail with account relationship
         if ($incomeAccount) {
-            IncomeDetail::create([
+            $incomeDetail = IncomeDetail::create([
                 'income_id' => $income->id,
                 'account_id' => $incomeAccount->id,
                 'value' => $amount,
                 'description' => $type,
             ]);
+            
+            // Explicitly set timestamps to ensure they are in 2024
+            $incomeDetail->created_at = $date;
+            $incomeDetail->updated_at = $date;
+            $incomeDetail->save();
         }
         
         // Create GL entry
@@ -1003,13 +1034,18 @@ class TransactionDataSeeder extends Seeder
         foreach ($details as $detail) {
             $account = $accounts->where('code', $detail['account'])->first();
             if ($account) {
-                GeneralLedgerDetail::create([
+                $glDetail = GeneralLedgerDetail::create([
                     'general_ledger_id' => $gl->id,
                     'account_id' => $account->id,
                     'type' => $detail['type'],
                     'value' => $detail['value'],
                     'description' => $detail['description'] ?? "{$detail['type']} entry for {$gl->note}",
                 ]);
+                
+                // Explicitly set timestamps to ensure they are in 2024
+                $glDetail->created_at = $date;
+                $glDetail->updated_at = $date;
+                $glDetail->save();
             }
         }
         
@@ -1023,29 +1059,13 @@ class TransactionDataSeeder extends Seeder
     {
         $this->command->info('Updating account balances...');
         
-        foreach ($accounts as $account) {
-            // Get the initial balance from the account
-            $initialBalance = $account->balance;
-            $balance = $initialBalance;
-            
-            // Calculate balance from general ledger details for this month only
-            $glDetails = GeneralLedgerDetail::whereHas('generalLedger', function($query) use ($company) {
-                $query->where('company_id', $company->id);
-            })->where('account_id', $account->id)->get();
-            
-            foreach ($glDetails as $detail) {
-                if ($detail->type === 'debit') {
-                    $balance += $detail->value;
-                } else {
-                    $balance -= $detail->value;
-                }
-            }
-            
-            // Update account balance (accumulate from previous months)
-            $account->update(['balance' => $balance]);
-            
-            $this->command->info("Updated {$account->name} ({$account->code}) balance: IDR " . number_format($balance, 0, ',', '.'));
-        }
+        // Use the AccountBalanceService to recalculate all account balances
+        AccountBalanceService::recalculateAllAccountBalances($company->id);
+        
+        // Refresh accounts to get updated balances
+        $accounts->each(function($account) {
+            $account->refresh();
+        });
         
         // Check if cash account is negative and transfer from accounts receivable if needed
         $this->balanceCashAccount($company, $accounts, $endDate);
@@ -1263,12 +1283,17 @@ class TransactionDataSeeder extends Seeder
         
         // Create income detail
         if ($incomeAccount) {
-            IncomeDetail::create([
+            $emergencyIncomeDetail = IncomeDetail::create([
                 'income_id' => $income->id,
                 'account_id' => $incomeAccount->id,
                 'value' => $incomeAmount,
                 'description' => 'Emergency income for cash balancing',
             ]);
+            
+            // Explicitly set timestamps to ensure they are in 2024
+            $emergencyIncomeDetail->created_at = $incomeDate;
+            $emergencyIncomeDetail->updated_at = $incomeDate;
+            $emergencyIncomeDetail->save();
         }
         
         // Create GL entry
@@ -1625,13 +1650,18 @@ class TransactionDataSeeder extends Seeder
         
         // Create expense detail
         if ($expenseAccount) {
-            ExpenseDetail::create([
+            $maintenanceExpenseDetail = ExpenseDetail::create([
                 'expense_id' => $expense->id,
                 'account_id' => $expenseAccount->id,
                 'value' => $maintenanceAmount,
                 'status' => 'approved',
                 'description' => "{$type} for {$asset->name}",
             ]);
+            
+            // Explicitly set timestamps to ensure they are in 2024
+            $maintenanceExpenseDetail->created_at = $date;
+            $maintenanceExpenseDetail->updated_at = $date;
+            $maintenanceExpenseDetail->save();
         }
         
         // Create GL entry
@@ -1823,6 +1853,75 @@ class TransactionDataSeeder extends Seeder
             ->whereYear('created_at', '!=', 2024)
             ->count();
         
+        // Check product lines and details
+        $poLinesCount = PurchaseOrderProductLine::whereHas('purchaseOrder', function($query) use ($company) {
+            $query->where('company_id', $company->id);
+        })->count();
+        $poLinesInvalidDates = PurchaseOrderProductLine::whereHas('purchaseOrder', function($query) use ($company) {
+            $query->where('company_id', $company->id);
+        })->whereYear('created_at', '!=', 2024)->count();
+        
+        $soLinesCount = SalesOrderProductLine::whereHas('salesOrder', function($query) use ($company) {
+            $query->where('company_id', $company->id);
+        })->count();
+        $soLinesInvalidDates = SalesOrderProductLine::whereHas('salesOrder', function($query) use ($company) {
+            $query->where('company_id', $company->id);
+        })->whereYear('created_at', '!=', 2024)->count();
+        
+        $receiptLinesCount = ReceiptProductLine::whereHas('receipt', function($query) use ($company) {
+            $query->where('company_id', $company->id);
+        })->count();
+        $receiptLinesInvalidDates = ReceiptProductLine::whereHas('receipt', function($query) use ($company) {
+            $query->where('company_id', $company->id);
+        })->whereYear('created_at', '!=', 2024)->count();
+        
+        $deliveryLinesCount = DeliveryProductLine::whereHas('delivery', function($query) use ($company) {
+            $query->where('company_id', $company->id);
+        })->count();
+        $deliveryLinesInvalidDates = DeliveryProductLine::whereHas('delivery', function($query) use ($company) {
+            $query->where('company_id', $company->id);
+        })->whereYear('created_at', '!=', 2024)->count();
+        
+        // Check general ledger details
+        $glDetailsCount = GeneralLedgerDetail::whereHas('generalLedger', function($query) use ($company) {
+            $query->where('company_id', $company->id);
+        })->count();
+        $glDetailsInvalidDates = GeneralLedgerDetail::whereHas('generalLedger', function($query) use ($company) {
+            $query->where('company_id', $company->id);
+        })->whereYear('created_at', '!=', 2024)->count();
+        
+        // Check expense and income details
+        $expenseDetailsCount = ExpenseDetail::whereHas('expense', function($query) use ($company) {
+            $query->where('company_id', $company->id);
+        })->count();
+        $expenseDetailsInvalidDates = ExpenseDetail::whereHas('expense', function($query) use ($company) {
+            $query->where('company_id', $company->id);
+        })->whereYear('created_at', '!=', 2024)->count();
+        
+        $incomeDetailsCount = IncomeDetail::whereHas('income', function($query) use ($company) {
+            $query->where('company_id', $company->id);
+        })->count();
+        $incomeDetailsInvalidDates = IncomeDetail::whereHas('income', function($query) use ($company) {
+            $query->where('company_id', $company->id);
+        })->whereYear('created_at', '!=', 2024)->count();
+        
+        // Note: Status logs don't have created_at/updated_at columns, only changed_at
+        $poStatusLogsCount = PurchaseOrderStatusLog::whereHas('purchaseOrder', function($query) use ($company) {
+            $query->where('company_id', $company->id);
+        })->count();
+        
+        $soStatusLogsCount = SalesOrderStatusLog::whereHas('salesOrder', function($query) use ($company) {
+            $query->where('company_id', $company->id);
+        })->count();
+        
+        $receiptStatusLogsCount = ReceiptStatusLog::whereHas('receipt', function($query) use ($company) {
+            $query->where('company_id', $company->id);
+        })->count();
+        
+        $deliveryStatusLogsCount = DeliveryStatusLog::whereHas('delivery', function($query) use ($company) {
+            $query->where('company_id', $company->id);
+        })->count();
+        
         $this->command->info("Purchase Orders: {$poCount} total, {$poInvalidDates} outside 2024");
         $this->command->info("Sales Orders: {$soCount} total, {$soInvalidDates} outside 2024");
         $this->command->info("Receipts: {$receiptCount} total, {$receiptInvalidDates} outside 2024");
@@ -1833,10 +1932,23 @@ class TransactionDataSeeder extends Seeder
         $this->command->info("Incomes: {$incomeCount} total, {$incomeInvalidDates} outside 2024");
         $this->command->info("Assets: {$assetCount} total, {$assetInvalidDates} outside 2024");
         $this->command->info("Stock History: {$stockHistoryCount} total, {$stockHistoryInvalidDates} outside 2024");
+        $this->command->info("Purchase Order Lines: {$poLinesCount} total, {$poLinesInvalidDates} outside 2024");
+        $this->command->info("Sales Order Lines: {$soLinesCount} total, {$soLinesInvalidDates} outside 2024");
+        $this->command->info("Receipt Lines: {$receiptLinesCount} total, {$receiptLinesInvalidDates} outside 2024");
+        $this->command->info("Delivery Lines: {$deliveryLinesCount} total, {$deliveryLinesInvalidDates} outside 2024");
+        $this->command->info("General Ledger Details: {$glDetailsCount} total, {$glDetailsInvalidDates} outside 2024");
+        $this->command->info("Expense Details: {$expenseDetailsCount} total, {$expenseDetailsInvalidDates} outside 2024");
+        $this->command->info("Income Details: {$incomeDetailsCount} total, {$incomeDetailsInvalidDates} outside 2024");
+        $this->command->info("Purchase Order Status Logs: {$poStatusLogsCount} total (no timestamp validation needed)");
+        $this->command->info("Sales Order Status Logs: {$soStatusLogsCount} total (no timestamp validation needed)");
+        $this->command->info("Receipt Status Logs: {$receiptStatusLogsCount} total (no timestamp validation needed)");
+        $this->command->info("Delivery Status Logs: {$deliveryStatusLogsCount} total (no timestamp validation needed)");
         
         $totalInvalid = $poInvalidDates + $soInvalidDates + $receiptInvalidDates + $deliveryInvalidDates + 
                        $itInvalidDates + $glInvalidDates + $expenseInvalidDates + $incomeInvalidDates + 
-                       $assetInvalidDates + $stockHistoryInvalidDates;
+                       $assetInvalidDates + $stockHistoryInvalidDates + $poLinesInvalidDates + $soLinesInvalidDates +
+                       $receiptLinesInvalidDates + $deliveryLinesInvalidDates + $glDetailsInvalidDates + 
+                       $expenseDetailsInvalidDates + $incomeDetailsInvalidDates;
         
         if ($totalInvalid === 0) {
             $this->command->info("✅ All transaction dates are within 2024");

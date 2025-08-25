@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Services\AccountBalanceService;
 
 class InternalTransferController extends Controller
 {
@@ -128,8 +129,11 @@ class InternalTransferController extends Controller
                 'description' => 'Transfer out: ' . $internalTransfer->number,
             ]);
 
-            // Update account balances
-            $this->updateAccountBalances($request->account_in, $request->account_out, $request->value);
+            // Update account balances using AccountBalanceService
+            AccountBalanceService::updateBalancesForTransaction($company->id, [
+                ['account_id' => $request->account_in, 'type' => 'debit', 'value' => $request->value],
+                ['account_id' => $request->account_out, 'type' => 'credit', 'value' => $request->value],
+            ]);
 
             DB::commit();
 
@@ -256,8 +260,11 @@ class InternalTransferController extends Controller
                 ]);
             }
 
-            // Update account balances
-            $this->updateAccountBalances($request->account_in, $request->account_out, $request->value);
+            // Update account balances using AccountBalanceService
+            AccountBalanceService::updateBalancesForTransaction($company->id, [
+                ['account_id' => $request->account_in, 'type' => 'debit', 'value' => $request->value],
+                ['account_id' => $request->account_out, 'type' => 'credit', 'value' => $request->value],
+            ]);
 
             DB::commit();
 
@@ -291,8 +298,11 @@ class InternalTransferController extends Controller
         }
 
         try {
-            // Reverse the account balances before deleting
-            $this->reverseAccountBalances($internalTransfer->account_in, $internalTransfer->account_out, $internalTransfer->value);
+            // Reverse the account balances before deleting using AccountBalanceService
+            AccountBalanceService::reverseBalancesForTransaction($company->id, [
+                ['account_id' => $internalTransfer->account_in, 'type' => 'credit', 'value' => $internalTransfer->value],
+                ['account_id' => $internalTransfer->account_out, 'type' => 'debit', 'value' => $internalTransfer->value],
+            ]);
 
             $internalTransfer->delete();
 
@@ -302,86 +312,6 @@ class InternalTransferController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()
                 ->with('error', 'Failed to delete internal transfer. Please try again.');
-        }
-    }
-
-    /**
-     * Update account balances after internal transfer
-     */
-    private function updateAccountBalances($accountInId, $accountOutId, $amount)
-    {
-        try {
-            // Get the accounts
-            $accountIn = Account::find($accountInId);
-            $accountOut = Account::find($accountOutId);
-
-            if ($accountIn && $accountOut) {
-                // Update receiving account (debit - increases asset/expense, decreases liability/equity/revenue)
-                $this->updateAccountBalance($accountIn, $amount, 'debit');
-
-                // Update sending account (credit - decreases asset/expense, increases liability/equity/revenue)
-                $this->updateAccountBalance($accountOut, $amount, 'credit');
-            }
-        } catch (\Exception $e) {
-            \Log::error('Failed to update account balances for internal transfer: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Update individual account balance based on account type and entry type
-     */
-    private function updateAccountBalance($account, $amount, $entryType)
-    {
-        $currentBalance = $account->balance;
-        $newBalance = $currentBalance;
-
-        // Calculate new balance based on account type and entry type
-        switch ($account->type) {
-            case 'Asset':
-            case 'Expense':
-                // Assets and Expenses increase with debit, decrease with credit
-                if ($entryType === 'debit') {
-                    $newBalance = $currentBalance + $amount;
-                } else {
-                    $newBalance = $currentBalance - $amount;
-                }
-                break;
-
-            case 'Liability':
-            case 'Equity':
-            case 'Revenue':
-                // Liabilities, Equity, and Revenue decrease with debit, increase with credit
-                if ($entryType === 'debit') {
-                    $newBalance = $currentBalance - $amount;
-                } else {
-                    $newBalance = $currentBalance + $amount;
-                }
-                break;
-        }
-
-        // Update the account balance
-        $account->update(['balance' => $newBalance]);
-    }
-
-    /**
-     * Reverse account balances when internal transfer is deleted
-     */
-    private function reverseAccountBalances($accountInId, $accountOutId, $amount)
-    {
-        try {
-            // Get the accounts
-            $accountIn = Account::find($accountInId);
-            $accountOut = Account::find($accountOutId);
-
-            if ($accountIn && $accountOut) {
-                // Reverse receiving account (was debited, now credit it back)
-                $this->updateAccountBalance($accountIn, $amount, 'credit');
-
-                // Reverse sending account (was credited, now debit it back)
-                $this->updateAccountBalance($accountOut, $amount, 'debit');
-            }
-        } catch (\Exception $e) {
-            \Log::error('Failed to reverse account balances for internal transfer deletion: ' . $e->getMessage());
         }
     }
 }
