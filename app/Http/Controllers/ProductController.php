@@ -141,7 +141,7 @@ class ProductController extends Controller
         }
 
         // Check if product belongs to current company
-        if ($product->company_id !== $company->id) {
+        if ($product->company_id != $company->id) {
             abort(403, 'Unauthorized access to product.');
         }
 
@@ -160,7 +160,7 @@ class ProductController extends Controller
         }
 
         // Check if product belongs to current company
-        if ($product->company_id !== $company->id) {
+        if ($product->company_id != $company->id) {
             abort(403, 'Unauthorized access to product.');
         }
 
@@ -231,7 +231,7 @@ class ProductController extends Controller
         }
 
         // Check if product belongs to current company
-        if ($product->company_id !== $company->id) {
+        if ($product->company_id != $company->id) {
             abort(403, 'Unauthorized access to product.');
         }
 

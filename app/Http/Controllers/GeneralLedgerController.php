@@ -185,7 +185,7 @@ class GeneralLedgerController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $generalLedger->company_id !== $company->id) {
+        if (!$company || $generalLedger->company_id != $company->id) {
             abort(403);
         }
 
@@ -201,7 +201,7 @@ class GeneralLedgerController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $generalLedger->company_id !== $company->id) {
+        if (!$company || $generalLedger->company_id != $company->id) {
             abort(403);
         }
 

@@ -141,7 +141,7 @@ class DepartmentController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $department->company_id !== $company->id) {
+        if (!$company || $department->company_id != $company->id) {
             return redirect()->route('departments.index')->with('error', 'Department not found.');
         }
 
@@ -162,7 +162,7 @@ class DepartmentController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $department->company_id !== $company->id) {
+        if (!$company || $department->company_id != $company->id) {
             return redirect()->route('departments.index')->with('error', 'Department not found.');
         }
 
@@ -224,7 +224,7 @@ class DepartmentController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $department->company_id !== $company->id) {
+        if (!$company || $department->company_id != $company->id) {
             return redirect()->route('departments.index')->with('error', 'Department not found.');
         }
 

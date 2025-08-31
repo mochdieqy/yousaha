@@ -106,7 +106,7 @@ class WarehouseController extends Controller
         }
 
         // Check if warehouse belongs to current company
-        if ($warehouse->company_id !== $company->id) {
+        if ($warehouse->company_id != $company->id) {
             return redirect()->route('warehouses.index')
                 ->with('error', 'Warehouse not found.');
         }
@@ -126,7 +126,7 @@ class WarehouseController extends Controller
         }
 
         // Check if warehouse belongs to current company
-        if ($warehouse->company_id !== $company->id) {
+        if ($warehouse->company_id != $company->id) {
             return redirect()->route('warehouses.index')
                 ->with('error', 'Warehouse not found.');
         }
@@ -177,7 +177,7 @@ class WarehouseController extends Controller
         }
 
         // Check if warehouse belongs to current company
-        if ($warehouse->company_id !== $company->id) {
+        if ($warehouse->company_id != $company->id) {
             return redirect()->route('warehouses.index')
                 ->with('error', 'Warehouse not found.');
         }

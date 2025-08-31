@@ -548,7 +548,7 @@ class DeliveryController extends Controller
         }
 
         // Check if delivery belongs to current company
-        if ($delivery->company_id !== $company->id) {
+        if ($delivery->company_id != $company->id) {
             return back()->with('error', 'Delivery not found.');
         }
 

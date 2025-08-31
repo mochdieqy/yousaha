@@ -163,8 +163,8 @@ class AIEvaluationController extends Controller
     public function show(AIEvaluation $evaluation)
     {
         $company = Auth::user()->currentCompany;
-        return $company;
-        if (!$company || $evaluation->company_id !== $company->id) {
+        
+        if (!$company || $evaluation->company_id != $company->id) {
             return redirect()->route('ai-evaluation.index')
                 ->with('error', 'Evaluation not found.');
         }
@@ -181,7 +181,7 @@ class AIEvaluationController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $evaluation->company_id !== $company->id) {
+        if (!$company || $evaluation->company_id != $company->id) {
             return redirect()->route('ai-evaluation.index')
                 ->with('error', 'Evaluation not found.');
         }
@@ -203,7 +203,7 @@ class AIEvaluationController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $evaluation->company_id !== $company->id) {
+        if (!$company || $evaluation->company_id != $company->id) {
             return redirect()->route('ai-evaluation.index')
                 ->with('error', 'Evaluation not found.');
         }
@@ -285,7 +285,7 @@ class AIEvaluationController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $evaluation->company_id !== $company->id) {
+        if (!$company || $evaluation->company_id != $company->id) {
             return redirect()->route('ai-evaluation.index')
                 ->with('error', 'Evaluation not found.');
         }
@@ -303,7 +303,7 @@ class AIEvaluationController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $evaluation->company_id !== $company->id) {
+        if (!$company || $evaluation->company_id != $company->id) {
             return redirect()->route('ai-evaluation.index')
                 ->with('error', 'Evaluation not found.');
         }

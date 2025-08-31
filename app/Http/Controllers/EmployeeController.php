@@ -177,7 +177,7 @@ class EmployeeController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $employee->company_id !== $company->id) {
+        if (!$company || $employee->company_id != $company->id) {
             return redirect()->route('employees.index')->with('error', 'Employee not found.');
         }
 
@@ -195,7 +195,7 @@ class EmployeeController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $employee->company_id !== $company->id) {
+        if (!$company || $employee->company_id != $company->id) {
             return redirect()->route('employees.index')->with('error', 'Employee not found.');
         }
 
@@ -264,7 +264,7 @@ class EmployeeController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $employee->company_id !== $company->id) {
+        if (!$company || $employee->company_id != $company->id) {
             return redirect()->route('employees.index')->with('error', 'Employee not found.');
         }
 

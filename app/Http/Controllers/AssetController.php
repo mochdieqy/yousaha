@@ -125,7 +125,7 @@ class AssetController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $asset->company_id !== $company->id) {
+        if (!$company || $asset->company_id != $company->id) {
             abort(403);
         }
 
@@ -141,7 +141,7 @@ class AssetController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $asset->company_id !== $company->id) {
+        if (!$company || $asset->company_id != $company->id) {
             abort(403);
         }
 
@@ -160,7 +160,7 @@ class AssetController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $asset->company_id !== $company->id) {
+        if (!$company || $asset->company_id != $company->id) {
             abort(403);
         }
 
@@ -211,7 +211,7 @@ class AssetController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $asset->company_id !== $company->id) {
+        if (!$company || $asset->company_id != $company->id) {
             abort(403);
         }
 

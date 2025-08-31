@@ -129,7 +129,7 @@ class SupplierController extends Controller
         }
 
         // Check if supplier belongs to current company
-        if ($supplier->company_id !== $company->id) {
+        if ($supplier->company_id != $company->id) {
             abort(403, 'Unauthorized access to supplier.');
         }
 
@@ -148,7 +148,7 @@ class SupplierController extends Controller
         }
 
         // Check if supplier belongs to current company
-        if ($supplier->company_id !== $company->id) {
+        if ($supplier->company_id != $company->id) {
             abort(403, 'Unauthorized access to supplier.');
         }
 
@@ -210,7 +210,7 @@ class SupplierController extends Controller
         }
 
         // Check if supplier belongs to current company
-        if ($supplier->company_id !== $company->id) {
+        if ($supplier->company_id != $company->id) {
             abort(403, 'Unauthorized access to supplier.');
         }
 

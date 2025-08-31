@@ -167,7 +167,7 @@ class TimeOffController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $timeOff->employee->company_id !== $company->id) {
+        if (!$company || $timeOff->employee->company_id != $company->id) {
             return redirect()->route('time-offs.index')->with('error', 'Time off request not found.');
         }
 
@@ -189,7 +189,7 @@ class TimeOffController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $timeOff->employee->company_id !== $company->id) {
+        if (!$company || $timeOff->employee->company_id != $company->id) {
             return redirect()->route('time-offs.index')->with('error', 'Time off request not found.');
         }
 
@@ -257,7 +257,7 @@ class TimeOffController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $timeOff->employee->company_id !== $company->id) {
+        if (!$company || $timeOff->employee->company_id != $company->id) {
             return redirect()->route('time-offs.index')->with('error', 'Time off request not found.');
         }
 
@@ -341,7 +341,7 @@ class TimeOffController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $timeOff->employee->company_id !== $company->id) {
+        if (!$company || $timeOff->employee->company_id != $company->id) {
             return redirect()->route('time-offs.approval')->with('error', 'Time off request not found.');
         }
 
@@ -366,7 +366,7 @@ class TimeOffController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $timeOff->employee->company_id !== $company->id) {
+        if (!$company || $timeOff->employee->company_id != $company->id) {
             return redirect()->route('time-offs.approval')->with('error', 'Time off request not found.');
         }
 

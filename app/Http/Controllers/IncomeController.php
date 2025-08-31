@@ -210,7 +210,7 @@ class IncomeController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $income->company_id !== $company->id) {
+        if (!$company || $income->company_id != $company->id) {
             abort(403);
         }
 
@@ -226,7 +226,7 @@ class IncomeController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $income->company_id !== $company->id) {
+        if (!$company || $income->company_id != $company->id) {
             abort(403);
         }
 
@@ -256,7 +256,7 @@ class IncomeController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $income->company_id !== $company->id) {
+        if (!$company || $income->company_id != $company->id) {
             abort(403);
         }
 
@@ -371,7 +371,7 @@ class IncomeController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $income->company_id !== $company->id) {
+        if (!$company || $income->company_id != $company->id) {
             abort(403);
         }
 

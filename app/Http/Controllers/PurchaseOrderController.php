@@ -514,7 +514,7 @@ class PurchaseOrderController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $purchaseOrder->company_id !== $company->id) {
+        if (!$company || $purchaseOrder->company_id != $company->id) {
             abort(403, 'Unauthorized access to purchase order.');
         }
     }

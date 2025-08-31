@@ -109,7 +109,7 @@ class AccountController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $account->company_id !== $company->id) {
+        if (!$company || $account->company_id != $company->id) {
             abort(403);
         }
 
@@ -133,7 +133,7 @@ class AccountController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $account->company_id !== $company->id) {
+        if (!$company || $account->company_id != $company->id) {
             abort(403);
         }
 
@@ -155,7 +155,7 @@ class AccountController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $account->company_id !== $company->id) {
+        if (!$company || $account->company_id != $company->id) {
             abort(403);
         }
 
@@ -193,7 +193,7 @@ class AccountController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $account->company_id !== $company->id) {
+        if (!$company || $account->company_id != $company->id) {
             abort(403);
         }
 

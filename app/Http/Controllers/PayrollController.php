@@ -169,7 +169,7 @@ class PayrollController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $payroll->employee->company_id !== $company->id) {
+        if (!$company || $payroll->employee->company_id != $company->id) {
             return redirect()->route('payrolls.index')->with('error', 'Payroll information not found.');
         }
 
@@ -192,7 +192,7 @@ class PayrollController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $payroll->employee->company_id !== $company->id) {
+        if (!$company || $payroll->employee->company_id != $company->id) {
             return redirect()->route('payrolls.index')->with('error', 'Payroll information not found.');
         }
 
@@ -260,7 +260,7 @@ class PayrollController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $payroll->employee->company_id !== $company->id) {
+        if (!$company || $payroll->employee->company_id != $company->id) {
             return redirect()->route('payrolls.index')->with('error', 'Payroll information not found.');
         }
 
@@ -279,7 +279,7 @@ class PayrollController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $payroll->employee->company_id !== $company->id) {
+        if (!$company || $payroll->employee->company_id != $company->id) {
             return redirect()->route('payrolls.index')->with('error', 'Payroll information not found.');
         }
 

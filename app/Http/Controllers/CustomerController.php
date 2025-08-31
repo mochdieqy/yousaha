@@ -115,7 +115,7 @@ class CustomerController extends Controller
         }
 
         // Check if customer belongs to current company
-        if ($customer->company_id !== $company->id) {
+        if ($customer->company_id != $company->id) {
             abort(403, 'Unauthorized access to customer.');
         }
 
@@ -134,7 +134,7 @@ class CustomerController extends Controller
         }
 
         // Check if customer belongs to current company
-        if ($customer->company_id !== $company->id) {
+        if ($customer->company_id != $company->id) {
             abort(403, 'Unauthorized access to customer.');
         }
 
@@ -182,7 +182,7 @@ class CustomerController extends Controller
         }
 
         // Check if customer belongs to current company
-        if ($customer->company_id !== $company->id) {
+        if ($customer->company_id != $company->id) {
             abort(403, 'Unauthorized access to customer.');
         }
 

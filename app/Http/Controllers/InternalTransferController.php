@@ -158,7 +158,7 @@ class InternalTransferController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $internalTransfer->company_id !== $company->id) {
+        if (!$company || $internalTransfer->company_id != $company->id) {
             abort(403);
         }
 
@@ -174,7 +174,7 @@ class InternalTransferController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $internalTransfer->company_id !== $company->id) {
+        if (!$company || $internalTransfer->company_id != $company->id) {
             abort(403);
         }
 
@@ -193,7 +193,7 @@ class InternalTransferController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $internalTransfer->company_id !== $company->id) {
+        if (!$company || $internalTransfer->company_id != $company->id) {
             abort(403);
         }
 
@@ -254,7 +254,7 @@ class InternalTransferController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $internalTransfer->company_id !== $company->id) {
+        if (!$company || $internalTransfer->company_id != $company->id) {
             abort(403);
         }
 

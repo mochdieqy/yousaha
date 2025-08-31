@@ -220,7 +220,7 @@ class StockController extends Controller
         }
 
         // Check if stock belongs to current company
-        if ($stock->company_id !== $company->id) {
+        if ($stock->company_id != $company->id) {
             return redirect()->route('stocks.index')
                 ->with('error', 'Stock not found.');
         }
@@ -243,7 +243,7 @@ class StockController extends Controller
         }
 
         // Check if stock belongs to current company
-        if ($stock->company_id !== $company->id) {
+        if ($stock->company_id != $company->id) {
             return redirect()->route('stocks.index')
                 ->with('error', 'Stock not found.');
         }
@@ -374,7 +374,7 @@ class StockController extends Controller
         }
 
         // Check if stock belongs to current company
-        if ($stock->company_id !== $company->id) {
+        if ($stock->company_id != $company->id) {
             return redirect()->route('stocks.index')
                 ->with('error', 'Stock not found.');
         }
@@ -414,7 +414,7 @@ class StockController extends Controller
         }
 
         // Check if stock belongs to current company
-        if ($stock->company_id !== $company->id) {
+        if ($stock->company_id != $company->id) {
             return redirect()->route('stocks.index')
                 ->with('error', 'Stock not found.');
         }

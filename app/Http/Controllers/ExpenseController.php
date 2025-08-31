@@ -199,7 +199,7 @@ class ExpenseController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $expense->company_id !== $company->id) {
+        if (!$company || $expense->company_id != $company->id) {
             abort(403);
         }
 
@@ -215,7 +215,7 @@ class ExpenseController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $expense->company_id !== $company->id) {
+        if (!$company || $expense->company_id != $company->id) {
             abort(403);
         }
 
@@ -245,7 +245,7 @@ class ExpenseController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $expense->company_id !== $company->id) {
+        if (!$company || $expense->company_id != $company->id) {
             abort(403);
         }
 
@@ -357,7 +357,7 @@ class ExpenseController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $expense->company_id !== $company->id) {
+        if (!$company || $expense->company_id != $company->id) {
             abort(403);
         }
 

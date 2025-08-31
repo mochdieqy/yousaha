@@ -165,7 +165,7 @@ class SalesOrderController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $salesOrder->company_id !== $company->id) {
+        if (!$company || $salesOrder->company_id != $company->id) {
             return redirect()->route('sales-orders.index')
                 ->with('error', 'Sales order not found.');
         }
@@ -182,7 +182,7 @@ class SalesOrderController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $salesOrder->company_id !== $company->id) {
+        if (!$company || $salesOrder->company_id != $company->id) {
             return redirect()->route('sales-orders.index')
                 ->with('error', 'Sales order not found.');
         }
@@ -209,7 +209,7 @@ class SalesOrderController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $salesOrder->company_id !== $company->id) {
+        if (!$company || $salesOrder->company_id != $company->id) {
             return redirect()->route('sales-orders.index')
                 ->with('error', 'Sales order not found.');
         }
@@ -301,7 +301,7 @@ class SalesOrderController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $salesOrder->company_id !== $company->id) {
+        if (!$company || $salesOrder->company_id != $company->id) {
             return redirect()->route('sales-orders.index')
                 ->with('error', 'Sales order not found.');
         }
@@ -339,7 +339,7 @@ class SalesOrderController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $salesOrder->company_id !== $company->id) {
+        if (!$company || $salesOrder->company_id != $company->id) {
             return redirect()->route('sales-orders.index')
                 ->with('error', 'Sales order not found.');
         }
@@ -376,7 +376,7 @@ class SalesOrderController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $salesOrder->company_id !== $company->id) {
+        if (!$company || $salesOrder->company_id != $company->id) {
             return redirect()->route('sales-orders.index')
                 ->with('error', 'Sales order not found.');
         }
@@ -413,7 +413,7 @@ class SalesOrderController extends Controller
     {
         $company = Auth::user()->currentCompany;
         
-        if (!$company || $salesOrder->company_id !== $company->id) {
+        if (!$company || $salesOrder->company_id != $company->id) {
             return redirect()->route('sales-orders.index')
                 ->with('error', 'Sales order not found.');
         }
