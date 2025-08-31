@@ -91,11 +91,12 @@ class User extends Authenticatable
         if (session('current_company_id')) {
             $company = Company::find(session('current_company_id'));
             if ($company) {
-                // Check if user owns this company or is an employee
+                // Check if user owns this company
                 if ($company->owner === $this->id) {
                     return $company;
                 }
                 
+                // Check if user is an employee of this company
                 $employee = $this->employee;
                 if ($employee && $employee->company_id === $company->id) {
                     return $company;
@@ -103,13 +104,13 @@ class User extends Authenticatable
             }
         }
         
-        // Fallback: check if user owns a company
-        $company = $this->companies()->first();
-        if ($company) {
-            return $company;
+        // Fallback: check if user owns any company
+        $ownedCompany = $this->companies()->first();
+        if ($ownedCompany) {
+            return $ownedCompany;
         }
         
-        // If not owner, check if user is an employee
+        // If not owner, check if user is an employee of any company
         $employee = $this->employee;
         if ($employee && $employee->company) {
             return $employee->company;
