@@ -18,7 +18,10 @@ class Income extends Model
         'company_id',
         'number',
         'date',
+        'due_date',
         'total',
+        'paid',
+        'status',
         'note',
         'description',
         'customer_id',
@@ -32,7 +35,9 @@ class Income extends Model
      */
     protected $casts = [
         'date' => 'date',
+        'due_date' => 'date',
         'total' => 'decimal:2',
+        'paid' => 'boolean',
     ];
 
     /**
