@@ -21,7 +21,7 @@ class AIEvaluationController extends Controller
     /**
      * Display a listing of AI evaluations.
      */
-    public function index()
+    public function index(Request $request)
     {
         $company = Auth::user()->currentCompany;
         
@@ -29,11 +29,29 @@ class AIEvaluationController extends Controller
             return redirect()->route('company.choice')->with('error', 'Please select a company first.');
         }
 
-        $evaluations = AIEvaluation::where('company_id', $company->id)
-            ->with(['generatedByUser'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $query = AIEvaluation::where('company_id', $company->id)
+            ->with(['generatedByUser']);
 
+        // Apply search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('category', 'like', "%{$search}%");
+            });
+        }
+
+        // Apply category filter
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+
+        // Apply status filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $evaluations = $query->orderBy('created_at', 'desc')->get();
         $categories = config('ai.evaluation.categories');
 
         return view('pages.ai-evaluation.index', compact('evaluations', 'categories'));
@@ -98,32 +116,15 @@ class AIEvaluationController extends Controller
             ]);
 
             // Generate AI evaluation
-            \Log::info('Starting AI evaluation generation', [
-                'category' => $request->category,
-                'period_start' => $request->period_start,
-                'period_end' => $request->period_end,
-                'user_id' => Auth::id(),
-                'company_id' => $company->id
-            ]);
-            
             $result = $this->aiEvaluationService->generateEvaluation(
                 $request->category,
                 $request->period_start ? Carbon::parse($request->period_start) : null,
                 $request->period_end ? Carbon::parse($request->period_end) : null
             );
-            
-            \Log::info('AI evaluation result received', [
-                'success' => $result['success'] ?? false,
-                'has_content' => isset($result['content']),
-                'has_insights' => isset($result['insights']),
-                'has_recommendations' => isset($result['recommendations']),
-                'result_keys' => array_keys($result)
-            ]);
 
             if ($result['success']) {
                 // Validate required fields exist
                 if (!isset($result['content']) || !isset($result['insights']) || !isset($result['recommendations'])) {
-                    \Log::error('AI Evaluation response missing required fields:', $result);
                     throw new \Exception('AI response is incomplete. Please try again.');
                 }
                 
@@ -250,10 +251,10 @@ class AIEvaluationController extends Controller
             if ($result['success']) {
                 // Update evaluation with AI results
                 $evaluation->update([
-                    'content' => $result['ai_response'],
+                    'content' => $result['content'],
                     'data_summary' => $result['data'],
-                    'insights' => $result['parsed_response']['insights'],
-                    'recommendations' => $result['parsed_response']['recommendations'],
+                    'insights' => $result['insights'],
+                    'recommendations' => $result['recommendations'],
                     'status' => AIEvaluation::STATUS_COMPLETED,
                 ]);
 
@@ -318,10 +319,10 @@ class AIEvaluationController extends Controller
             if ($result['success']) {
                 // Update evaluation with AI results
                 $evaluation->update([
-                    'content' => $result['ai_response'],
+                    'content' => $result['content'],
                     'data_summary' => $result['data'],
-                    'insights' => $result['parsed_response']['insights'],
-                    'recommendations' => $result['parsed_response']['recommendations'],
+                    'insights' => $result['insights'],
+                    'recommendations' => $result['recommendations'],
                     'status' => AIEvaluation::STATUS_COMPLETED,
                 ]);
 

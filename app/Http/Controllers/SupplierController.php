@@ -6,6 +6,7 @@ use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class SupplierController extends Controller
 {
@@ -75,6 +76,14 @@ class SupplierController extends Controller
             'address' => 'nullable|string|max:500',
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
+        ], [
+            'type.required' => 'Supplier type is required.',
+            'type.in' => 'Supplier type must be either individual or company.',
+            'name.required' => 'Supplier name is required.',
+            'name.max' => 'Supplier name cannot exceed 255 characters.',
+            'address.max' => 'Address cannot exceed 500 characters.',
+            'phone.max' => 'Phone number cannot exceed 20 characters.',
+            'email.email' => 'Please enter a valid email address.',
         ]);
 
         if ($validator->fails()) {
@@ -84,20 +93,26 @@ class SupplierController extends Controller
         }
 
         try {
+            DB::beginTransaction();
+            
             $supplier = Supplier::create([
                 'company_id' => $company->id,
                 'type' => $request->type,
-                'name' => $request->name,
-                'address' => $request->address,
-                'phone' => $request->phone,
-                'email' => $request->email,
+                'name' => trim($request->name),
+                'address' => $request->address ? trim($request->address) : null,
+                'phone' => $request->phone ? trim($request->phone) : null,
+                'email' => $request->email ? trim($request->email) : null,
             ]);
+
+            DB::commit();
 
             return redirect()->route('suppliers.index')
                 ->with('success', 'Supplier created successfully.');
         } catch (\Exception $e) {
+            DB::rollBack();
+            
             return redirect()->back()
-                ->with('error', 'Failed to create supplier: ' . $e->getMessage())
+                ->with('error', 'Failed to create supplier. Please try again.')
                 ->withInput();
         }
     }
@@ -143,6 +158,14 @@ class SupplierController extends Controller
             'address' => 'nullable|string|max:500',
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
+        ], [
+            'type.required' => 'Supplier type is required.',
+            'type.in' => 'Supplier type must be either individual or company.',
+            'name.required' => 'Supplier name is required.',
+            'name.max' => 'Supplier name cannot exceed 255 characters.',
+            'address.max' => 'Address cannot exceed 500 characters.',
+            'phone.max' => 'Phone number cannot exceed 20 characters.',
+            'email.email' => 'Please enter a valid email address.',
         ]);
 
         if ($validator->fails()) {
@@ -152,19 +175,25 @@ class SupplierController extends Controller
         }
 
         try {
+            DB::beginTransaction();
+            
             $supplier->update([
                 'type' => $request->type,
-                'name' => $request->name,
-                'address' => $request->address,
-                'phone' => $request->phone,
-                'email' => $request->email,
+                'name' => trim($request->name),
+                'address' => $request->address ? trim($request->address) : null,
+                'phone' => $request->phone ? trim($request->phone) : null,
+                'email' => $request->email ? trim($request->email) : null,
             ]);
+
+            DB::commit();
 
             return redirect()->route('suppliers.index')
                 ->with('success', 'Supplier updated successfully.');
         } catch (\Exception $e) {
+            DB::rollBack();
+            
             return redirect()->back()
-                ->with('error', 'Failed to update supplier: ' . $e->getMessage())
+                ->with('error', 'Failed to update supplier. Please try again.')
                 ->withInput();
         }
     }
@@ -193,13 +222,19 @@ class SupplierController extends Controller
                     ->with('error', 'Cannot delete supplier. It is being used in purchase orders or receipts.');
             }
 
+            DB::beginTransaction();
+            
             $supplier->delete();
+            
+            DB::commit();
 
             return redirect()->route('suppliers.index')
                 ->with('success', 'Supplier deleted successfully.');
         } catch (\Exception $e) {
+            DB::rollBack();
+            
             return redirect()->back()
-                ->with('error', 'Failed to delete supplier: ' . $e->getMessage());
+                ->with('error', 'Failed to delete supplier. Please try again.');
         }
     }
 }

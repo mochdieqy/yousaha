@@ -24,13 +24,39 @@ class GeneralLedgerController extends Controller
             return redirect()->route('company.choice')->with('error', 'Please select a company first.');
         }
 
-        $generalLedgers = GeneralLedger::where('company_id', $company->id)
+        $query = GeneralLedger::where('company_id', $company->id)
             ->with(['details.account'])
             ->orderBy('date', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
+            ->orderBy('created_at', 'desc');
 
-        return view('pages.general-ledger.index', compact('generalLedgers'));
+        // Apply filters if provided
+        if (request('search')) {
+            $query->where(function($q) {
+                $q->where('number', 'like', '%' . request('search') . '%')
+                  ->orWhere('reference', 'like', '%' . request('search') . '%')
+                  ->orWhere('description', 'like', '%' . request('search') . '%');
+            });
+        }
+
+        if (request('type')) {
+            $query->where('type', request('type'));
+        }
+
+        if (request('status')) {
+            $query->where('status', request('status'));
+        }
+
+        if (request('start_date')) {
+            $query->where('date', '>=', request('start_date'));
+        }
+
+        if (request('end_date')) {
+            $query->where('date', '<=', request('end_date'));
+        }
+
+        $generalLedgers = $query->paginate(15);
+
+        return view('pages.general-ledger.index', compact('generalLedgers', 'company'));
     }
 
     /**
@@ -58,7 +84,7 @@ class GeneralLedgerController extends Controller
             'other' => 'Other',
         ];
 
-        return view('pages.general-ledger.create', compact('accounts', 'generalLedgerTypes'));
+        return view('pages.general-ledger.create', compact('accounts', 'generalLedgerTypes', 'company'));
     }
 
     /**
@@ -163,9 +189,9 @@ class GeneralLedgerController extends Controller
             abort(403);
         }
 
-        $generalLedger->load(['details.account']);
+        $generalLedger->load(['details.account', 'company']);
 
-        return view('pages.general-ledger.show', compact('generalLedger'));
+        return view('pages.general-ledger.show', compact('generalLedger', 'company'));
     }
 
     /**
@@ -195,7 +221,7 @@ class GeneralLedgerController extends Controller
 
         $generalLedger->load(['details']);
 
-        return view('pages.general-ledger.edit', compact('generalLedger', 'accounts', 'generalLedgerTypes'));
+        return view('pages.general-ledger.edit', compact('generalLedger', 'accounts', 'generalLedgerTypes', 'company'));
     }
 
     /**

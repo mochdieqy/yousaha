@@ -25,9 +25,15 @@
         </div>
 
         <!-- Company Info -->
-        <div class="alert alert-info" role="alert">
-            <i class="fas fa-building me-2"></i>
-            <strong>Company:</strong> {{ $company->name }}
+        <div class="alert alert-info border-0 shadow-sm mb-4">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-building me-3 fa-lg"></i>
+                <div>
+                    <strong>Company:</strong> {{ $company->name }}
+                    <br>
+                    <small class="text-muted">Warehouse will be added to this company's inventory system</small>
+                </div>
+            </div>
         </div>
 
         <!-- Create Warehouse Form -->
@@ -192,6 +198,7 @@
         </div>
     </div>
 </div>
+
 @endsection
 
 @section('script')

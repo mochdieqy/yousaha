@@ -42,7 +42,9 @@ class PurchaseOrderController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(15);
 
-        return view('pages.purchase-order.index', compact('purchaseOrders'));
+        $suppliers = Supplier::where('company_id', $company->id)->get();
+
+        return view('pages.purchase-order.index', compact('purchaseOrders', 'suppliers', 'company'));
     }
 
     /**
@@ -60,7 +62,7 @@ class PurchaseOrderController extends Controller
         $products = Product::where('company_id', $company->id)->get();
         $warehouses = Warehouse::where('company_id', $company->id)->get();
 
-        return view('pages.purchase-order.create', compact('suppliers', 'products', 'warehouses'));
+        return view('pages.purchase-order.create', compact('suppliers', 'products', 'warehouses', 'company'));
     }
 
     /**
@@ -155,9 +157,10 @@ class PurchaseOrderController extends Controller
     {
         $this->authorizeCompany($purchaseOrder);
         
-        $purchaseOrder->load(['supplier', 'warehouse', 'productLines.product', 'statusLogs']);
+        $company = Auth::user()->currentCompany;
+        $purchaseOrder->load(['company', 'supplier', 'warehouse', 'productLines.product', 'statusLogs']);
         
-        return view('pages.purchase-order.show', compact('purchaseOrder'));
+        return view('pages.purchase-order.show', compact('purchaseOrder', 'company'));
     }
 
     /**
@@ -178,7 +181,7 @@ class PurchaseOrderController extends Controller
         
         $purchaseOrder->load(['warehouse', 'productLines.product']);
 
-        return view('pages.purchase-order.edit', compact('purchaseOrder', 'suppliers', 'products', 'warehouses'));
+        return view('pages.purchase-order.edit', compact('purchaseOrder', 'suppliers', 'products', 'warehouses', 'company'));
     }
 
     /**
@@ -198,7 +201,7 @@ class PurchaseOrderController extends Controller
             'requestor' => 'required|string|max:255',
             'activities' => 'nullable|string|max:500',
             'deadline' => 'required|date',
-            'status' => ['required', Rule::in(['draft', 'accepted', 'sent', 'done', 'cancel'])],
+            'status' => ['required', Rule::in(['draft', 'accepted', 'done', 'cancel'])],
             'products' => 'required|array|min:1',
             'products.*.product_id' => 'required|exists:products,id',
             'products.*.quantity' => 'required|integer|min:1',
@@ -258,9 +261,14 @@ class PurchaseOrderController extends Controller
                 'changed_at' => now(),
             ]);
 
-            // Handle status-specific actions
-            if (in_array($request->status, ['accepted', 'sent', 'done', 'cancel'])) {
-                $this->handleStatusChange($purchaseOrder, $request->status);
+            // Handle status-specific actions for update method
+            if (in_array($request->status, ['accepted', 'done', 'cancel'])) {
+                // For cancel status, we need to pass the original purchase order state
+                if ($request->status === 'cancel') {
+                    $this->handleStatusChange($purchaseOrder->fresh(), $request->status);
+                } else {
+                    $this->handleStatusChange($purchaseOrder, $request->status);
+                }
             }
 
             DB::commit();
@@ -312,7 +320,7 @@ class PurchaseOrderController extends Controller
         $this->authorizeCompany($purchaseOrder);
         
         $validator = Validator::make($request->all(), [
-            'status' => ['required', Rule::in(['draft', 'accepted', 'sent', 'done', 'cancel'])],
+            'status' => ['required', Rule::in(['draft', 'accepted', 'done', 'cancel'])],
         ]);
 
         if ($validator->fails()) {
@@ -338,9 +346,14 @@ class PurchaseOrderController extends Controller
                 'changed_at' => now(),
             ]);
 
-            // Handle status-specific actions
-            if (in_array($request->status, ['accepted', 'sent', 'done', 'cancel'])) {
-                $this->handleStatusChange($purchaseOrder, $request->status);
+            // Handle status-specific actions for updateStatus method
+            if (in_array($request->status, ['accepted', 'done', 'cancel'])) {
+                // For cancel status, we need to pass the original purchase order state
+                if ($request->status === 'cancel') {
+                    $this->handleStatusChange($purchaseOrder->fresh(), $request->status);
+                } else {
+                    $this->handleStatusChange($purchaseOrder, $request->status);
+                }
             }
 
             DB::commit();
@@ -486,6 +499,11 @@ class PurchaseOrderController extends Controller
                     ]);
                 }
                 break;
+
+            case 'cancel':
+                // When purchase order is cancelled, decrease the quantities that were added when accepted
+                $this->handlePurchaseOrderCancellation($purchaseOrder, $company);
+                break;
         }
     }
 
@@ -567,6 +585,80 @@ class PurchaseOrderController extends Controller
                         ]);
                     }
                 }
+            }
+        }
+    }
+
+    /**
+     * Handle purchase order cancellation by decreasing stock quantities
+     */
+    private function handlePurchaseOrderCancellation(PurchaseOrder $purchaseOrder, $company)
+    {
+        \Log::info('handlePurchaseOrderCancellation called for PO: ' . $purchaseOrder->number . ' with status: ' . $purchaseOrder->status);
+        
+        // Check if the purchase order has related receipts (was previously accepted)
+        $hasReceipts = Receipt::where('company_id', $company->id)
+            ->where('reference', $purchaseOrder->number)
+            ->exists();
+
+        \Log::info('PO has receipts: ' . ($hasReceipts ? 'Yes' : 'No'));
+
+        if ($hasReceipts) {
+            \Log::info('Processing cancellation for PO with receipts');
+            
+            foreach ($purchaseOrder->productLines as $line) {
+                $stock = Stock::where('company_id', $company->id)
+                    ->where('product_id', $line->product_id)
+                    ->where('warehouse_id', $purchaseOrder->warehouse_id)
+                    ->first();
+
+                if ($stock) {
+                    \Log::info('Found stock for product ' . $line->product_id . ': incoming=' . $stock->quantity_incoming . ', total=' . $stock->quantity_total);
+                    
+                    // Decrease incoming and total quantities that were added when accepted
+                    $quantityToDecrease = min($line->quantity, $stock->quantity_incoming);
+                    
+                    \Log::info('Quantity to decrease: ' . $quantityToDecrease);
+                    
+                    if ($quantityToDecrease > 0) {
+                        // Decrease quantities
+                        $stock->decrement('quantity_incoming', $quantityToDecrease);
+                        $stock->decrement('quantity_total', $quantityToDecrease);
+
+                        \Log::info('Decreased quantities. New incoming: ' . $stock->quantity_incoming . ', new total: ' . $stock->quantity_total);
+
+                        // Create stock history for the cancellation
+                        StockHistory::create([
+                            'stock_id' => $stock->id,
+                            'type' => 'purchase_cancelled',
+                            'reference' => 'PO-' . $purchaseOrder->number,
+                            'quantity_total_before' => $stock->quantity_total + $quantityToDecrease,
+                            'quantity_total_after' => $stock->quantity_total,
+                            'quantity_incoming_before' => $stock->quantity_incoming + $quantityToDecrease,
+                            'quantity_incoming_after' => $stock->quantity_incoming,
+                            'quantity_saleable_before' => $stock->quantity_saleable,
+                            'quantity_saleable_after' => $stock->quantity_saleable,
+                            'quantity_reserve_before' => $stock->quantity_reserve,
+                            'quantity_reserve_after' => $stock->quantity_reserve,
+                            'date' => now(),
+                        ]);
+                    }
+                }
+            }
+
+            // Also update related receipts to cancelled status
+            $receipts = Receipt::where('company_id', $company->id)
+                ->where('reference', $purchaseOrder->number)
+                ->get();
+
+            foreach ($receipts as $receipt) {
+                $receipt->update(['status' => 'cancelled']);
+                
+                ReceiptStatusLog::create([
+                    'receipt_id' => $receipt->id,
+                    'status' => 'cancelled',
+                    'changed_at' => now(),
+                ]);
             }
         }
     }

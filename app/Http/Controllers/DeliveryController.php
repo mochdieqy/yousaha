@@ -29,12 +29,33 @@ class DeliveryController extends Controller
                 ->with('error', 'Please select a company before viewing deliveries.');
         }
 
-        $deliveries = Delivery::with(['warehouse', 'productLines.product'])
-            ->where('company_id', $company->id)
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $query = Delivery::with(['warehouse', 'productLines.product'])
+            ->where('company_id', $company->id);
 
-        return view('pages.delivery.index', compact('deliveries'));
+        // Apply search filter
+        if (request('search')) {
+            $search = request('search');
+            $query->where(function($q) use ($search) {
+                $q->where('reference', 'like', "%{$search}%")
+                  ->orWhere('delivery_address', 'like', "%{$search}%")
+                  ->orWhere('id', 'like', "%{$search}%");
+            });
+        }
+
+        // Apply status filter
+        if (request('status')) {
+            $query->where('status', request('status'));
+        }
+
+        // Apply warehouse filter
+        if (request('warehouse_id')) {
+            $query->where('warehouse_id', request('warehouse_id'));
+        }
+
+        $deliveries = $query->orderBy('created_at', 'desc')->paginate(10);
+        $warehouses = Warehouse::where('company_id', $company->id)->get();
+
+        return view('pages.delivery.index', compact('deliveries', 'warehouses'));
     }
 
     /**
@@ -252,11 +273,6 @@ class DeliveryController extends Controller
                 'status' => $delivery->status,
                 'changed_at' => now(),
             ]);
-
-            // If status is being updated to 'ready', update stock
-            if ($request->has('status') && $request->status === 'ready') {
-                $this->updateStockForReadyStatus($delivery);
-            }
 
             DB::commit();
 
@@ -597,6 +613,86 @@ class DeliveryController extends Controller
                     'quantity_incoming_before' => $stock->quantity_incoming,
                     'quantity_incoming_after' => $stock->quantity_incoming,
                     'reference' => 'Delivery #' . $delivery->id,
+                    'date' => now(),
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Cancel delivery and release reserved stock
+     */
+    public function cancelDelivery(Request $request, Delivery $delivery)
+    {
+        $company = Auth::user()->currentCompany;
+        
+        if (!$company) {
+            return redirect()->route('company.choice')
+                ->with('error', 'Please select a company before cancelling deliveries.');
+        }
+
+        // Check if delivery can be cancelled
+        if ($delivery->status !== 'ready') {
+            return back()->with('error', 'Only deliveries with ready status can be cancelled.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Update delivery status to cancelled
+            $delivery->update(['status' => 'cancel']);
+
+            // Create status log
+            DeliveryStatusLog::create([
+                'delivery_id' => $delivery->id,
+                'status' => 'cancel',
+                'changed_at' => now(),
+            ]);
+
+            // Release reserved stock back to saleable inventory
+            $this->releaseReservedStock($delivery);
+
+            DB::commit();
+
+            return back()->with('success', 'Delivery cancelled successfully. Reserved stock has been released back to saleable inventory.');
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back()->with('error', 'Failed to cancel delivery: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Release reserved stock back to saleable inventory
+     */
+    private function releaseReservedStock(Delivery $delivery)
+    {
+        foreach ($delivery->productLines as $productLine) {
+            $stock = Stock::where('company_id', $delivery->company_id)
+                ->where('warehouse_id', $delivery->warehouse_id)
+                ->where('product_id', $productLine->product_id)
+                ->first();
+
+            if ($stock) {
+                // Release reserved stock back to saleable
+                $stock->update([
+                    'quantity_saleable' => $stock->quantity_saleable + $productLine->quantity,
+                    'quantity_reserve' => $stock->quantity_reserve - $productLine->quantity
+                ]);
+
+                // Create stock history for stock release
+                StockHistory::create([
+                    'stock_id' => $stock->id,
+                    'type' => 'release',
+                    'quantity_total_before' => $stock->quantity_total,
+                    'quantity_total_after' => $stock->quantity_total,
+                    'quantity_reserve_before' => $stock->quantity_reserve + $productLine->quantity,
+                    'quantity_reserve_after' => $stock->quantity_reserve,
+                    'quantity_saleable_before' => $stock->quantity_saleable - $productLine->quantity,
+                    'quantity_saleable_after' => $stock->quantity_saleable,
+                    'quantity_incoming_before' => $stock->quantity_incoming,
+                    'quantity_incoming_after' => $stock->quantity_incoming,
+                    'reference' => 'Delivery #' . $delivery->id . ' (Cancelled)',
                     'date' => now(),
                 ]);
             }

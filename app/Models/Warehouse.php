@@ -22,6 +22,16 @@ class Warehouse extends Model
     ];
 
     /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
+    /**
      * Get the company that owns the warehouse.
      */
     public function company()
@@ -51,5 +61,41 @@ class Warehouse extends Model
     public function getTotalQuantityAttribute()
     {
         return $this->stocks()->sum('quantity_total');
+    }
+
+    /**
+     * Check if warehouse has any stock.
+     */
+    public function hasStock()
+    {
+        return $this->stocks()->exists();
+    }
+
+    /**
+     * Get warehouse display name with code.
+     */
+    public function getDisplayNameAttribute()
+    {
+        return "{$this->name} ({$this->code})";
+    }
+
+    /**
+     * Scope to filter by company.
+     */
+    public function scopeForCompany($query, $companyId)
+    {
+        return $query->where('company_id', $companyId);
+    }
+
+    /**
+     * Scope to search warehouses.
+     */
+    public function scopeSearch($query, $search)
+    {
+        return $query->where(function($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('code', 'like', "%{$search}%")
+              ->orWhere('address', 'like', "%{$search}%");
+        });
     }
 }

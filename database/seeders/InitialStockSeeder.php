@@ -163,7 +163,6 @@ class InitialStockSeeder extends Seeder
         
         foreach ($accounts as $account) {
             $initialBalance = $this->getInitialBalanceForAccount($account);
-            $account->update(['balance' => $initialBalance]);
             
             $this->command->info("Set {$account->name} ({$account->code}) initial balance: IDR " . number_format($initialBalance, 0, ',', '.'));
         }

@@ -1,42 +1,55 @@
 @extends('layouts.home')
 
 @section('content')
-<div class="container-fluid">
-    <!-- Page Header -->
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">
-            <i class="fas fa-eye text-info me-2"></i>
-            Stock Details
-        </h1>
-        <div class="d-flex gap-2">
-            @can('stocks.edit')
-            <a href="{{ route('stocks.edit', $stock) }}" class="btn btn-warning btn-sm">
-                <i class="fas fa-edit me-1"></i>
-                Edit Stock
-            </a>
-            @endcan
-            <a href="{{ route('stocks.index') }}" class="btn btn-secondary btn-sm">
-                <i class="fas fa-arrow-left me-1"></i>
-                Back to Stock List
-            </a>
+<div class="row">
+    <div class="col-12">
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-1">
+                    <i class="fas fa-eye text-info me-2"></i>
+                    Stock Details
+                </h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('stocks.index') }}">Stocks</a></li>
+                        <li class="breadcrumb-item active">Details</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="d-flex gap-2">
+                @can('stocks.edit')
+                <a href="{{ route('stocks.edit', $stock) }}" class="btn btn-warning">
+                    <i class="fas fa-edit me-2"></i>
+                    Edit Stock
+                </a>
+                @endcan
+                <a href="{{ route('stocks.index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Back to Stock List
+                </a>
+            </div>
         </div>
-    </div>
 
+</div>
 
-
-    <!-- Stock Overview Card -->
-    <div class="row">
+<div class="row">
+        <!-- Stock Overview Card -->
         <div class="col-lg-8">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Stock Information</h6>
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Stock Information
+                    </h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label fw-bold">Product</label>
                             <div class="form-control-plaintext">
-                                <strong>{{ $stock->product->code }}</strong><br>
+                                <strong>{{ $stock->product->sku }}</strong><br>
                                 <span class="text-muted">{{ $stock->product->name }}</span>
                             </div>
                         </div>
@@ -104,9 +117,12 @@
 
         <!-- Stock Summary Card -->
         <div class="col-lg-4">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>
+                        Quick Actions
+                    </h5>
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
@@ -138,9 +154,12 @@
             </div>
 
             <!-- Stock Statistics -->
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Statistics</h6>
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Statistics
+                    </h5>
                 </div>
                 <div class="card-body">
                     <div class="row text-center">
@@ -160,26 +179,26 @@
         </div>
     </div>
 
-    <!-- Stock Details Card -->
-    @if($stock->details->count() > 0)
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">
-                <i class="fas fa-list me-2"></i>
-                Stock Details
-            </h6>
-        </div>
+        <!-- Stock Details Card -->
+        @if($stock->details->count() > 0)
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    Stock Details
+                </h5>
+            </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-bordered table-striped">
-                    <thead class="table-dark">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
                         <tr>
-                            <th>Quantity</th>
-                            <th>Code</th>
-                            <th>Cost</th>
-                            <th>Reference</th>
-                            <th>Expiration Date</th>
-                            <th>Status</th>
+                            <th class="border-0">Quantity</th>
+                            <th class="border-0">Code</th>
+                            <th class="border-0">Cost</th>
+                            <th class="border-0">Reference</th>
+                            <th class="border-0">Expiration Date</th>
+                            <th class="border-0">Total Value</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -241,25 +260,25 @@
     </div>
     @endif
 
-    <!-- Stock History Card -->
-    @if($stock->histories->count() > 0)
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">
-                <i class="fas fa-history me-2"></i>
-                Stock History
-            </h6>
-        </div>
+        <!-- Stock History Card -->
+        @if($stock->histories->count() > 0)
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Stock History
+                </h5>
+            </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-bordered table-striped">
-                    <thead class="table-dark">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
                         <tr>
-                            <th>Date</th>
-                            <th>Type</th>
-                            <th>Total Qty Change</th>
-                            <th>Saleable Qty Change</th>
-                            <th>Reference</th>
+                            <th class="border-0">Date</th>
+                            <th class="border-0">Type</th>
+                            <th class="border-0">Total Qty Change</th>
+                            <th class="border-0">Saleable Qty Change</th>
+                            <th class="border-0">Reference</th>
                         </tr>
                     </thead>
                     <tbody>

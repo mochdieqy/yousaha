@@ -217,4 +217,142 @@ class SalesOrderStatusChangeTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHasErrors('status');
     }
+
+    /** @test */
+    public function it_can_cancel_sales_order_and_release_reserved_stock()
+    {
+        $this->actingAs($this->user);
+        
+        // First change to accepted to reserve stock
+        $this->post(route('sales-orders.update-status', $this->salesOrder), [
+            'status' => 'accepted'
+        ]);
+        
+        // Verify stock is reserved
+        $this->stock->refresh();
+        $this->assertEquals(10, $this->stock->quantity_reserve);
+        $this->assertEquals(90, $this->stock->quantity_saleable);
+        
+        // Check delivery is created
+        $this->assertDatabaseHas('deliveries', [
+            'sales_order_id' => $this->salesOrder->id,
+            'status' => 'ready'
+        ]);
+        
+        // Now cancel the sales order
+        $response = $this->post(route('sales-orders.update-status', $this->salesOrder), [
+            'status' => 'cancel'
+        ]);
+        
+        $response->assertRedirect(route('sales-orders.index'));
+        $response->assertSessionHas('success');
+        
+        // Check sales order status
+        $this->salesOrder->refresh();
+        $this->assertEquals('cancel', $this->salesOrder->status);
+        
+        // Check stock reservation is released
+        $this->stock->refresh();
+        $this->assertEquals(0, $this->stock->quantity_reserve);
+        $this->assertEquals(100, $this->stock->quantity_saleable);
+        
+        // Check delivery is cancelled
+        $this->assertDatabaseHas('deliveries', [
+            'sales_order_id' => $this->salesOrder->id,
+            'status' => 'cancelled'
+        ]);
+        
+        // Check stock history is created for the release
+        $this->assertDatabaseHas('stock_histories', [
+            'company_id' => $this->company->id,
+            'product_id' => $this->product->id,
+            'type' => 'release',
+            'reference' => 'sales_order_cancellation'
+        ]);
+    }
+
+    /** @test */
+    public function it_can_change_status_from_waiting_to_accepted_with_sufficient_stock()
+    {
+        $this->actingAs($this->user);
+        
+        // First, create a sales order with insufficient stock to set it to waiting
+        $this->stock->update(['quantity_saleable' => 5]); // Less than required 10
+        
+        // Try to change to accepted - should fail and set status to waiting
+        $response = $this->post(route('sales-orders.update-status', $this->salesOrder), [
+            'status' => 'accepted'
+        ]);
+        
+        $response->assertRedirect(route('sales-orders.index'));
+        $response->assertSessionHas('error');
+        
+        // Check sales order status is now waiting
+        $this->salesOrder->refresh();
+        $this->assertEquals('waiting', $this->salesOrder->status);
+        
+        // Now increase stock to sufficient level
+        $this->stock->update(['quantity_saleable' => 15]); // More than required 10
+        
+        // Try to change from waiting to accepted - should succeed
+        $response = $this->post(route('sales-orders.update-status', $this->salesOrder), [
+            'status' => 'accepted'
+        ]);
+        
+        $response->assertRedirect(route('sales-orders.index'));
+        $response->assertSessionHas('success');
+        
+        // Check sales order status is now accepted
+        $this->salesOrder->refresh();
+        $this->assertEquals('accepted', $this->salesOrder->status);
+        
+        // Check stock is reserved
+        $this->stock->refresh();
+        $this->assertEquals(10, $this->stock->quantity_reserve);
+        $this->assertEquals(5, $this->stock->quantity_saleable);
+        
+        // Check delivery is created
+        $this->assertDatabaseHas('deliveries', [
+            'sales_order_id' => $this->salesOrder->id,
+            'status' => 'ready'
+        ]);
+    }
+
+    /** @test */
+    public function it_cannot_change_status_from_waiting_to_accepted_with_insufficient_stock()
+    {
+        $this->actingAs($this->user);
+        
+        // First, create a sales order with insufficient stock to set it to waiting
+        $this->stock->update(['quantity_saleable' => 5]); // Less than required 10
+        
+        // Try to change to accepted - should fail and set status to waiting
+        $response = $this->post(route('sales-orders.update-status', $this->salesOrder), [
+            'status' => 'accepted'
+        ]);
+        
+        $response->assertRedirect(route('sales-orders.index'));
+        $response->assertSessionHas('error');
+        
+        // Check sales order status is now waiting
+        $this->salesOrder->refresh();
+        $this->assertEquals('waiting', $this->salesOrder->status);
+        
+        // Try to change from waiting to accepted again - should still fail
+        $response = $this->post(route('sales-orders.update-status', $this->salesOrder), [
+            'status' => 'accepted'
+        ]);
+        
+        $response->assertRedirect(route('sales-orders.index'));
+        $response->assertSessionHas('error');
+        
+        // Check sales order status remains waiting
+        $this->salesOrder->refresh();
+        $this->assertEquals('waiting', $this->salesOrder->status);
+        
+        // Check stock quantities remain unchanged
+        $this->stock->refresh();
+        $this->assertEquals(0, $this->stock->quantity_reserve);
+        $this->assertEquals(5, $this->stock->quantity_saleable);
+    }
 }

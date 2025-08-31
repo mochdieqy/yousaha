@@ -12,7 +12,7 @@ class AccountController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $company = Auth::user()->currentCompany;
         
@@ -20,9 +20,23 @@ class AccountController extends Controller
             return redirect()->route('company.choice')->with('error', 'Please select a company first.');
         }
 
-        $accounts = Account::where('company_id', $company->id)
-            ->orderBy('code')
-            ->paginate(15);
+        $query = Account::where('company_id', $company->id);
+
+        // Apply search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('code', 'like', "%{$search}%")
+                  ->orWhere('name', 'like', "%{$search}%");
+            });
+        }
+
+        // Apply type filter
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        $accounts = $query->orderBy('code')->paginate(15);
 
         return view('pages.accounts.index', compact('accounts'));
     }
@@ -99,7 +113,15 @@ class AccountController extends Controller
             abort(403);
         }
 
-        $account->load(['generalLedgerDetails.generalLedger', 'expenseDetails.expense', 'incomeDetails.income']);
+        // Eager load relationships to avoid N+1 queries
+        $account->load([
+            'generalLedgerDetails.generalLedger',
+            'expenseDetails.expense',
+            'incomeDetails.income',
+            'internalTransfersIn',
+            'internalTransfersOut',
+            'assets'
+        ]);
 
         return view('pages.accounts.show', compact('account'));
     }
@@ -181,15 +203,10 @@ class AccountController extends Controller
                 ->with('error', 'This account cannot be deleted as it is a critical system account used in sales and purchase orders.');
         }
 
-        // Check if account has any transactions
-        if ($account->generalLedgerDetails()->exists() || 
-            $account->expenseDetails()->exists() || 
-            $account->incomeDetails()->exists() ||
-            $account->internalTransfersIn()->exists() ||
-            $account->internalTransfersOut()->exists() ||
-            $account->assets()->exists()) {
-            return redirect()->back()
-                ->with('error', 'Cannot delete account. It has associated transactions or is referenced by other records.');
+        // Use the model's canBeDeleted method for better encapsulation
+        if (!$account->canBeDeleted()) {
+            $reason = $account->getDeletionBlockReason();
+            return redirect()->back()->with('error', $reason);
         }
 
         try {

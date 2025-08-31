@@ -222,7 +222,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" onclick="closeDeleteModal()" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <p>Are you sure you want to delete the supplier "<strong id="supplierName"></strong>"?</p>
@@ -232,11 +232,14 @@
                 </p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
                 <form id="deleteForm" method="POST" style="display: inline;">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="btn btn-danger">Delete Supplier</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>
+                        Delete Supplier
+                    </button>
                 </form>
             </div>
         </div>
@@ -248,12 +251,109 @@
 
 @section('script')
 <script>
+let deleteModalInstance = null;
+
 function confirmDelete(supplierId, supplierName) {
     document.getElementById('supplierName').textContent = supplierName;
     document.getElementById('deleteForm').action = `/suppliers/${supplierId}`;
     
-    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
-    deleteModal.show();
+    // Create modal instance and store it globally
+    deleteModalInstance = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModalInstance.show();
 }
+
+function closeDeleteModal() {
+    // Method 1: Use stored instance
+    if (deleteModalInstance) {
+        deleteModalInstance.hide();
+        return;
+    }
+    
+    // Method 2: Try to get existing instance
+    const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+    if (modal) {
+        modal.hide();
+        return;
+    }
+    
+    // Method 3: Create new instance and hide immediately
+    try {
+        const newModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        newModal.hide();
+    } catch (error) {
+        // Silent fail - modal will be closed by other methods
+    }
+    
+    // Method 4: Manual hide using CSS classes
+    const modalElement = document.getElementById('deleteModal');
+    if (modalElement) {
+        modalElement.classList.remove('show');
+        modalElement.style.display = 'none';
+        document.body.classList.remove('modal-open');
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) {
+            backdrop.remove();
+        }
+    }
+}
+
+// Close modal when clicking outside or pressing ESC
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteModalElement = document.getElementById('deleteModal');
+    const deleteForm = document.getElementById('deleteForm');
+    
+    if (deleteModalElement && deleteForm) {
+        // Add event listeners for close buttons
+        const deleteCloseButtons = deleteModalElement.querySelectorAll('[onclick*="closeDeleteModal"], .btn-close');
+        deleteCloseButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                closeDeleteModal();
+            });
+        });
+        
+        // Close delete modal when clicking outside
+        deleteModalElement.addEventListener('click', function(event) {
+            if (event.target === deleteModalElement) {
+                closeDeleteModal();
+            }
+        });
+        
+        // Close modals when pressing ESC key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeDeleteModal();
+            }
+        });
+        
+        // Handle form submission with loading state
+        deleteForm.addEventListener('submit', function() {
+            const submitBtn = deleteForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Deleting...';
+            
+            // Re-enable after a delay (in case of errors)
+            setTimeout(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }, 10000);
+        });
+    }
+    
+    // Auto-hide success/error messages after 5 seconds
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            if (alert.classList.contains('alert-success') || alert.classList.contains('alert-danger')) {
+                alert.style.transition = 'opacity 0.5s ease';
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            }
+        }, 5000);
+    });
+});
 </script>
 @endsection

@@ -5,98 +5,112 @@ namespace App\Services;
 use App\Models\Account;
 use App\Models\GeneralLedgerDetail;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class AccountBalanceService
 {
     /**
-     * Calculate balance from general ledger for a specific account
+     * Update account balances for a transaction
      */
-    public static function calculateBalanceFromGeneralLedger(Account $account): float
+    public static function updateBalancesForTransaction($companyId, $entries)
     {
-        $glDetails = GeneralLedgerDetail::whereHas('generalLedger', function($query) use ($account) {
-            $query->where('company_id', $account->company_id);
-        })->where('account_id', $account->id)->get();
-
-        $balance = 0;
-
-        foreach ($glDetails as $detail) {
-            $balance += self::calculateEntryImpact($detail, $account->type);
-        }
-
-        return $balance;
-    }
-
-    /**
-     * Calculate the impact of a general ledger entry on an account balance
-     */
-    public static function calculateEntryImpact($detail, string $accountType): float
-    {
-        $value = $detail->value;
-        $isDebit = $detail->type === 'debit';
-        
-        switch (strtolower($accountType)) {
-            case 'asset':
-                // Assets increase with debits, decrease with credits
-                return $isDebit ? $value : -$value;
-                
-            case 'liability':
-                // Liabilities increase with credits, decrease with debits
-                return $isDebit ? -$value : $value;
-                
-            case 'equity':
-                // Equity increases with credits, decreases with debits
-                return $isDebit ? -$value : $value;
-                
-            case 'revenue':
-                // Revenue increases with credits, decreases with debits
-                return $isDebit ? -$value : $value;
-                
-            case 'expense':
-                // Expenses increase with debits, decrease with credits
-                return $isDebit ? $value : -$value;
-                
-            default:
-                Log::warning("Unknown account type: {$accountType}, using default calculation");
-                return $isDebit ? $value : -$value;
+        foreach ($entries as $entry) {
+            $account = Account::find($entry['account_id']);
+            
+            if ($account && $account->company_id == $companyId) {
+                if ($entry['type'] === 'debit') {
+                    $account->increment('balance', $entry['value']);
+                } else {
+                    $account->decrement('balance', $entry['value']);
+                }
+            }
         }
     }
 
     /**
-     * Calculate balance from general ledger for a specific account within a date range
+     * Reverse account balances for a transaction
      */
-    public static function calculateBalanceFromGeneralLedgerInRange(Account $account, $startDate, $endDate): float
+    public static function reverseBalancesForTransaction($companyId, $entries)
     {
-        $glDetails = GeneralLedgerDetail::whereHas('generalLedger', function($query) use ($account, $startDate, $endDate) {
+        foreach ($entries as $entry) {
+            $account = Account::find($entry['account_id']);
+            
+            if ($account && $account->company_id == $companyId) {
+                if ($entry['type'] === 'debit') {
+                    $account->decrement('balance', $entry['value']);
+                } else {
+                    $account->increment('balance', $entry['value']);
+                }
+            }
+        }
+    }
+
+    /**
+     * Calculate balance from general ledger for an account
+     */
+    public static function calculateBalanceFromGeneralLedger($account)
+    {
+        $debits = GeneralLedgerDetail::whereHas('generalLedger', function($query) use ($account) {
             $query->where('company_id', $account->company_id)
+                  ->where('status', 'posted');
+        })->where('account_id', $account->id)
+          ->where('type', 'debit')
+          ->sum('value');
+
+        $credits = GeneralLedgerDetail::whereHas('generalLedger', function($query) use ($account) {
+            $query->where('company_id', $account->company_id)
+                  ->where('status', 'posted');
+        })->where('account_id', $account->id)
+          ->where('type', 'credit')
+          ->sum('value');
+
+        return $debits - $credits;
+    }
+
+    /**
+     * Calculate balance from general ledger in a date range
+     */
+    public static function calculateBalanceFromGeneralLedgerInRange($account, $startDate, $endDate)
+    {
+        $debits = GeneralLedgerDetail::whereHas('generalLedger', function($query) use ($account, $startDate, $endDate) {
+            $query->where('company_id', $account->company_id)
+                  ->where('status', 'posted')
                   ->whereBetween('date', [$startDate, $endDate]);
-        })->where('account_id', $account->id)->get();
+        })->where('account_id', $account->id)
+          ->where('type', 'debit')
+          ->sum('value');
 
-        $balance = 0;
+        $credits = GeneralLedgerDetail::whereHas('generalLedger', function($query) use ($account, $startDate, $endDate) {
+            $query->where('company_id', $account->company_id)
+                  ->where('status', 'posted')
+                  ->whereBetween('date', [$startDate, $endDate]);
+        })->where('account_id', $account->id)
+          ->where('type', 'credit')
+          ->sum('value');
 
-        foreach ($glDetails as $detail) {
-            $balance += self::calculateEntryImpact($detail, $account->type);
-        }
-
-        return $balance;
+        return $debits - $credits;
     }
 
     /**
-     * Calculate opening balance (balance before a specific date)
+     * Calculate opening balance for an account before a specific date
      */
-    public static function calculateOpeningBalance(Account $account, $date): float
+    public static function calculateOpeningBalance($account, $date)
     {
-        $glDetails = GeneralLedgerDetail::whereHas('generalLedger', function($query) use ($account, $date) {
+        $debits = GeneralLedgerDetail::whereHas('generalLedger', function($query) use ($account, $date) {
             $query->where('company_id', $account->company_id)
+                  ->where('status', 'posted')
                   ->where('date', '<', $date);
-        })->where('account_id', $account->id)->get();
+        })->where('account_id', $account->id)
+          ->where('type', 'debit')
+          ->sum('value');
 
-        $balance = 0;
+        $credits = GeneralLedgerDetail::whereHas('generalLedger', function($query) use ($account, $date) {
+            $query->where('company_id', $account->company_id)
+                  ->where('status', 'posted')
+                  ->where('date', '<', $date);
+        })->where('account_id', $account->id)
+          ->where('type', 'credit')
+          ->sum('value');
 
-        foreach ($glDetails as $detail) {
-            $balance += self::calculateEntryImpact($detail, $account->type);
-        }
-
-        return $balance;
+        return $debits - $credits;
     }
 }

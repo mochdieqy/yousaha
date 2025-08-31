@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Asset;
-use App\Models\GeneralLedger;
-use App\Models\GeneralLedgerDetail;
 use App\Models\Account;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -24,13 +22,29 @@ class AssetController extends Controller
             return redirect()->route('company.choice')->with('error', 'Please select a company first.');
         }
 
-        $assets = Asset::where('company_id', $company->id)
-            ->with(['accountAsset'])
-            ->orderBy('purchased_date', 'desc')
+        $query = Asset::where('company_id', $company->id)
+            ->with(['accountAsset']);
+
+        // Apply search filter
+        if (request('search')) {
+            $search = request('search');
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('number', 'like', "%{$search}%")
+                  ->orWhere('reference', 'like', "%{$search}%");
+            });
+        }
+
+        // Apply location filter
+        if (request('location')) {
+            $query->where('location', request('location'));
+        }
+
+        $assets = $query->orderBy('purchased_date', 'desc')
             ->orderBy('created_at', 'desc')
             ->paginate(15);
 
-        return view('pages.assets.index', compact('assets'));
+        return view('pages.assets.index', compact('assets', 'company'));
     }
 
     /**
@@ -49,7 +63,7 @@ class AssetController extends Controller
             ->orderBy('code')
             ->get();
 
-        return view('pages.assets.create', compact('assetAccounts'));
+        return view('pages.assets.create', compact('assetAccounts', 'company'));
     }
 
     /**
@@ -80,7 +94,7 @@ class AssetController extends Controller
         try {
             DB::beginTransaction();
 
-            $asset = Asset::create([
+            Asset::create([
                 'company_id' => $company->id,
                 'name' => $request->name,
                 'number' => $request->number,
@@ -90,41 +104,6 @@ class AssetController extends Controller
                 'location' => $request->location,
                 'reference' => $request->reference,
             ]);
-
-            // Create general ledger entry (commented out since assets don't store amounts)
-            // $generalLedger = GeneralLedger::create([
-            //     'company_id' => $company->id,
-            //     'number' => $asset->number,
-            //     'type' => 'Asset Purchase',
-            //     'date' => $asset->purchased_date,
-            //     'note' => 'Asset: ' . $asset->name,
-            //     'total' => 0, // Assets don't store amount in the table
-            //     'reference' => 'AST-' . $asset->id,
-            //     'description' => 'Asset Purchase: ' . $asset->name,
-            //     'status' => 'Posted',
-            // ]);
-
-            // Debit asset account (commented out since no amount available)
-            // GeneralLedgerDetail::create([
-            //     'general_ledger_id' => $generalLedger->id,
-            //     'account_id' => $request->account_asset,
-            //     'type' => 'debit',
-            //     'value' => $request->amount,
-            //     'debit' => $request->amount,
-            //     'credit' => 0,
-            //     'description' => 'Asset purchase: ' . $asset->name,
-            // ]);
-
-            // Credit payment account (commented out since no amount available)
-            // GeneralLedgerDetail::create([
-            //     'general_ledger_id' => $generalLedger->id,
-            //     'account_id' => $request->payment_account_id,
-            //     'type' => 'credit',
-            //     'value' => $request->amount,
-            //     'debit' => 0,
-            //     'credit' => $request->amount,
-            //     'description' => 'Payment for asset: ' . $asset->name,
-            // ]);
 
             DB::commit();
 
@@ -152,7 +131,7 @@ class AssetController extends Controller
 
         $asset->load(['accountAsset']);
 
-        return view('pages.assets.show', compact('asset'));
+        return view('pages.assets.show', compact('asset', 'company'));
     }
 
     /**
@@ -171,7 +150,7 @@ class AssetController extends Controller
             ->orderBy('code')
             ->get();
 
-        return view('pages.assets.edit', compact('asset', 'assetAccounts'));
+        return view('pages.assets.edit', compact('asset', 'assetAccounts', 'company'));
     }
 
     /**
@@ -212,43 +191,6 @@ class AssetController extends Controller
                 'reference' => $request->reference,
             ]);
 
-            // Update general ledger entry (commented out since assets don't store amounts)
-            // $generalLedger = GeneralLedger::where('reference', 'AST-' . $asset->id)->first();
-            // if ($generalLedger) {
-            //     $generalLedger->update([
-            //         'number' => $asset->number,
-            //         'date' => $asset->purchased_date,
-            //         'note' => 'Asset: ' . $asset->name,
-            //         'total' => $asset->amount,
-            //         'description' => 'Asset Purchase: ' . $asset->name,
-            //     ]);
-
-            //     // Delete existing general ledger details
-            //     $generalLedger->details()->delete();
-
-            //     // Debit asset account
-            //     GeneralLedgerDetail::create([
-            //         'general_ledger_id' => $generalLedger->id,
-            //         'account_id' => $request->account_asset,
-            //         'type' => 'debit',
-            //         'value' => $request->amount,
-            //         'debit' => $request->amount,
-            //         'credit' => 0,
-            //         'description' => 'Asset purchase: ' . $asset->name,
-            //     ]);
-
-            //     // Credit payment account
-            //     GeneralLedgerDetail::create([
-            //         'general_ledger_id' => $generalLedger->id,
-            //         'account_id' => $request->payment_account_id,
-            //         'type' => 'credit',
-            //         'value' => $request->amount,
-            //         'debit' => 0,
-            //         'credit' => $request->amount,
-            //         'description' => 'Payment for asset: ' . $asset->name,
-            //     ]);
-            // }
-
             DB::commit();
 
             return redirect()->route('assets.index')
@@ -272,13 +214,6 @@ class AssetController extends Controller
         if (!$company || $asset->company_id !== $company->id) {
             abort(403);
         }
-
-        // Check if asset has general ledger entries (commented out since assets don't create GL entries)
-        // $generalLedger = GeneralLedger::where('reference', 'AST-' . $asset->id)->first();
-        // if ($generalLedger) {
-        //     return redirect()->back()
-        //         ->with('error', 'Cannot delete asset. It has associated general ledger entries.');
-        // }
 
         try {
             $asset->delete();

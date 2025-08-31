@@ -1,24 +1,37 @@
 @extends('layouts.home')
 
 @section('content')
-<div class="container-fluid">
-    <!-- Page Header -->
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">
-            <i class="fas fa-edit text-warning me-2"></i>
-            Edit Stock
-        </h1>
-        <a href="{{ route('stocks.index') }}" class="btn btn-secondary btn-sm">
-            <i class="fas fa-arrow-left me-1"></i>
-            Back to Stock List
-        </a>
-    </div>
-
-    <!-- Edit Stock Form -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Stock Information</h6>
+<div class="row">
+    <div class="col-12">
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-1">
+                    <i class="fas fa-edit text-warning me-2"></i>
+                    Edit Stock
+                </h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('stocks.index') }}">Stocks</a></li>
+                        <li class="breadcrumb-item active">Edit</li>
+                    </ol>
+                </nav>
+            </div>
+            <a href="{{ route('stocks.index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>
+                Back to Stock List
+            </a>
         </div>
+
+        <!-- Edit Stock Form -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Stock Information
+                </h5>
+            </div>
         <div class="card-body">
             <form method="POST" action="{{ route('stocks.update', $stock) }}" id="editStockForm">
                 @csrf
@@ -56,7 +69,7 @@
                             @foreach($products as $product)
                                 <option value="{{ $product->id }}" 
                                         {{ (old('product_id', $stock->product_id) == $product->id) ? 'selected' : '' }}>
-                                    {{ $product->code }} - {{ $product->name }}
+                                    {{ $product->sku }} - {{ $product->name }}
                                 </option>
                             @endforeach
                         </select>

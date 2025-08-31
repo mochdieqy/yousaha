@@ -1,126 +1,140 @@
 @extends('layouts.home')
 
-@section('title', 'Generate AI Evaluation')
-
 @section('content')
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="page-title-box d-flex align-items-center justify-content-between">
-                <h4 class="mb-0">Generate AI Evaluation</h4>
-                <div class="page-title-right">
-                    <a href="{{ route('ai-evaluation.index') }}" class="btn btn-secondary mb-3">
-                        <i class="fas fa-arrow-left"></i> Back to Evaluations
-                    </a>
-                </div>
+<div class="row">
+    <div class="col-12">
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-1">
+                    <i class="fas fa-robot text-primary me-2"></i>
+                    Generate AI Evaluation
+                </h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('ai-evaluation.index') }}">AI Evaluations</a></li>
+                        <li class="breadcrumb-item active">Generate New</li>
+                    </ol>
+                </nav>
             </div>
+            <a href="{{ route('ai-evaluation.index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>
+                Back to Evaluations
+            </a>
         </div>
-    </div>
 
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <form action="{{ route('ai-evaluation.store') }}" method="POST" id="ai-evaluation-form">
-                        @csrf
+        <!-- AI Evaluation Form -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="fas fa-plus me-2"></i>
+                    Generate New AI Evaluation
+                </h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ route('ai-evaluation.store') }}" method="POST" id="ai-evaluation-form">
+                    @csrf
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="title" class="form-label">Evaluation Title <span class="text-danger">*</span></label>
+                                <input type="text" 
+                                       class="form-control @error('title') is-invalid @enderror" 
+                                       id="title" 
+                                       name="title" 
+                                       value="{{ old('title') }}" 
+                                       placeholder="Enter evaluation title"
+                                       required>
+                                @error('title')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
                         
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="title" class="form-label">Evaluation Title <span class="text-danger">*</span></label>
-                                    <input type="text" 
-                                           class="form-control @error('title') is-invalid @enderror" 
-                                           id="title" 
-                                           name="title" 
-                                           value="{{ old('title') }}" 
-                                           placeholder="Enter evaluation title"
-                                           required>
-                                    @error('title')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="category" class="form-label">Evaluation Category <span class="text-danger">*</span></label>
-                                    <select class="form-select @error('category') is-invalid @enderror" 
-                                            id="category" 
-                                            name="category" 
-                                            required>
-                                        <option value="">Select Category</option>
-                                        @foreach($categories as $key => $name)
-                                            <option value="{{ $key }}" {{ old('category') == $key ? 'selected' : '' }}>
-                                                {{ $name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('category')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="category" class="form-label">Evaluation Category <span class="text-danger">*</span></label>
+                                <select class="form-select @error('category') is-invalid @enderror" 
+                                        id="category" 
+                                        name="category" 
+                                        required>
+                                    <option value="">Select Category</option>
+                                    @foreach($categories as $key => $name)
+                                        <option value="{{ $key }}" {{ old('category') == $key ? 'selected' : '' }}>
+                                            {{ $name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('category')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
+                    </div>
 
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="period_start" class="form-label">Period Start</label>
-                                    <input type="date" 
-                                           class="form-control @error('period_start') is-invalid @enderror" 
-                                           id="period_start" 
-                                           name="period_start" 
-                                           value="{{ old('period_start') }}">
-                                    <div class="form-text">Leave empty to analyze all data</div>
-                                    @error('period_start')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="period_end" class="form-label">Period End</label>
-                                    <input type="date" 
-                                           class="form-control @error('period_end') is-invalid @enderror" 
-                                           id="period_end" 
-                                           name="period_end" 
-                                           value="{{ old('period_end') }}">
-                                    <div class="form-text">Leave empty to analyze all data</div>
-                                    @error('period_end')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="period_start" class="form-label">Period Start</label>
+                                <input type="date" 
+                                       class="form-control @error('period_start') is-invalid @enderror" 
+                                       id="period_start" 
+                                       name="period_start" 
+                                       value="{{ old('period_start') }}">
+                                <div class="form-text">Leave empty to analyze all data</div>
+                                @error('period_start')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="period_end" class="form-label">Period End</label>
+                                <input type="date" 
+                                       class="form-control @error('period_end') is-invalid @enderror" 
+                                       id="period_end" 
+                                       name="period_end" 
+                                       value="{{ old('period_end') }}">
+                                <div class="form-text">Leave empty to analyze all data</div>
+                                @error('period_end')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
 
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="alert alert-info">
-                                    <h6 class="alert-heading">
-                                        <i class="fas fa-info-circle"></i> What will be analyzed?
-                                    </h6>
-                                    <div id="category-description">
-                                        <p class="mb-0">Select a category to see what data will be analyzed.</p>
-                                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    What will be analyzed?
+                                </h6>
+                                <div id="category-description">
+                                    <p class="mb-0">Select a category to see what data will be analyzed.</p>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="d-flex justify-content-end">
-                                    <a href="{{ route('ai-evaluation.index') }}" class="btn btn-secondary me-2">
-                                        Cancel
-                                    </a>
-                                    <button type="submit" class="btn btn-primary" id="generate-btn">
-                                        <i class="fas fa-robot"></i> Generate AI Evaluation
-                                    </button>
-                                </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-end">
+                                <a href="{{ route('ai-evaluation.index') }}" class="btn btn-secondary me-2">
+                                    <i class="fas fa-times me-2"></i>
+                                    Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary" id="generate-btn">
+                                    <i class="fas fa-robot me-2"></i>
+                                    Generate AI Evaluation
+                                </button>
                             </div>
                         </div>
-                    </form>
-                </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -212,7 +226,7 @@ $(document).ready(function() {
         
         // Disable button and show loading state
         submitBtn.prop('disabled', true);
-        submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Generating AI Evaluation...');
+        submitBtn.html('<i class="fas fa-spinner fa-spin me-2"></i>Generating AI Evaluation...');
         
         // Add loading overlay to the form
         const form = $(this);
@@ -258,7 +272,7 @@ $(document).ready(function() {
             $('.progress-step').eq(2).addClass('active');
         }, 4000);
         
-        // Re-enable button after 5 seconds as fallback (in case of errors)
+        // Re-enable button after 5 minutes as fallback (in case of errors)
         setTimeout(function() {
             if (submitBtn.prop('disabled')) {
                 submitBtn.prop('disabled', false);

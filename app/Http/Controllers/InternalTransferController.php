@@ -17,7 +17,7 @@ class InternalTransferController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $company = Auth::user()->currentCompany;
         
@@ -25,11 +25,47 @@ class InternalTransferController extends Controller
             return redirect()->route('company.choice')->with('error', 'Please select a company first.');
         }
 
-        $internalTransfers = InternalTransfer::where('company_id', $company->id)
-            ->with(['accountOut', 'accountIn'])
-            ->orderBy('date', 'desc')
+        $query = InternalTransfer::where('company_id', $company->id)
+            ->with(['accountOut', 'accountIn']);
+
+        // Apply search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('number', 'like', "%{$search}%")
+                  ->orWhere('note', 'like', "%{$search}%")
+                  ->orWhereHas('accountOut', function($q) use ($search) {
+                      $q->where('code', 'like', "%{$search}%")
+                        ->orWhere('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('accountIn', function($q) use ($search) {
+                      $q->where('code', 'like', "%{$search}%")
+                        ->orWhere('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Apply account type filter
+        if ($request->filled('account_type')) {
+            $accountType = $request->account_type;
+            $query->where(function($q) use ($accountType) {
+                $q->whereHas('accountOut', function($q) use ($accountType) {
+                    $q->where('type', $accountType);
+                })->orWhereHas('accountIn', function($q) use ($accountType) {
+                    $q->where('type', $accountType);
+                });
+            });
+        }
+
+        // Apply date filter
+        if ($request->filled('date_from')) {
+            $query->where('date', '>=', $request->date_from);
+        }
+
+        $internalTransfers = $query->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc')
-            ->paginate(15);
+            ->paginate(15)
+            ->withQueryString();
 
         return view('pages.internal-transfers.index', compact('internalTransfers'));
     }
@@ -94,40 +130,7 @@ class InternalTransferController extends Controller
                 'note' => $request->note,
             ]);
 
-            // Create general ledger entry
-            $generalLedger = GeneralLedger::create([
-                'company_id' => $company->id,
-                'number' => $internalTransfer->number,
-                'type' => 'Internal Transfer',
-                'date' => $internalTransfer->date,
-                'note' => $internalTransfer->note,
-                'total' => $internalTransfer->value,
-                'reference' => 'TRF-' . $internalTransfer->id,
-                'description' => 'Internal Transfer: ' . $internalTransfer->number,
-                'status' => 'Posted',
-            ]);
-
-            // Debit receiving account
-            GeneralLedgerDetail::create([
-                'general_ledger_id' => $generalLedger->id,
-                'account_id' => $request->account_in,
-                'type' => 'debit',
-                'value' => $request->value,
-                'debit' => $request->value,
-                'credit' => 0,
-                'description' => 'Transfer in: ' . $internalTransfer->number,
-            ]);
-
-            // Credit sending account
-            GeneralLedgerDetail::create([
-                'general_ledger_id' => $generalLedger->id,
-                'account_id' => $request->account_out,
-                'type' => 'credit',
-                'value' => $request->value,
-                'debit' => 0,
-                'credit' => $request->value,
-                'description' => 'Transfer out: ' . $internalTransfer->number,
-            ]);
+            $this->createGeneralLedgerEntry($internalTransfer);
 
             // Update account balances using AccountBalanceService
             AccountBalanceService::updateBalancesForTransaction($company->id, [
@@ -223,42 +226,7 @@ class InternalTransferController extends Controller
                 'note' => $request->note,
             ]);
 
-            // Update general ledger entry
-            $generalLedger = GeneralLedger::where('reference', 'TRF-' . $internalTransfer->id)->first();
-            if ($generalLedger) {
-                $generalLedger->update([
-                    'number' => $internalTransfer->number,
-                    'date' => $internalTransfer->date,
-                    'note' => $internalTransfer->note,
-                    'total' => $internalTransfer->value,
-                    'description' => 'Internal Transfer: ' . $internalTransfer->number,
-                ]);
-
-                // Delete existing general ledger details
-                $generalLedger->details()->delete();
-
-                // Debit receiving account
-                GeneralLedgerDetail::create([
-                    'general_ledger_id' => $generalLedger->id,
-                    'account_id' => $request->account_in,
-                    'type' => 'debit',
-                    'value' => $request->value,
-                    'debit' => $request->value,
-                    'credit' => 0,
-                    'description' => 'Transfer in: ' . $internalTransfer->number,
-                ]);
-
-                // Credit sending account
-                GeneralLedgerDetail::create([
-                    'general_ledger_id' => $generalLedger->id,
-                    'account_id' => $request->account_out,
-                    'type' => 'credit',
-                    'value' => $request->value,
-                    'debit' => 0,
-                    'credit' => $request->value,
-                    'description' => 'Transfer out: ' . $internalTransfer->number,
-                ]);
-            }
+            $this->updateGeneralLedgerEntry($internalTransfer);
 
             // Update account balances using AccountBalanceService
             AccountBalanceService::updateBalancesForTransaction($company->id, [
@@ -312,6 +280,89 @@ class InternalTransferController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()
                 ->with('error', 'Failed to delete internal transfer. Please try again.');
+        }
+    }
+
+    /**
+     * Create general ledger entry for internal transfer
+     */
+    private function createGeneralLedgerEntry(InternalTransfer $internalTransfer): void
+    {
+        $generalLedger = GeneralLedger::create([
+            'company_id' => $internalTransfer->company_id,
+            'number' => $internalTransfer->number,
+            'type' => 'Internal Transfer',
+            'date' => $internalTransfer->date,
+            'note' => $internalTransfer->note,
+            'total' => $internalTransfer->value,
+            'reference' => 'TRF-' . $internalTransfer->id,
+            'description' => 'Internal Transfer: ' . $internalTransfer->number,
+            'status' => 'Posted',
+        ]);
+
+        // Debit receiving account
+        GeneralLedgerDetail::create([
+            'general_ledger_id' => $generalLedger->id,
+            'account_id' => $internalTransfer->account_in,
+            'type' => 'debit',
+            'value' => $internalTransfer->value,
+            'debit' => $internalTransfer->value,
+            'credit' => 0,
+            'description' => 'Transfer in: ' . $internalTransfer->number,
+        ]);
+
+        // Credit sending account
+        GeneralLedgerDetail::create([
+            'general_ledger_id' => $generalLedger->id,
+            'account_id' => $internalTransfer->account_out,
+            'type' => 'credit',
+            'value' => $internalTransfer->value,
+            'debit' => 0,
+            'credit' => $internalTransfer->value,
+            'description' => 'Transfer out: ' . $internalTransfer->number,
+        ]);
+    }
+
+    /**
+     * Update general ledger entry for internal transfer
+     */
+    private function updateGeneralLedgerEntry(InternalTransfer $internalTransfer): void
+    {
+        $generalLedger = GeneralLedger::where('reference', 'TRF-' . $internalTransfer->id)->first();
+        
+        if ($generalLedger) {
+            $generalLedger->update([
+                'number' => $internalTransfer->number,
+                'date' => $internalTransfer->date,
+                'note' => $internalTransfer->note,
+                'total' => $internalTransfer->value,
+                'description' => 'Internal Transfer: ' . $internalTransfer->number,
+            ]);
+
+            // Delete existing general ledger details
+            $generalLedger->details()->delete();
+
+            // Debit receiving account
+            GeneralLedgerDetail::create([
+                'general_ledger_id' => $generalLedger->id,
+                'account_id' => $internalTransfer->account_in,
+                'type' => 'debit',
+                'value' => $internalTransfer->value,
+                'debit' => $internalTransfer->value,
+                'credit' => 0,
+                'description' => 'Transfer in: ' . $internalTransfer->number,
+            ]);
+
+            // Credit sending account
+            GeneralLedgerDetail::create([
+                'general_ledger_id' => $generalLedger->id,
+                'account_id' => $internalTransfer->account_out,
+                'type' => 'credit',
+                'value' => $internalTransfer->value,
+                'debit' => 0,
+                'credit' => $internalTransfer->value,
+                'description' => 'Transfer out: ' . $internalTransfer->number,
+            ]);
         }
     }
 }

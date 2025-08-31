@@ -34,7 +34,6 @@ use App\Models\InternalTransfer;
 use App\Models\Asset;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use App\Services\AccountBalanceService;
 
 /**
  * TransactionDataSeeder
@@ -437,7 +436,7 @@ class TransactionDataSeeder extends Seeder
             'requestor' => fake()->name(),
             'activities' => fake()->sentence(),
             'total' => 0,
-            'status' => 'completed',
+            'status' => 'done',
             'deadline' => $this->safeAddTime($date, 'days', rand(1, 30)),
         ]);
 
@@ -475,7 +474,7 @@ class TransactionDataSeeder extends Seeder
         // Create status log
         PurchaseOrderStatusLog::create([
             'purchase_order_id' => $purchaseOrder->id,
-            'status' => 'completed',
+            'status' => 'done',
             'changed_at' => $date,
         ]);
         
@@ -497,7 +496,7 @@ class TransactionDataSeeder extends Seeder
             'receive_from' => $supplier->id,
             'scheduled_at' => $this->safeAddTime($date, 'hours', rand(9, 17)),
             'reference' => $purchaseOrder->number,
-            'status' => 'completed',
+            'status' => 'done',
         ]);
 
         // Explicitly set timestamps to ensure they are in 2024
@@ -522,7 +521,7 @@ class TransactionDataSeeder extends Seeder
         // Create status log
         ReceiptStatusLog::create([
             'receipt_id' => $receipt->id,
-            'status' => 'completed',
+            'status' => 'done',
             'changed_at' => $date,
         ]);
         
@@ -583,7 +582,7 @@ class TransactionDataSeeder extends Seeder
             'salesperson' => fake()->name(),
             'activities' => fake()->sentence(),
             'total' => 0,
-            'status' => 'completed',
+            'status' => 'done',
             'deadline' => $this->safeAddTime($date, 'days', rand(1, 30)),
         ]);
 
@@ -645,7 +644,7 @@ class TransactionDataSeeder extends Seeder
         // Create status log
         SalesOrderStatusLog::create([
             'sales_order_id' => $salesOrder->id,
-            'status' => 'completed',
+            'status' => 'done',
             'changed_at' => $date,
         ]);
         
@@ -666,7 +665,7 @@ class TransactionDataSeeder extends Seeder
             'delivery_address' => fake()->address(),
             'scheduled_at' => $this->safeAddTime($date, 'hours', rand(9, 17)),
             'reference' => $salesOrder->number,
-            'status' => 'completed',
+            'status' => 'done',
         ]);
 
         // Explicitly set timestamps to ensure they are in 2024
@@ -691,7 +690,7 @@ class TransactionDataSeeder extends Seeder
         // Create status log
         DeliveryStatusLog::create([
             'delivery_id' => $delivery->id,
-            'status' => 'completed',
+            'status' => 'done',
             'changed_at' => $date,
         ]);
         
@@ -1059,9 +1058,6 @@ class TransactionDataSeeder extends Seeder
     {
         $this->command->info('Updating account balances...');
         
-        // Use the AccountBalanceService to recalculate all account balances
-        AccountBalanceService::recalculateAllAccountBalances($company->id);
-        
         // Refresh accounts to get updated balances
         $accounts->each(function($account) {
             $account->refresh();
@@ -1136,10 +1132,6 @@ class TransactionDataSeeder extends Seeder
                     ['account' => '1000', 'type' => 'debit', 'value' => $transferAmount, 'description' => 'Cash received from accounts receivable collection'],
                     ['account' => '1100', 'type' => 'credit', 'value' => $transferAmount, 'description' => 'Accounts receivable collected and transferred to cash'],
                 ], "Automatic cash balancing transfer");
-                
-                // Update account balances after the transfer
-                $cashAccount->update(['balance' => $cashBalance + $transferAmount]);
-                $receivableAccount->update(['balance' => $receivableBalance - $transferAmount]);
                 
                 $this->command->info("Successfully transferred IDR " . number_format($transferAmount, 0, ',', '.') . " from Accounts Receivable to Cash.");
                 $this->command->info("New cash balance: IDR " . number_format($cashAccount->balance, 0, ',', '.'));
@@ -1219,10 +1211,6 @@ class TransactionDataSeeder extends Seeder
                     ['account' => '1100', 'type' => 'credit', 'value' => $transferAmount, 'description' => 'Accounts receivable collected and transferred to cash'],
                 ], "Automatic cash balancing transfer after transaction");
                 
-                // Update account balances after the transfer
-                $cashAccount->update(['balance' => $cashBalance + $transferAmount]);
-                $receivableAccount->update(['balance' => $receivableBalance - $transferAmount]);
-                
                 $this->command->info("Successfully balanced cash account. New cash balance: IDR " . number_format($cashAccount->balance, 0, ',', '.'));
                 $this->command->info("Transfer completed at: " . $transferDate->format('Y-m-d H:i:s'));
             }
@@ -1301,9 +1289,6 @@ class TransactionDataSeeder extends Seeder
             ['account' => '1000', 'type' => 'debit', 'value' => $incomeAmount, 'description' => 'Emergency cash injection'],
             ['account' => '4100', 'type' => 'credit', 'value' => $incomeAmount, 'description' => 'Emergency income received'],
         ], "Emergency income for cash balancing");
-        
-        // Update account balances
-        $cashAccount->update(['balance' => $cashAccount->balance + $incomeAmount]);
         
         $this->command->info("Created emergency income: IDR " . number_format($incomeAmount, 0, ',', '.') . ". New cash balance: IDR " . number_format($cashAccount->balance, 0, ',', '.'));
         $this->command->info("Emergency income received at: " . $incomeDate->format('Y-m-d H:i:s'));

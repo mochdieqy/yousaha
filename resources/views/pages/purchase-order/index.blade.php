@@ -1,205 +1,320 @@
 @extends('layouts.home')
 
 @section('content')
-<div class="container-fluid">
-    <!-- Page Header -->
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">
-            <i class="fas fa-shopping-cart text-info me-2"></i>
-            Purchase Orders Management
-        </h1>
-        @can('purchase-orders.create')
-        <a href="{{ route('purchase-orders.create') }}" class="btn btn-primary btn-sm">
-            <i class="fas fa-plus me-1"></i>
-            Create Purchase Order
-        </a>
-        @endcan
-    </div>
-
-    <!-- Purchase Orders Table -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Purchase Orders List</h6>
+<div class="row">
+    <div class="col-12">
+        <!-- Page Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="mb-1">
+                    <i class="fas fa-shopping-cart text-primary me-2"></i>
+                    Purchase Orders Management
+                </h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
+                        <li class="breadcrumb-item active">Purchase Orders</li>
+                    </ol>
+                </nav>
+            </div>
+            @can('purchase-orders.create')
+            <a href="{{ route('purchase-orders.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>
+                Create Purchase Order
+            </a>
+            @endcan
         </div>
-        <div class="card-body">
-            @if($purchaseOrders->count() > 0)
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped" id="purchaseOrdersTable">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Order Number</th>
-                            <th>Supplier</th>
-                            <th>Warehouse</th>
-                            <th>Requestor</th>
-                            <th>Total</th>
-                            <th>Status</th>
-                            <th>Deadline</th>
-                            <th>Created</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($purchaseOrders as $purchaseOrder)
-                        <tr>
-                            <td>
-                                <strong>{{ $purchaseOrder->number }}</strong>
-                            </td>
-                            <td>
-                                <span class="badge bg-info text-white">
-                                    {{ $purchaseOrder->supplier->name }}
+
+        <!-- Purchase Orders Table -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list me-2"></i>
+                            Purchase Orders List
+                        </h5>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-md-end">
+                            <span class="badge bg-info text-white">
+                                <i class="fas fa-building me-1"></i>
+                                {{ $company->name }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <!-- Search and Filter Form -->
+                <div class="p-3 border-bottom">
+                    <form method="GET" action="{{ route('purchase-orders.index') }}" class="row g-3">
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
                                 </span>
-                            </td>
-                            <td>
-                                <span class="badge bg-success text-white">
-                                    {{ $purchaseOrder->warehouse->name }}
-                                </span>
-                            </td>
-                            <td>{{ $purchaseOrder->requestor }}</td>
-                            <td>
-                                <span class="fw-bold text-primary">
-                                    Rp {{ number_format($purchaseOrder->total, 0, ',', '.') }}
-                                </span>
-                            </td>
-                            <td>
-                                @php
-                                    $statusColors = [
-                                        'draft' => 'bg-secondary',
-                                        'accepted' => 'bg-info',
-                                        'sent' => 'bg-warning',
-                                        'done' => 'bg-success',
-                                        'cancel' => 'bg-danger'
-                                    ];
-                                    $statusColor = $statusColors[$purchaseOrder->status] ?? 'bg-secondary';
-                                @endphp
-                                <span class="badge {{ $statusColor }} text-white">
-                                    {{ ucfirst($purchaseOrder->status) }}
-                                </span>
-                            </td>
-                            <td>
-                                @if($purchaseOrder->isOverdue())
-                                    <span class="text-danger fw-bold">
-                                        <i class="fas fa-exclamation-triangle me-1"></i>
-                                        {{ $purchaseOrder->deadline->format('M d, Y') }}
+                                <input type="text" 
+                                       class="form-control" 
+                                       name="search" 
+                                       placeholder="Search orders..." 
+                                       value="{{ request('search') }}">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <select name="status" class="form-select">
+                                <option value="">All Statuses</option>
+                                <option value="draft" {{ request('status') === 'draft' ? 'selected' : '' }}>Draft</option>
+                                <option value="accepted" {{ request('status') === 'accepted' ? 'selected' : '' }}>Accepted</option>
+
+                                <option value="done" {{ request('status') === 'done' ? 'selected' : '' }}>Done</option>
+                                <option value="cancel" {{ request('status') === 'cancel' ? 'selected' : '' }}>Cancel</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="supplier_id" class="form-select">
+                                <option value="">All Suppliers</option>
+                                @foreach($suppliers as $supplier)
+                                    <option value="{{ $supplier->id }}" {{ request('supplier_id') == $supplier->id ? 'selected' : '' }}>
+                                        {{ $supplier->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter me-2"></i>Filter
+                            </button>
+                        </div>
+                        <div class="col-md-2">
+                            @if(request('search') || request('status') || request('supplier_id'))
+                                <a href="{{ route('purchase-orders.index') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-2"></i>Clear
+                                </a>
+                            @endif
+                        </div>
+                    </form>
+                </div>
+
+                @if($purchaseOrders->count() > 0)
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="border-0">Order Number</th>
+                                <th class="border-0">Supplier</th>
+                                <th class="border-0">Warehouse</th>
+                                <th class="border-0">Requestor</th>
+                                <th class="border-0">Total</th>
+                                <th class="border-0">Status</th>
+                                <th class="border-0">Deadline</th>
+                                <th class="border-0">Created</th>
+                                <th class="border-0">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($purchaseOrders as $purchaseOrder)
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            <i class="fas fa-shopping-cart text-primary fa-lg"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0 fw-bold">{{ $purchaseOrder->number }}</h6>
+                                            <small class="text-muted">PO</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info text-white">
+                                        {{ $purchaseOrder->supplier->name }}
                                     </span>
-                                @else
-                                    {{ $purchaseOrder->deadline->format('M d, Y') }}
-                                @endif
-                            </td>
-                            <td>{{ $purchaseOrder->created_at->format('M d, Y') }}</td>
-                            <td>
-                                <div class="btn-group" role="group">
-                                    @can('purchase-orders.view')
-                                    <a href="{{ route('purchase-orders.show', $purchaseOrder) }}" 
-                                       class="btn btn-sm btn-outline-primary" 
-                                       title="View Details">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    @endcan
-                                    
-                                    @can('purchase-orders.edit')
-                                    @if(!in_array($purchaseOrder->status, ['done', 'cancel']))
-                                    <a href="{{ route('purchase-orders.edit', $purchaseOrder) }}" 
-                                       class="btn btn-sm btn-outline-warning" 
-                                       title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success text-white">
+                                        {{ $purchaseOrder->warehouse->name }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="text-muted">{{ $purchaseOrder->requestor }}</span>
+                                </td>
+                                <td>
+                                    <strong class="text-primary">
+                                        Rp {{ number_format($purchaseOrder->total, 0, ',', '.') }}
+                                    </strong>
+                                </td>
+                                <td>
+                                    @php
+                                        $statusColors = [
+                                            'draft' => 'bg-secondary',
+                                            'accepted' => 'bg-info',
+                                            'done' => 'bg-success',
+                                            'cancel' => 'bg-danger'
+                                        ];
+                                        $statusColor = $statusColors[$purchaseOrder->status] ?? 'bg-secondary';
+                                    @endphp
+                                    <span class="badge {{ $statusColor }} text-white">
+                                        {{ ucfirst($purchaseOrder->status) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    @if($purchaseOrder->isOverdue())
+                                        <span class="text-danger fw-bold">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            {{ $purchaseOrder->deadline->format('M d, Y') }}
+                                        </span>
+                                    @else
+                                        <span class="text-muted">{{ $purchaseOrder->deadline->format('M d, Y') }}</span>
                                     @endif
-                                    @endcan
-                                    
-                                    @can('purchase-orders.delete')
-                                    @if($purchaseOrder->status === 'draft')
-                                    <form action="{{ route('purchase-orders.delete', $purchaseOrder) }}" 
-                                          method="POST" 
-                                          class="d-inline"
-                                          onsubmit="return confirmDelete()">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" 
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{ $purchaseOrder->created_at->format('M d, Y') }}</small>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        @can('purchase-orders.view')
+                                        <a href="{{ route('purchase-orders.show', $purchaseOrder) }}" 
+                                           class="btn btn-sm btn-outline-primary" 
+                                           title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        @endcan
+                                        
+                                        @can('purchase-orders.edit')
+                                        @if(!in_array($purchaseOrder->status, ['done', 'cancel']))
+                                        <a href="{{ route('purchase-orders.edit', $purchaseOrder) }}" 
+                                           class="btn btn-sm btn-outline-warning" 
+                                           title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        @endif
+                                        @endcan
+                                        
+                                        @can('purchase-orders.edit')
+                                        @if(!in_array($purchaseOrder->status, ['done', 'cancel']))
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-info" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#statusChangeModal" 
+                                                data-purchase-order-id="{{ $purchaseOrder->id }}"
+                                                data-current-status="{{ $purchaseOrder->status }}"
+                                                data-purchase-order-number="{{ $purchaseOrder->number }}"
+                                                title="Change Status">
+                                            <i class="fas fa-exchange-alt"></i>
+                                        </button>
+                                        @endif
+                                        @endcan
+                                        
+                                        @can('purchase-orders.delete')
+                                        @if($purchaseOrder->status === 'draft')
+                                        <button type="button" 
                                                 class="btn btn-sm btn-outline-danger" 
-                                                title="Delete">
+                                                title="Delete"
+                                                onclick="confirmDelete({{ $purchaseOrder->id }}, '{{ addslashes($purchaseOrder->number) }}')">
                                             <i class="fas fa-trash"></i>
                                         </button>
-                                    </form>
-                                    @endif
-                                    @endcan
-                                </div>
-                                
-                                @can('purchase-orders.edit')
-                                @if(!in_array($purchaseOrder->status, ['done', 'cancel']))
-                                <!-- Quick Status Update -->
-                                <div class="mt-2">
-                                    <form action="{{ route('purchase-orders.update-status', $purchaseOrder) }}" 
-                                          method="POST" 
-                                          class="d-inline status-update-form"
-                                          data-current-status="{{ $purchaseOrder->status }}">
-                                        @csrf
-                                        <select name="status" 
-                                                class="form-select form-select-sm d-inline-block w-auto me-2" 
-                                                style="width: auto; min-width: 100px;"
-                                                onchange="validateStatusChange('{{ $purchaseOrder->status }}', this.value, this)">
-                                            @if($purchaseOrder->status === 'draft')
-                                                <option value="draft" selected>Draft</option>
-                                                <option value="accepted">Accepted</option>
-                                                <option value="cancel">Cancel</option>
-                                            @else
-                                                <option value="draft" {{ $purchaseOrder->status == 'draft' ? 'selected' : '' }}>Draft</option>
-                                                <option value="accepted" {{ $purchaseOrder->status == 'accepted' ? 'selected' : '' }}>Accepted</option>
-                                                <option value="sent" {{ $purchaseOrder->status == 'sent' ? 'selected' : '' }}>Sent</option>
-                                                <option value="done" {{ $purchaseOrder->status == 'done' ? 'selected' : '' }}>Done</option>
-                                                <option value="cancel" {{ $purchaseOrder->status == 'cancel' ? 'selected' : '' }}>Cancel</option>
-                                            @endif
-                                        </select>
-                                        <button type="submit" 
-                                                class="btn btn-sm btn-outline-success" 
-                                                title="Update Status">
-                                            <i class="fas fa-save"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                                @endif
-                                @endcan
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                                        @endif
+                                        @endcan
+                                    </div>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @else
+                <div class="text-center py-5">
+                    <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Purchase Orders Found</h5>
+                    <p class="text-muted">Start by creating your first purchase order.</p>
+                    @can('purchase-orders.create')
+                    <a href="{{ route('purchase-orders.create') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        Create Purchase Order
+                    </a>
+                    @endcan
+                </div>
+                @endif
             </div>
-            
-            <!-- Pagination -->
-            <div class="d-flex justify-content-center mt-4">
-                {{ $purchaseOrders->links() }}
-            </div>
-            @else
-            <div class="text-center py-4">
-                <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">No Purchase Orders Found</h5>
-                <p class="text-muted">Start by creating your first purchase order.</p>
-                @can('purchase-orders.create')
-                <a href="{{ route('purchase-orders.create') }}" class="btn btn-primary">
-                    <i class="fas fa-plus me-1"></i>
-                    Create Purchase Order
-                </a>
-                @endcan
+            @if($purchaseOrders->hasPages())
+            <div class="card-footer bg-light">
+                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                    <div class="text-muted mb-2 mb-md-0">
+                        <small>
+                            Showing {{ $purchaseOrders->firstItem() ?? 0 }} to {{ $purchaseOrders->lastItem() ?? 0 }} of {{ $purchaseOrders->total() }} purchase orders
+                            @if($purchaseOrders->total() > 0)
+                                (Page {{ $purchaseOrders->currentPage() }} of {{ $purchaseOrders->lastPage() }})
+                            @endif
+                        </small>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        @if($purchaseOrders->total() > 15)
+                            <div class="me-3">
+                                <small class="text-muted">Items per page: 15</small>
+                            </div>
+                        @endif
+                        <div class="pagination-wrapper">
+                            {{ $purchaseOrders->links() }}
+                        </div>
+                    </div>
+                </div>
             </div>
             @endif
         </div>
     </div>
 </div>
 
-<!-- Status Change Confirmation Modal -->
+<!-- Status Change Modal -->
 <div class="modal fade" id="statusChangeModal" tabindex="-1" aria-labelledby="statusChangeModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="statusChangeModalLabel">Confirm Status Change</h5>
+                <h5 class="modal-title" id="statusChangeModalLabel">Change Purchase Order Status</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p id="statusChangeMessage"></p>
+                <form id="quickStatusChangeForm">
+                    @csrf
+                    <div class="mb-3">
+                        <label for="modal_purchase_order_number" class="form-label">Purchase Order</label>
+                        <input type="text" class="form-control" id="modal_purchase_order_number" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modal_current_status" class="form-label">Current Status</label>
+                        <input type="text" class="form-control" id="modal_current_status" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modal_new_status" class="form-label">New Status <span class="text-danger">*</span></label>
+                        <select class="form-select" id="modal_new_status" name="status" required>
+                            <option value="">Select Status</option>
+                            <option value="draft">Draft</option>
+                            <option value="accepted">Accepted</option>
+                            <option value="done">Done</option>
+                            <option value="cancel">Cancel</option>
+                        </select>
+                        <div class="form-text">
+                            <small class="text-muted">Only valid status transitions are enabled based on current status.</small>
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <small>
+                            <strong>Status Change Rules:</strong><br>
+                            • <strong>Draft:</strong> Can change to Accepted or Cancel<br>
+                            • <strong>Accepted:</strong> Can change to Done or Cancel (checks stock availability)<br>
+                            • <strong>Done/Cancel:</strong> Cannot change status<br>
+                            • <strong>Accepted:</strong> Creates receipt and reserves stock if stock is sufficient<br>
+                            • <strong>Done:</strong> Creates receipt, updates stock, and creates financial entries
+                        </small>
+                    </div>
+                </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="confirmStatusChange">Confirm Change</button>
+                <button type="button" class="btn btn-info" id="modalChangeStatusBtn">
+                    <i class="fas fa-sync-alt me-1"></i>
+                    Change Status
+                </button>
             </div>
         </div>
     </div>
@@ -211,14 +326,25 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" onclick="closeDeleteModal()" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>Are you sure you want to delete this purchase order?</p>
+                <p>Are you sure you want to delete the purchase order "<strong id="purchaseOrderNumber"></strong>"?</p>
+                <p class="text-danger mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    This action cannot be undone.
+                </p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmDelete">Delete</button>
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>
+                        Delete Purchase Order
+                    </button>
+                </form>
             </div>
         </div>
     </div>
@@ -226,101 +352,290 @@
 @endsection
 
 @section('script')
+<style>
+/* Style for disabled select options */
+#modal_new_status option:disabled {
+    color: #6c757d;
+    font-style: italic;
+    background-color: #f8f9fa;
+}
+
+/* Style for enabled select options */
+#modal_new_status option:not(:disabled) {
+    color: #212529;
+    font-weight: 500;
+}
+
+/* Status transition rules styling */
+.alert-info small strong {
+    color: #0c5460;
+}
+</style>
 <script>
-$(document).ready(function() {
-    // Initialize DataTable
-    $('#purchaseOrdersTable').DataTable({
-        pageLength: 15,
-        order: [[6, 'desc']], // Sort by created date descending
-        responsive: true,
-        language: {
-            search: "Search purchase orders:",
-            lengthMenu: "Show _MENU_ purchase orders per page",
-            info: "Showing _START_ to _END_ of _TOTAL_ purchase orders",
-            paginate: {
-                first: "First",
-                last: "Last",
-                next: "Next",
-                previous: "Previous"
+let deleteModalInstance = null;
+
+// Confirm delete function
+function confirmDelete(purchaseOrderId, purchaseOrderNumber) {
+    console.log('confirmDelete called with:', purchaseOrderId, purchaseOrderNumber);
+    
+    try {
+        document.getElementById('purchaseOrderNumber').textContent = purchaseOrderNumber;
+        document.getElementById('deleteForm').action = `/purchase-orders/${purchaseOrderId}`;
+        
+        // Check if Bootstrap is available
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            console.log('Bootstrap Modal available, creating modal instance...');
+            // Create modal instance and store it globally
+            deleteModalInstance = new bootstrap.Modal(document.getElementById('deleteModal'));
+            deleteModalInstance.show();
+            console.log('Modal should be visible now');
+        } else {
+            console.log('Bootstrap Modal not available, using fallback...');
+            // Fallback: show a simple confirmation
+            if (confirm(`Are you sure you want to delete the purchase order "${purchaseOrderNumber}"?`)) {
+                // Create a temporary form and submit
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/purchase-orders/${purchaseOrderId}`;
+                
+                const csrfToken = document.createElement('input');
+                csrfToken.type = 'hidden';
+                csrfToken.name = '_token';
+                csrfToken.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                
+                const methodField = document.createElement('input');
+                methodField.type = 'hidden';
+                methodField.name = '_method';
+                methodField.value = 'DELETE';
+                
+                form.appendChild(csrfToken);
+                form.appendChild(methodField);
+                document.body.appendChild(form);
+                form.submit();
             }
         }
-    });
+    } catch (error) {
+        console.error('Error opening delete modal:', error);
+        // Fallback: show a simple confirmation
+        if (confirm(`Are you sure you want to delete the purchase order "${purchaseOrderNumber}"?`)) {
+            // Create a temporary form and submit
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/purchase-orders/${purchaseOrderId}`;
+            
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = '_token';
+            csrfToken.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            
+            const methodField = document.createElement('input');
+            methodField.type = 'hidden';
+            methodField.name = '_method';
+            methodField.value = 'DELETE';
+            
+            form.appendChild(csrfToken);
+            form.appendChild(methodField);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+}
 
-    // Handle status change form submission
-    $('.status-update-form').on('submit', function(e) {
-        e.preventDefault();
+// Close delete modal
+function closeDeleteModal() {
+    console.log('closeDeleteModal called');
+    
+    if (deleteModalInstance) {
+        deleteModalInstance.hide();
+        deleteModalInstance = null;
+        return;
+    }
+    
+    const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+    if (modal) {
+        modal.hide();
+        return;
+    }
+    
+    // Manual hide using CSS classes
+    const modalElement = document.getElementById('deleteModal');
+    if (modalElement) {
+        modalElement.classList.remove('show');
+        modalElement.style.display = 'none';
+        document.body.classList.remove('modal-open');
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) {
+            backdrop.remove();
+        }
+    }
+}
+
+
+
+
+
+// Close modal when clicking outside or pressing ESC
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteModalElement = document.getElementById('deleteModal');
+    const deleteForm = document.getElementById('deleteForm');
+    
+    // Add event listeners for close buttons
+    const deleteCloseButtons = deleteModalElement.querySelectorAll('[onclick*="closeDeleteModal"], .btn-close');
+    deleteCloseButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            closeDeleteModal();
+        });
+    });
+    
+    // Close delete modal when clicking outside
+    deleteModalElement.addEventListener('click', function(event) {
+        if (event.target === deleteModalElement) {
+            closeDeleteModal();
+        }
+    });
+    
+    // Close modals when pressing ESC key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeDeleteModal();
+        }
+    });
+    
+    // Handle form submission with loading state
+    deleteForm.addEventListener('submit', function() {
+        const submitBtn = deleteForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
         
-        const form = $(this);
-        const currentStatus = form.data('current-status');
-        const newStatus = form.find('select[name="status"]').val();
+        // Show loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Deleting...';
         
-        if (currentStatus === newStatus) {
-            form[0].submit(); // No change, submit directly
+        // Re-enable after a delay (in case of errors)
+        setTimeout(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }, 10000);
+    });
+    
+    // Auto-hide success/error messages after 5 seconds
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            if (alert.classList.contains('alert-success') || alert.classList.contains('alert-danger')) {
+                alert.style.transition = 'opacity 0.5s ease';
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            }
+        }, 5000);
+    });
+    
+    // Handle status change modal
+    $('#statusChangeModal').on('show.bs.modal', function (event) {
+        const button = $(event.relatedTarget);
+        const purchaseOrderId = button.data('purchase-order-id');
+        const currentStatus = button.data('current-status');
+        const purchaseOrderNumber = button.data('purchase-order-number');
+        
+        const modal = $(this);
+        modal.find('#modal_purchase_order_number').val(purchaseOrderNumber);
+        modal.find('#modal_current_status').val(currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1));
+        modal.find('#modal_new_status').val('').prop('disabled', false);
+        
+        // Reset all options to enabled first
+        modal.find('#modal_new_status option').prop('disabled', false);
+        
+        // Disable current status option
+        modal.find('#modal_new_status option[value="' + currentStatus + '"]').prop('disabled', true);
+        
+        // Apply status transition rules
+        const statusSelect = modal.find('#modal_new_status');
+        const currentStatusValue = currentStatus.toLowerCase();
+        
+        // Disable all options first
+        statusSelect.find('option').prop('disabled', true);
+        
+        // Enable only valid transitions based on current status
+        switch (currentStatusValue) {
+            case 'draft':
+                // Draft can only change to: accepted or cancel
+                statusSelect.find('option[value="accepted"]').prop('disabled', false);
+                statusSelect.find('option[value="cancel"]').prop('disabled', false);
+                break;
+                
+            case 'accepted':
+                // Accepted can only change to: done or cancel
+                statusSelect.find('option[value="done"]').prop('disabled', false);
+                statusSelect.find('option[value="cancel"]').prop('disabled', false);
+                break;
+                
+            case 'done':
+            case 'cancel':
+                // Done and cancel cannot change status
+                statusSelect.find('option').prop('disabled', true);
+                // Show message that no status changes are allowed
+                modal.find('.alert-info').html('<small><strong>Status Change Rules:</strong><br>• <strong>' + currentStatusValue.charAt(0).toUpperCase() + currentStatusValue.slice(1) + ':</strong> Cannot change status - this purchase order is already ' + currentStatusValue + '.</small>');
+                break;
+                
+            default:
+                // For any other status, allow all transitions
+                statusSelect.find('option').prop('disabled', false);
+                break;
+        }
+        
+        // Store purchase order ID for form submission
+        modal.data('purchase-order-id', purchaseOrderId);
+        
+        // Update modal button state based on available transitions
+        const hasValidTransitions = statusSelect.find('option:not(:disabled)').length > 1; // > 1 because empty option is always enabled
+        const changeStatusBtn = modal.find('#modalChangeStatusBtn');
+        
+        if (!hasValidTransitions) {
+            changeStatusBtn.prop('disabled', true).html('<i class="fas fa-ban me-1"></i>No Status Changes Allowed');
+            changeStatusBtn.removeClass('btn-info').addClass('btn-secondary');
+        } else {
+            changeStatusBtn.prop('disabled', false).html('<i class="fas fa-sync-alt me-1"></i>Change Status');
+            changeStatusBtn.removeClass('btn-secondary').addClass('btn-info');
+        }
+    });
+    
+    // Handle modal status change form submission
+    $('#modalChangeStatusBtn').click(function() {
+        const modal = $('#statusChangeModal');
+        const purchaseOrderId = modal.data('purchase-order-id');
+        const newStatus = $('#modal_new_status').val();
+        const currentStatus = $('#modal_current_status').val().toLowerCase();
+        
+        if (!newStatus) {
+            alert('Please select a new status.');
             return;
         }
         
-        // Validate status change for draft orders
-        if (currentStatus === 'draft' && !['draft', 'accepted', 'cancel'].includes(newStatus)) {
-            showStatusChangeModal('Draft purchase orders can only be accepted or cancelled.', false);
+        if (newStatus === currentStatus) {
+            alert('Please select a different status.');
             return;
         }
         
-        // Show confirmation modal
-        showStatusChangeModal(currentStatus, newStatus, form);
-    });
-
-    // Handle delete form submission
-    $('form[action*="delete"]').on('submit', function(e) {
-        e.preventDefault();
-        showDeleteModal($(this));
+        // Disable button and show loading
+        $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Processing...');
+        
+        // Create form and submit
+        const form = $('<form>', {
+            'method': 'POST',
+            'action': '/purchase-orders/' + purchaseOrderId + '/status'
+        }).append($('<input>', {
+            'type': 'hidden',
+            'name': '_token',
+            'value': $('meta[name="csrf-token"]').attr('content')
+        })).append($('<input>', {
+            'type': 'hidden',
+            'name': 'status',
+            'value': newStatus
+        }));
+        
+        $('body').append(form);
+        form.submit();
     });
 });
-
-// Show status change confirmation modal
-function showStatusChangeModal(currentStatus, newStatus, form = null) {
-    let message = `Are you sure you want to change the status from <strong>"${currentStatus}"</strong> to <strong>"${newStatus}"</strong>?`;
-    
-    // Special message for draft to accepted transition
-    if (newStatus === 'accepted' && currentStatus === 'draft') {
-        message += '<br><br><strong>Note:</strong> This will automatically create a receipt for the purchase order.';
-    }
-    
-    $('#statusChangeMessage').html(message);
-    
-    // Store form reference for confirmation
-    $('#confirmStatusChange').off('click').on('click', function() {
-        if (form) {
-            form[0].submit();
-        }
-        $('#statusChangeModal').modal('hide');
-    });
-    
-    $('#statusChangeModal').modal('show');
-}
-
-// Show delete confirmation modal
-function showDeleteModal(form) {
-    $('#confirmDelete').off('click').on('click', function() {
-        form[0].submit();
-        $('#deleteModal').modal('hide');
-    });
-    
-    $('#deleteModal').modal('show');
-}
-
-// Validate status change for draft orders (for select change)
-function validateStatusChange(currentStatus, newStatus, selectElement) {
-    if (currentStatus === 'draft' && !['draft', 'accepted', 'cancel'].includes(newStatus)) {
-        showStatusChangeModal('Draft purchase orders can only be accepted or cancelled.', false);
-        selectElement.value = 'draft';
-        return false;
-    }
-    return true;
-}
-
-// Legacy function for backward compatibility
-function confirmDelete() {
-    return false; // This will be handled by the modal now
-}
 </script>
 @endsection

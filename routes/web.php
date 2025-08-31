@@ -193,6 +193,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('deliveries/{delivery}/status', [App\Http\Controllers\DeliveryController::class, 'updateStatus'])->name('deliveries.update-status');
         Route::post('deliveries/{delivery}/goods-issue', [App\Http\Controllers\DeliveryController::class, 'goodsIssue'])->name('deliveries.goods-issue');
         Route::post('deliveries/{delivery}/check-stock', [App\Http\Controllers\DeliveryController::class, 'checkStockAvailability'])->name('deliveries.check-stock');
+        Route::post('deliveries/{delivery}/cancel', [App\Http\Controllers\DeliveryController::class, 'cancelDelivery'])->name('deliveries.cancel');
     });
     
     Route::middleware(['permission:deliveries.delete'])->group(function () {
@@ -365,7 +366,7 @@ Route::middleware(['auth'])->group(function () {
     });
     
     Route::middleware(['permission:internal-transfers.delete'])->group(function () {
-        Route::delete('internal-transfers/{internalTransfer}', [App\Http\Controllers\InternalTransferController::class, 'destroy'])->name('internal-transfers.delete');
+        Route::delete('internal-transfers/{internalTransfer}', [App\Http\Controllers\InternalTransferController::class, 'destroy'])->name('internal-transfers.destroy');
     });
     
     Route::middleware(['permission:internal-transfers.view'])->group(function () {
@@ -444,20 +445,6 @@ Route::middleware(['auth'])->group(function () {
     // HR Management - Attendances
     Route::middleware(['permission:attendances.view'])->group(function () {
         Route::get('attendances', [App\Http\Controllers\AttendanceController::class, 'index'])->name('attendances.index');
-    });
-    
-    Route::middleware(['permission:attendances.create'])->group(function () {
-        Route::get('attendances/create', [App\Http\Controllers\AttendanceController::class, 'create'])->name('attendances.create');
-        Route::post('attendances', [App\Http\Controllers\AttendanceController::class, 'store'])->name('attendances.store');
-    });
-    
-    Route::middleware(['permission:attendances.edit'])->group(function () {
-        Route::get('attendances/{attendance}/edit', [App\Http\Controllers\AttendanceController::class, 'edit'])->name('attendances.edit');
-        Route::put('attendances/{attendance}', [App\Http\Controllers\AttendanceController::class, 'update'])->name('attendances.update');
-    });
-    
-    Route::middleware(['permission:attendances.delete'])->group(function () {
-        Route::delete('attendances/{attendance}', [App\Http\Controllers\AttendanceController::class, 'destroy'])->name('attendances.delete');
     });
     
     // Clock in/out routes (no specific permission required, but user must be employee)

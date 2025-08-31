@@ -8,13 +8,14 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class EmployeeController extends Controller
 {
     /**
      * Display a listing of employees.
      */
-    public function index()
+    public function index(Request $request)
     {
         $company = Auth::user()->currentCompany;
         
@@ -22,12 +23,39 @@ class EmployeeController extends Controller
             return redirect()->route('company.choice')->with('error', 'Please select a company first.');
         }
 
-        $employees = Employee::where('company_id', $company->id)
-            ->with(['user', 'department', 'managerUser'])
-            ->orderBy('number')
-            ->get();
+        $query = Employee::where('company_id', $company->id)
+            ->with(['user', 'department', 'managerUser']);
 
-        return view('pages.employees.index', compact('employees'));
+        // Apply search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('user', function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            })
+            ->orWhere('number', 'like', "%{$search}%")
+            ->orWhere('position', 'like', "%{$search}%");
+        }
+
+        // Apply department filter
+        if ($request->filled('department_id')) {
+            $query->where('department_id', $request->department_id);
+        }
+
+        // Apply level filter
+        if ($request->filled('level')) {
+            $query->where('level', $request->level);
+        }
+
+        // Apply work arrangement filter
+        if ($request->filled('work_arrangement')) {
+            $query->where('work_arrangement', $request->work_arrangement);
+        }
+
+        $employees = $query->orderBy('number')->paginate(15);
+        $departments = Department::where('company_id', $company->id)->orderBy('name')->get();
+
+        return view('pages.employees.index', compact('employees', 'departments', 'company'));
     }
 
     /**
@@ -45,7 +73,7 @@ class EmployeeController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('pages.employees.create', compact('departments'));
+        return view('pages.employees.create', compact('departments', 'company'));
     }
 
     /**
@@ -89,35 +117,37 @@ class EmployeeController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        // Find the user by email
-        $user = User::where('email', $request->email)->first();
-        
-        if (!$user) {
-            return redirect()->back()->with('error', 'User with this email does not exist. Please ask them to register first.')->withInput();
-        }
-
-        // Check if user is already an employee in any company
-        if (Employee::where('user_id', $user->id)->exists()) {
-            return redirect()->back()->with('error', 'This user is already an employee in another company.')->withInput();
-        }
-
-        // Check if user is already an employee in this company
-        if (Employee::where('company_id', $company->id)
-            ->where('user_id', $user->id)
-            ->exists()) {
-            return redirect()->back()->with('error', 'This user is already an employee in this company.')->withInput();
-        }
-
-        // Check if department belongs to the company
-        $department = Department::where('id', $request->department_id)
-            ->where('company_id', $company->id)
-            ->first();
-        
-        if (!$department) {
-            return redirect()->back()->with('error', 'The selected department is invalid.')->withInput();
-        }
-
         try {
+            DB::beginTransaction();
+
+            // Find the user by email
+            $user = User::where('email', $request->email)->first();
+            
+            if (!$user) {
+                return redirect()->back()->with('error', 'User with this email does not exist. Please ask them to register first.')->withInput();
+            }
+
+            // Check if user is already an employee in any company
+            if (Employee::where('user_id', $user->id)->exists()) {
+                return redirect()->back()->with('error', 'This user is already an employee in another company.')->withInput();
+            }
+
+            // Check if user is already an employee in this company
+            if (Employee::where('company_id', $company->id)
+                ->where('user_id', $user->id)
+                ->exists()) {
+                return redirect()->back()->with('error', 'This user is already an employee in this company.')->withInput();
+            }
+
+            // Check if department belongs to the company
+            $department = Department::where('id', $request->department_id)
+                ->where('company_id', $company->id)
+                ->first();
+            
+            if (!$department) {
+                return redirect()->back()->with('error', 'The selected department is invalid.')->withInput();
+            }
+
             Employee::create([
                 'company_id' => $company->id,
                 'user_id' => $user->id,
@@ -131,8 +161,11 @@ class EmployeeController extends Controller
                 'work_arrangement' => $request->work_arrangement,
             ]);
 
+            DB::commit();
             return redirect()->route('employees.index')->with('success', 'Employee created successfully.');
+
         } catch (\Exception $e) {
+            DB::rollBack();
             return redirect()->back()->with('error', 'Failed to create employee: ' . $e->getMessage())->withInput();
         }
     }
@@ -152,7 +185,7 @@ class EmployeeController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('pages.employees.edit', compact('employee', 'departments'));
+        return view('pages.employees.edit', compact('employee', 'departments', 'company'));
     }
 
     /**
@@ -192,16 +225,18 @@ class EmployeeController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        // Check if department belongs to the company
-        $department = Department::where('id', $request->department_id)
-            ->where('company_id', $company->id)
-            ->first();
-        
-        if (!$department) {
-            return redirect()->back()->with('error', 'The selected department is invalid.')->withInput();
-        }
-
         try {
+            DB::beginTransaction();
+
+            // Check if department belongs to the company
+            $department = Department::where('id', $request->department_id)
+                ->where('company_id', $company->id)
+                ->first();
+            
+            if (!$department) {
+                return redirect()->back()->with('error', 'The selected department is invalid.')->withInput();
+            }
+
             $employee->update([
                 'department_id' => $request->department_id,
                 'number' => $request->number,
@@ -213,8 +248,11 @@ class EmployeeController extends Controller
                 'work_arrangement' => $request->work_arrangement,
             ]);
 
+            DB::commit();
             return redirect()->route('employees.index')->with('success', 'Employee updated successfully.');
+
         } catch (\Exception $e) {
+            DB::rollBack();
             return redirect()->back()->with('error', 'Failed to update employee: ' . $e->getMessage())->withInput();
         }
     }
@@ -231,9 +269,12 @@ class EmployeeController extends Controller
         }
 
         try {
+            DB::beginTransaction();
             $employee->delete();
+            DB::commit();
             return redirect()->route('employees.index')->with('success', 'Employee deleted successfully.');
         } catch (\Exception $e) {
+            DB::rollBack();
             return redirect()->route('employees.index')->with('error', 'Failed to delete employee. Please try again.');
         }
     }

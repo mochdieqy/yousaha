@@ -25,7 +25,7 @@
         </div>
 
         <!-- Company Info -->
-        <div class="alert alert-info border-0 shadow-sm">
+        <div class="alert alert-info border-0 shadow-sm mb-4">
             <div class="d-flex align-items-center">
                 <i class="fas fa-building me-3 fa-lg"></i>
                 <div>
@@ -299,8 +299,11 @@ function calculateTotal() {
     const taxes = parseFloat(document.getElementById('taxes').value) || 0;
     const total = price + taxes;
     
-    // You can display this somewhere if needed
-    console.log('Total Price (including taxes): Rp ' + total.toLocaleString('id-ID'));
+    // Update a display element if needed (removed console.log)
+    const totalDisplay = document.getElementById('total-price-display');
+    if (totalDisplay) {
+        totalDisplay.textContent = 'Rp ' + total.toLocaleString('id-ID');
+    }
 }
 
 // Toggle inventory tracking based on product type
@@ -325,9 +328,49 @@ function toggleInventoryTracking() {
 // Initialize inventory tracking state when page loads
 document.addEventListener('DOMContentLoaded', function() {
     toggleInventoryTracking();
+    
+    // Auto-hide validation errors after 8 seconds
+    const errorElements = document.querySelectorAll('.invalid-feedback');
+    errorElements.forEach(error => {
+        setTimeout(() => {
+            error.style.transition = 'opacity 0.5s ease';
+            error.style.opacity = '0';
+            setTimeout(() => error.remove(), 500);
+        }, 8000);
+    });
+    
+    // Clear validation errors when user starts typing
+    const inputs = document.querySelectorAll('input, select');
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            if (this.classList.contains('is-invalid')) {
+                this.classList.remove('is-invalid');
+                const errorElement = this.parentNode.querySelector('.invalid-feedback');
+                if (errorElement) {
+                    errorElement.remove();
+                }
+            }
+        });
+    });
 });
 
 // Update inventory tracking when product type changes
 document.getElementById('type').addEventListener('change', toggleInventoryTracking);
+
+// Form submission handling
+document.querySelector('form').addEventListener('submit', function(e) {
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    // Show loading state
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating...';
+    
+    // Re-enable after a delay (in case of errors)
+    setTimeout(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }, 15000);
+});
 </script>
 @endsection

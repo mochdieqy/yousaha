@@ -22,231 +22,44 @@ class AttendanceController extends Controller
             return redirect()->route('company.choice')->with('error', 'Please select a company first.');
         }
 
-        // Get employees for filter dropdown
-        $employees = Employee::where('company_id', $company->id)
-            ->with('user')
-            ->orderBy('number')
-            ->get();
+        $user = Auth::user();
+        $employee = Employee::where('company_id', $company->id)
+            ->where('user_id', $user->id)
+            ->first();
 
-        // Build query with filters
-        $query = Attendance::whereHas('employee', function($query) use ($company) {
+        if (!$employee) {
+            return redirect()->route('attendances.index')->with('error', 'You are not registered as an employee in this company.');
+        }
+
+        // Get employees for filter dropdown based on user role
+        $employees = $this->getAccessibleEmployees($company, $employee, $user);
+
+        // Build query with filters and access control
+        $query = Attendance::whereHas('employee', function($query) use ($company, $employee, $user) {
                 $query->where('company_id', $company->id);
+                
+                // Apply access control based on user role
+                if (!$this->canViewAllEmployees($user)) {
+                    if ($this->isManager($user, $employee)) {
+                        // Manager can see employees in their department
+                        $query->where('department_id', $employee->department_id);
+                    } else {
+                        // Regular employee can only see their own attendance
+                        $query->where('user_id', $user->id);
+                    }
+                }
             })
             ->with(['employee.user', 'employee.department']);
 
-        // Filter by employee
-        if ($request->filled('employee_id')) {
-            $query->where('employee_id', $request->employee_id);
-        }
-
-        // Filter by date range
-        if ($request->filled('date_from')) {
-            $query->where('date', '>=', $request->date_from);
-        }
-        
-        if ($request->filled('date_to')) {
-            $query->where('date', '<=', $request->date_to);
-        }
-
-        // Filter by specific date
-        if ($request->filled('date') && !$request->filled('date_from') && !$request->filled('date_to')) {
-            $query->where('date', $request->date);
-        }
+        // Apply filters
+        $this->applyFilters($query, $request);
 
         $attendances = $query->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc')
             ->paginate(15)
             ->withQueryString();
 
-        return view('pages.attendances.index', compact('attendances', 'employees'));
-    }
-
-    /**
-     * Show the form for creating a new attendance.
-     */
-    public function create()
-    {
-        $company = Auth::user()->currentCompany;
-        
-        if (!$company) {
-            return redirect()->route('company.choice')->with('error', 'Please select a company first.');
-        }
-
-        $employees = Employee::where('company_id', $company->id)
-            ->with('user')
-            ->orderBy('number')
-            ->get();
-
-        return view('pages.attendances.create', compact('employees'));
-    }
-
-    /**
-     * Store a newly created attendance in storage.
-     */
-    public function store(Request $request)
-    {
-        $company = Auth::user()->currentCompany;
-        
-        if (!$company) {
-            return redirect()->route('company.choice')->with('error', 'Please select a company first.');
-        }
-
-        $validator = Validator::make($request->all(), [
-            'employee_id' => 'required|exists:employees,id',
-            'date' => 'required|date',
-            'clock_in' => 'nullable|date_format:H:i',
-            'clock_out' => 'nullable|date_format:H:i|after:clock_in',
-            'notes' => 'nullable|string|max:500',
-        ], [
-            'employee_id.required' => 'Please select an employee.',
-            'employee_id.exists' => 'The selected employee is invalid.',
-            'date.required' => 'Date is required.',
-            'date.date' => 'Date must be a valid date.',
-            'clock_in.date_format' => 'Clock in must be in HH:MM format.',
-            'clock_out.date_format' => 'Clock out must be in HH:MM format.',
-            'clock_out.after' => 'Clock out must be after clock in.',
-            'notes.max' => 'Notes cannot exceed 500 characters.',
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        // Check if employee belongs to the company
-        $employee = Employee::where('id', $request->employee_id)
-            ->where('company_id', $company->id)
-            ->first();
-        
-        if (!$employee) {
-            return redirect()->back()->with('error', 'The selected employee is invalid.')->withInput();
-        }
-
-        // Check if attendance already exists for this employee on this date
-        $existingAttendance = Attendance::where('employee_id', $request->employee_id)
-            ->where('date', $request->date)
-            ->first();
-
-        if ($existingAttendance) {
-            return redirect()->back()->with('error', 'Attendance record already exists for this employee on this date.')->withInput();
-        }
-
-        try {
-            Attendance::create([
-                'employee_id' => $request->employee_id,
-                'date' => $request->date,
-                'clock_in' => $request->clock_in,
-                'clock_out' => $request->clock_out,
-                'status' => 'pending',
-            ]);
-
-            return redirect()->route('attendances.index')->with('success', 'Attendance created successfully.');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Failed to create attendance. Please try again.')->withInput();
-        }
-    }
-
-    /**
-     * Show the form for editing the specified attendance.
-     */
-    public function edit(Attendance $attendance)
-    {
-        $company = Auth::user()->currentCompany;
-        
-        if (!$company || $attendance->employee->company_id !== $company->id) {
-            return redirect()->route('attendances.index')->with('error', 'Attendance not found.');
-        }
-
-        $employees = Employee::where('company_id', $company->id)
-            ->with('user')
-            ->orderBy('number')
-            ->get();
-
-        return view('pages.attendances.edit', compact('attendance', 'employees'));
-    }
-
-    /**
-     * Update the specified attendance in storage.
-     */
-    public function update(Request $request, Attendance $attendance)
-    {
-        $company = Auth::user()->currentCompany;
-        
-        if (!$company || $attendance->employee->company_id !== $company->id) {
-            return redirect()->route('attendances.index')->with('error', 'Attendance not found.');
-        }
-
-        $validator = Validator::make($request->all(), [
-            'employee_id' => 'required|exists:employees,id',
-            'date' => 'required|date',
-            'clock_in' => 'nullable|date_format:H:i',
-            'clock_out' => 'nullable|date_format:H:i|after:clock_in',
-            'notes' => 'nullable|string|max:500',
-        ], [
-            'employee_id.required' => 'Please select an employee.',
-            'employee_id.exists' => 'The selected employee is invalid.',
-            'date.required' => 'Date is required.',
-            'date.date' => 'Date must be a valid date.',
-            'clock_in.date_format' => 'Clock in must be in HH:MM format.',
-            'clock_out.date_format' => 'Clock out must be in HH:MM format.',
-            'clock_out.after' => 'Clock out must be after clock in.',
-            'notes.max' => 'Notes cannot exceed 500 characters.',
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        // Check if employee belongs to the company
-        $employee = Employee::where('id', $request->employee_id)
-            ->where('company_id', $company->id)
-            ->first();
-        
-        if (!$employee) {
-            return redirect()->back()->with('error', 'The selected employee is invalid.')->withInput();
-        }
-
-        // Check if attendance already exists for this employee on this date (excluding current attendance)
-        $existingAttendance = Attendance::where('employee_id', $request->employee_id)
-            ->where('date', $request->date)
-            ->where('id', '!=', $attendance->id)
-            ->first();
-
-        if ($existingAttendance) {
-            return redirect()->back()->with('error', 'Attendance record already exists for this employee on this date.')->withInput();
-        }
-
-        try {
-            $attendance->update([
-                'employee_id' => $request->employee_id,
-                'date' => $request->date,
-                'clock_in' => $request->clock_in,
-                'clock_out' => $request->clock_out,
-                'status' => 'pending',
-            ]);
-
-            return redirect()->route('attendances.index')->with('success', 'Attendance updated successfully.');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Failed to update attendance. Please try again.')->withInput();
-        }
-    }
-
-    /**
-     * Remove the specified attendance from storage.
-     */
-    public function destroy(Attendance $attendance)
-    {
-        $company = Auth::user()->currentCompany;
-        
-        if (!$company || $attendance->employee->company_id !== $company->id) {
-            return redirect()->route('attendances.index')->with('error', 'Attendance not found.');
-        }
-
-        try {
-            $attendance->delete();
-            return redirect()->route('attendances.index')->with('success', 'Attendance deleted successfully.');
-        } catch (\Exception $e) {
-            return redirect()->route('attendances.index')->with('error', 'Failed to delete attendance. Please try again.');
-        }
+        return view('pages.attendances.index', compact('attendances', 'employees', 'company'));
     }
 
     /**
@@ -343,6 +156,80 @@ class AttendanceController extends Controller
             return redirect()->route('attendances.index')->with('success', 'Clock out successful!');
         } catch (\Exception $e) {
             return redirect()->route('attendances.index')->with('error', 'Failed to clock out. Please try again.');
+        }
+    }
+
+    /**
+     * Get accessible employees based on user role
+     */
+    private function getAccessibleEmployees($company, $employee, $user)
+    {
+        if ($this->canViewAllEmployees($user)) {
+            // Company owner can see all employees
+            return Employee::where('company_id', $company->id)
+                ->with('user')
+                ->orderBy('number')
+                ->get();
+        } elseif ($this->isManager($user, $employee)) {
+            // Manager can see employees in their department
+            return Employee::where('company_id', $company->id)
+                ->where('department_id', $employee->department_id)
+                ->with('user')
+                ->orderBy('number')
+                ->get();
+        } else {
+            // Regular employee can only see themselves
+            return Employee::where('company_id', $company->id)
+                ->where('user_id', $user->id)
+                ->with('user')
+                ->orderBy('number')
+                ->get();
+        }
+    }
+
+    /**
+     * Check if user can view all employees (company owner)
+     */
+    private function canViewAllEmployees($user)
+    {
+        return $user->hasPermissionTo('company.manage-employee-roles') || 
+               $user->hasRole('company_owner') ||
+               $user->hasRole('admin');
+    }
+
+    /**
+     * Check if user is a manager
+     */
+    private function isManager($user, $employee)
+    {
+        // Check if user has manager permission or is a department manager
+        return $user->hasPermissionTo('employees.view') || 
+               $user->hasRole('manager') ||
+               ($employee->department && $employee->department->manager_id === $user->id);
+    }
+
+    /**
+     * Apply filters to the attendance query
+     */
+    private function applyFilters($query, Request $request)
+    {
+        // Filter by employee
+        if ($request->filled('employee_id')) {
+            $query->where('employee_id', $request->employee_id);
+        }
+
+        // Filter by date range
+        if ($request->filled('date_from')) {
+            $query->where('date', '>=', $request->date_from);
+        }
+        
+        if ($request->filled('date_to')) {
+            $query->where('date', '<=', $request->date_to);
+        }
+
+        // Filter by specific date
+        if ($request->filled('date') && !$request->filled('date_from') && !$request->filled('date_to')) {
+            $query->where('date', $request->date);
         }
     }
 }

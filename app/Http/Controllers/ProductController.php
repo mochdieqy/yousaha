@@ -6,6 +6,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
@@ -20,9 +21,12 @@ class ProductController extends Controller
             return redirect()->route('company.choice')->with('error', 'Please select a company first.');
         }
 
-        $query = Product::where('company_id', $company->id);
+        $query = Product::where('company_id', $company->id)
+            ->with(['stocks' => function($query) {
+                $query->select('id', 'product_id', 'warehouse_id', 'quantity_saleable');
+            }]);
         
-        // Handle search
+        // Handle search with optimized query
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -96,25 +100,31 @@ class ProductController extends Controller
         }
 
         try {
+            DB::beginTransaction();
+            
             $product = Product::create([
                 'company_id' => $company->id,
-                'name' => $request->name,
-                'sku' => $request->sku,
+                'name' => trim($request->name),
+                'sku' => trim($request->sku),
                 'type' => $request->type,
                 'is_track_inventory' => $request->has('is_track_inventory'),
                 'price' => $request->price,
                 'taxes' => $request->taxes ?? 0,
                 'cost' => $request->cost,
-                'barcode' => $request->barcode,
-                'reference' => $request->reference,
+                'barcode' => $request->barcode ? trim($request->barcode) : null,
+                'reference' => $request->reference ? trim($request->reference) : null,
                 'is_shrink' => $request->has('is_shrink'),
             ]);
 
+            DB::commit();
+
             return redirect()->route('products.index')
-                ->with('success', 'Product created successfully.');
+                ->with('success', 'Product "' . $product->name . '" created successfully.');
         } catch (\Exception $e) {
+            DB::rollBack();
+            
             return redirect()->back()
-                ->with('error', 'Failed to create product: ' . $e->getMessage())
+                ->with('error', 'Failed to create product. Please try again.')
                 ->withInput();
         }
     }
@@ -181,24 +191,30 @@ class ProductController extends Controller
         }
 
         try {
+            DB::beginTransaction();
+            
             $product->update([
-                'name' => $request->name,
-                'sku' => $request->sku,
+                'name' => trim($request->name),
+                'sku' => trim($request->sku),
                 'type' => $request->type,
                 'is_track_inventory' => $request->has('is_track_inventory'),
                 'price' => $request->price,
                 'taxes' => $request->taxes ?? 0,
                 'cost' => $request->cost,
-                'barcode' => $request->barcode,
-                'reference' => $request->reference,
+                'barcode' => $request->barcode ? trim($request->barcode) : null,
+                'reference' => $request->reference ? trim($request->reference) : null,
                 'is_shrink' => $request->has('is_shrink'),
             ]);
 
+            DB::commit();
+
             return redirect()->route('products.index')
-                ->with('success', 'Product updated successfully.');
+                ->with('success', 'Product "' . $product->name . '" updated successfully.');
         } catch (\Exception $e) {
+            DB::rollBack();
+            
             return redirect()->back()
-                ->with('error', 'Failed to update product: ' . $e->getMessage())
+                ->with('error', 'Failed to update product. Please try again.')
                 ->withInput();
         }
     }
@@ -227,16 +243,17 @@ class ProductController extends Controller
                 $product->deliveryLines()->exists() || 
                 $product->stocks()->exists()) {
                 return redirect()->back()
-                    ->with('error', 'Cannot delete product. It is being used in transactions or has stock records.');
+                    ->with('error', 'Cannot delete product "' . $product->name . '". It is being used in transactions or has stock records.');
             }
 
+            $productName = $product->name;
             $product->delete();
 
             return redirect()->route('products.index')
-                ->with('success', 'Product deleted successfully.');
+                ->with('success', 'Product "' . $productName . '" deleted successfully.');
         } catch (\Exception $e) {
             return redirect()->back()
-                ->with('error', 'Failed to delete product: ' . $e->getMessage());
+                ->with('error', 'Failed to delete product. Please try again.');
         }
     }
 }

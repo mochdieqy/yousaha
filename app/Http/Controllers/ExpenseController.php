@@ -7,6 +7,7 @@ use App\Models\ExpenseDetail;
 use App\Models\GeneralLedger;
 use App\Models\GeneralLedgerDetail;
 use App\Models\Account;
+use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -25,9 +26,30 @@ class ExpenseController extends Controller
             return redirect()->route('company.choice')->with('error', 'Please select a company first.');
         }
 
-        $expenses = Expense::where('company_id', $company->id)
-            ->with(['details.account'])
-            ->orderBy('date', 'desc')
+        $query = Expense::where('company_id', $company->id)
+            ->with(['details.account', 'supplier', 'paymentAccount']);
+
+        // Apply search filter
+        if (request('search')) {
+            $search = request('search');
+            $query->where(function($q) use ($search) {
+                $q->where('number', 'like', "%{$search}%")
+                  ->orWhere('note', 'like', "%{$search}%")
+                  ->orWhereHas('supplier', function($sq) use ($search) {
+                      $sq->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Apply date filters
+        if (request('date_from')) {
+            $query->where('date', '>=', request('date_from'));
+        }
+        if (request('date_to')) {
+            $query->where('date', '<=', request('date_to'));
+        }
+
+        $expenses = $query->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc')
             ->paginate(15);
 
@@ -55,7 +77,11 @@ class ExpenseController extends Controller
             ->orderBy('code')
             ->get();
 
-        return view('pages.expenses.create', compact('accounts', 'paymentAccounts'));
+        $suppliers = Supplier::where('company_id', $company->id)
+            ->orderBy('name')
+            ->get();
+
+        return view('pages.expenses.create', compact('accounts', 'paymentAccounts', 'suppliers'));
     }
 
     /**
@@ -74,7 +100,6 @@ class ExpenseController extends Controller
             'date' => 'required|date',
             'supplier_id' => 'nullable|exists:suppliers,id',
             'note' => 'nullable|string|max:500',
-            'total' => 'required|numeric|min:0',
             'payment_account_id' => 'required|exists:accounts,id',
             'details' => 'required|array|min:1',
             'details.*.account_id' => 'required|exists:accounts,id',
@@ -88,9 +113,9 @@ class ExpenseController extends Controller
 
         // Validate that total matches sum of details
         $totalAmount = collect($request->details)->sum('amount');
-        if (abs($totalAmount - $request->total) > 0.01) {
+        if ($totalAmount <= 0) {
             return redirect()->back()
-                ->withErrors(['total' => 'Total amount must equal the sum of detail amounts.'])
+                ->withErrors(['details' => 'Total amount must be greater than zero.'])
                 ->withInput();
         }
 
@@ -101,9 +126,9 @@ class ExpenseController extends Controller
                 'company_id' => $company->id,
                 'number' => $request->number,
                 'date' => $request->date,
-                'supplier_id' => $request->supplier_id,
+                'supplier_id' => $request->supplier_id ?: null,
                 'note' => $request->note,
-                'total' => $request->total,
+                'total' => $totalAmount,
                 'payment_account_id' => $request->payment_account_id,
             ]);
 
@@ -178,7 +203,7 @@ class ExpenseController extends Controller
             abort(403);
         }
 
-        $expense->load(['details.account', 'supplier', 'paymentAccount']);
+        $expense->load(['details.account', 'supplier', 'paymentAccount', 'company']);
 
         return view('pages.expenses.show', compact('expense'));
     }
@@ -204,9 +229,13 @@ class ExpenseController extends Controller
             ->orderBy('code')
             ->get();
 
+        $suppliers = Supplier::where('company_id', $company->id)
+            ->orderBy('name')
+            ->get();
+
         $expense->load('details');
 
-        return view('pages.expenses.edit', compact('expense', 'accounts', 'paymentAccounts'));
+        return view('pages.expenses.edit', compact('expense', 'accounts', 'paymentAccounts', 'suppliers'));
     }
 
     /**
@@ -225,7 +254,6 @@ class ExpenseController extends Controller
             'date' => 'required|date',
             'supplier_id' => 'nullable|exists:suppliers,id',
             'note' => 'nullable|string|max:500',
-            'total' => 'required|numeric|min:0',
             'payment_account_id' => 'required|exists:accounts,id',
             'details' => 'required|array|min:1',
             'details.*.account_id' => 'required|exists:accounts,id',
@@ -239,9 +267,9 @@ class ExpenseController extends Controller
 
         // Validate that total matches sum of details
         $totalAmount = collect($request->details)->sum('amount');
-        if (abs($totalAmount - $request->total) > 0.01) {
+        if ($totalAmount <= 0) {
             return redirect()->back()
-                ->withErrors(['total' => 'Total amount must equal the sum of detail amounts.'])
+                ->withErrors(['details' => 'Total amount must be greater than zero.'])
                 ->withInput();
         }
 
@@ -251,9 +279,9 @@ class ExpenseController extends Controller
             $expense->update([
                 'number' => $request->number,
                 'date' => $request->date,
-                'supplier_id' => $request->supplier_id,
+                'supplier_id' => $request->supplier_id ?: null,
                 'note' => $request->note,
-                'total' => $request->total,
+                'total' => $totalAmount,
                 'payment_account_id' => $request->payment_account_id,
             ]);
 

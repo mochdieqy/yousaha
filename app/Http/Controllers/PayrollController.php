@@ -37,7 +37,7 @@ class PayrollController extends Controller
      * (bank details, tax numbers, insurance) and does NOT handle
      * salary calculations or automatic payments.
      */
-    public function index()
+    public function index(Request $request)
     {
         $company = Auth::user()->currentCompany;
         
@@ -45,14 +45,36 @@ class PayrollController extends Controller
             return redirect()->route('company.choice')->with('error', 'Please select a company first.');
         }
 
-        $payrolls = Payroll::whereHas('employee', function($query) use ($company) {
+        $query = Payroll::whereHas('employee', function($query) use ($company) {
                 $query->where('company_id', $company->id);
             })
-            ->with(['employee.user', 'employee.department'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+            ->with(['employee.user', 'employee.department']);
 
-        return view('pages.payrolls.index', compact('payrolls'));
+        // Apply search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('employee.user', function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            })->orWhereHas('employee', function($q) use ($search) {
+                $q->where('number', 'like', "%{$search}%");
+            })->orWhere('payment_account_bank', 'like', "%{$search}%")
+              ->orWhere('payment_account_number', 'like', "%{$search}%");
+        }
+
+        // Apply department filter
+        if ($request->filled('department')) {
+            $query->whereHas('employee.department', function($q) use ($request) {
+                $q->where('id', $request->department);
+            });
+        }
+
+        $payrolls = $query->orderBy('created_at', 'desc')->get();
+
+        // Get departments for filter dropdown
+        $departments = $company->departments()->orderBy('name')->get();
+
+        return view('pages.payrolls.index', compact('payrolls', 'company', 'departments'));
     }
 
     /**
@@ -69,11 +91,12 @@ class PayrollController extends Controller
         }
 
         $employees = Employee::where('company_id', $company->id)
+            ->whereDoesntHave('payroll') // Only show employees without payroll info
             ->with('user')
             ->orderBy('number')
             ->get();
 
-        return view('pages.payrolls.create', compact('employees'));
+        return view('pages.payrolls.create', compact('employees', 'company'));
     }
 
     /**
@@ -113,20 +136,14 @@ class PayrollController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        // Check if employee belongs to the company
+        // Check if employee belongs to the company and doesn't have payroll info
         $employee = Employee::where('id', $request->employee_id)
             ->where('company_id', $company->id)
+            ->whereDoesntHave('payroll')
             ->first();
         
         if (!$employee) {
-            return redirect()->back()->with('error', 'The selected employee is invalid.')->withInput();
-        }
-
-        // Check if payroll information already exists for this employee
-        $existingPayroll = Payroll::where('employee_id', $request->employee_id)->first();
-
-        if ($existingPayroll) {
-            return redirect()->back()->with('error', 'Payroll information already exists for this employee.')->withInput();
+            return redirect()->back()->with('error', 'The selected employee is invalid or already has payroll information.')->withInput();
         }
 
         try {
@@ -157,11 +174,15 @@ class PayrollController extends Controller
         }
 
         $employees = Employee::where('company_id', $company->id)
+            ->where(function($query) use ($payroll) {
+                $query->whereDoesntHave('payroll')
+                      ->orWhere('id', $payroll->employee_id);
+            })
             ->with('user')
             ->orderBy('number')
             ->get();
 
-        return view('pages.payrolls.edit', compact('payroll', 'employees'));
+        return view('pages.payrolls.edit', compact('payroll', 'employees', 'company'));
     }
 
     /**
@@ -262,6 +283,6 @@ class PayrollController extends Controller
             return redirect()->route('payrolls.index')->with('error', 'Payroll information not found.');
         }
 
-        return view('pages.payrolls.show', compact('payroll'));
+        return view('pages.payrolls.show', compact('payroll', 'company'));
     }
 }

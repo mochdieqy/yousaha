@@ -7,14 +7,14 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h2 class="mb-1">
-                    <i class="fas fa-plus text-primary me-2"></i>
-                    Add New Account
+                    <i class="fas fa-edit text-primary me-2"></i>
+                    Edit Account
                 </h2>
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb mb-0">
                         <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
                         <li class="breadcrumb-item"><a href="{{ route('accounts.index') }}">Accounts</a></li>
-                        <li class="breadcrumb-item active">Add New</li>
+                        <li class="breadcrumb-item active">Edit Account</li>
                     </ol>
                 </nav>
             </div>
@@ -31,7 +31,7 @@
                 <div>
                     <strong>Company:</strong> {{ Auth::user()->currentCompany->name }}
                     <br>
-                    <small class="text-muted">Account will be added to this company's chart of accounts</small>
+                    <small class="text-muted">Account will be updated in this company's chart of accounts</small>
                 </div>
             </div>
         </div>
@@ -55,8 +55,9 @@
                     </div>
                 @endif
 
-                <form action="{{ route('accounts.store') }}" method="POST">
+                <form action="{{ route('accounts.update', $account) }}" method="POST">
                     @csrf
+                    @method('PUT')
                     
                     <div class="row">
                         <div class="col-md-6">
@@ -69,7 +70,7 @@
                                        class="form-control @error('code') is-invalid @enderror" 
                                        id="code" 
                                        name="code" 
-                                       value="{{ old('code') }}" 
+                                       value="{{ old('code', $account->code) }}" 
                                        placeholder="Enter account code (e.g., 1000, 1100)"
                                        required>
                                 <div class="form-text">Enter a unique account code</div>
@@ -91,7 +92,7 @@
                                         required>
                                     <option value="">Select Account Type</option>
                                     @foreach($accountTypes as $type => $label)
-                                        <option value="{{ $type }}" {{ old('type') == $type ? 'selected' : '' }}>
+                                        <option value="{{ $type }}" {{ old('type', $account->type) == $type ? 'selected' : '' }}>
                                             {{ $label }}
                                         </option>
                                     @endforeach
@@ -112,7 +113,7 @@
                                class="form-control @error('name') is-invalid @enderror" 
                                id="name" 
                                name="name" 
-                               value="{{ old('name') }}" 
+                               value="{{ old('name', $account->name) }}" 
                                placeholder="Enter descriptive account name"
                                required>
                         <div class="form-text">Enter a descriptive account name</div>
@@ -121,12 +122,20 @@
                         @enderror
                     </div>
 
+                    @if($account->isCriticalAccount())
+                        <div class="alert alert-warning border-0">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Warning:</strong> This is a critical system account used in sales and purchase orders. 
+                            Changes to this account may affect system functionality.
+                        </div>
+                    @endif
+
                     <div class="d-flex justify-content-between">
                         <a href="{{ route('accounts.index') }}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left me-1"></i>Cancel
                         </a>
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save me-1"></i>Create Account
+                            <i class="fas fa-save me-1"></i>Update Account
                         </button>
                     </div>
                 </form>

@@ -21,7 +21,7 @@ class ReceiptController extends Controller
     /**
      * Display a listing of receipts.
      */
-    public function index()
+    public function index(Request $request)
     {
         $company = Auth::user()->currentCompany;
         
@@ -29,12 +29,37 @@ class ReceiptController extends Controller
             return redirect()->route('company.choice')->with('error', 'Please select a company first.');
         }
 
-        $receipts = Receipt::with(['supplier', 'warehouse', 'productLines.product'])
-            ->where('company_id', $company->id)
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $query = Receipt::with(['supplier', 'warehouse', 'productLines.product'])
+            ->where('company_id', $company->id);
 
-        return view('pages.receipt.index', compact('receipts'));
+        // Apply filters
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function($q) use ($search) {
+                $q->where('reference', 'like', "%{$search}%")
+                  ->orWhere('id', 'like', "%{$search}%")
+                  ->orWhereHas('supplier', function($subQuery) use ($search) {
+                      $subQuery->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->get('status'));
+        }
+
+        if ($request->filled('warehouse')) {
+            $query->where('warehouse_id', $request->get('warehouse'));
+        }
+
+        $receipts = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        // Preserve query parameters in pagination
+        $receipts->appends($request->query());
+
+        $warehouses = Warehouse::where('company_id', $company->id)->get();
+
+        return view('pages.receipt.index', compact('receipts', 'company', 'warehouses'));
     }
 
     /**
@@ -111,30 +136,8 @@ class ReceiptController extends Controller
                 'changed_at' => now(),
             ]);
 
-            // Automatically upsert stock and increase incoming quantities
-            foreach ($request->products as $productData) {
-                $stock = Stock::where('company_id', $company->id)
-                    ->where('product_id', $productData['product_id'])
-                    ->where('warehouse_id', $request->warehouse_id)
-                    ->first();
-
-                if ($stock) {
-                    // Update existing stock - increment incoming quantity
-                    $stock->increment('quantity_incoming', $productData['quantity']);
-                    $stock->increment('quantity_total', $productData['quantity']);
-                } else {
-                    // Create new stock record
-                    $stock = Stock::create([
-                        'company_id' => $company->id,
-                        'product_id' => $productData['product_id'],
-                        'warehouse_id' => $request->warehouse_id,
-                        'quantity_total' => $productData['quantity'],
-                        'quantity_incoming' => $productData['quantity'],
-                        'quantity_saleable' => 0,
-                        'quantity_reserve' => 0,
-                    ]);
-                }
-            }
+            // Update stock quantities
+            $this->updateStockQuantities($company->id, $request->warehouse_id, $request->products, 'create');
 
             DB::commit();
 
@@ -255,28 +258,7 @@ class ReceiptController extends Controller
             }
 
             // Then, add the new quantities
-            foreach ($request->products as $productData) {
-                $stock = Stock::where('company_id', $company->id)
-                    ->where('product_id', $productData['product_id'])
-                    ->where('warehouse_id', $request->warehouse_id)
-                    ->first();
-
-                if ($stock) {
-                    $stock->increment('quantity_total', $productData['quantity']);
-                    $stock->increment('quantity_incoming', $productData['quantity']);
-                } else {
-                    // Create new stock record if it doesn't exist
-                    $stock = Stock::create([
-                        'company_id' => $company->id,
-                        'product_id' => $productData['product_id'],
-                        'warehouse_id' => $request->warehouse_id,
-                        'quantity_total' => $productData['quantity'],
-                        'quantity_incoming' => $productData['quantity'],
-                        'quantity_saleable' => 0,
-                        'quantity_reserve' => 0,
-                    ]);
-                }
-            }
+            $this->updateStockQuantities($company->id, $request->warehouse_id, $request->products, 'update');
 
             // Create status log
             ReceiptStatusLog::create([
@@ -309,6 +291,20 @@ class ReceiptController extends Controller
         try {
             DB::beginTransaction();
 
+            // Reverse stock quantities
+            $company = Auth::user()->currentCompany;
+            foreach ($receipt->productLines as $productLine) {
+                $stock = Stock::where('company_id', $company->id)
+                    ->where('product_id', $productLine->product_id)
+                    ->where('warehouse_id', $receipt->warehouse_id)
+                    ->first();
+
+                if ($stock) {
+                    $stock->decrement('quantity_total', $productLine->quantity);
+                    $stock->decrement('quantity_incoming', $productLine->quantity);
+                }
+            }
+
             // Delete related records
             $receipt->productLines()->delete();
             $receipt->statusLogs()->delete();
@@ -333,7 +329,7 @@ class ReceiptController extends Controller
         $company = Auth::user()->currentCompany;
         
         if (!$company) {
-            return redirect()->route('company.choice')->with('error', 'Receipt must be in ready status for goods receiving.');
+            return redirect()->route('company.choice')->with('error', 'Please select a company first.');
         }
 
         // Check if receipt is ready for goods receiving
@@ -354,42 +350,8 @@ class ReceiptController extends Controller
                 'changed_at' => now(),
             ]);
 
-            // Now move quantities from incoming to saleable and create stock details
-            foreach ($receipt->productLines as $productLine) {
-                $stock = Stock::where('company_id', $company->id)
-                    ->where('product_id', $productLine->product_id)
-                    ->where('warehouse_id', $receipt->warehouse_id)
-                    ->first();
-
-                if ($stock) {
-                    // Move quantity from incoming to saleable
-                    $stock->decrement('quantity_incoming', $productLine->quantity);
-                    $stock->increment('quantity_saleable', $productLine->quantity);
-
-                    // Create stock detail for saleable quantity
-                    StockDetail::create([
-                        'stock_id' => $stock->id,
-                        'quantity' => $productLine->quantity,
-                        'reference' => 'Receipt #' . $receipt->id,
-                    ]);
-
-                    // Create stock history for the goods receiving
-                    StockHistory::create([
-                        'stock_id' => $stock->id,
-                        'type' => 'goods_received',
-                        'reference' => 'Receipt #' . $receipt->id,
-                        'quantity_total_before' => $stock->quantity_total,
-                        'quantity_total_after' => $stock->quantity_total,
-                        'quantity_incoming_before' => $stock->quantity_incoming + $productLine->quantity,
-                        'quantity_incoming_after' => $stock->quantity_incoming,
-                        'quantity_saleable_before' => $stock->quantity_saleable - $productLine->quantity,
-                        'quantity_saleable_after' => $stock->quantity_saleable,
-                        'quantity_reserve_before' => $stock->quantity_reserve,
-                        'quantity_reserve_after' => $stock->quantity_reserve,
-                        'date' => now(),
-                    ]);
-                }
-            }
+            // Move quantities from incoming to saleable
+            $this->processGoodsReceiving($receipt, $company->id);
 
             DB::commit();
 
@@ -447,71 +409,8 @@ class ReceiptController extends Controller
 
             $oldStatus = $receipt->status;
             
-            // Handle stock adjustments before status change
-            if ($newStatus === 'cancel' && $oldStatus !== 'cancel') {
-                // Decrease stock quantities when cancelling
-                foreach ($receipt->productLines as $productLine) {
-                    $stock = Stock::where('company_id', $company->id)
-                        ->where('product_id', $productLine->product_id)
-                        ->where('warehouse_id', $receipt->warehouse_id)
-                        ->first();
-
-                    if ($stock) {
-                        $stock->decrement('quantity_incoming', $productLine->quantity);
-                        $stock->decrement('quantity_total', $productLine->quantity);
-                    }
-                }
-            } elseif ($oldStatus === 'cancel' && $newStatus === 'draft') {
-                // Reactivate cancelled receipt - increase stock quantities back
-                foreach ($receipt->productLines as $productLine) {
-                    $stock = Stock::where('company_id', $company->id)
-                        ->where('product_id', $productLine->product_id)
-                        ->where('warehouse_id', $receipt->warehouse_id)
-                        ->first();
-
-                    if ($stock) {
-                        $stock->increment('quantity_incoming', $productLine->quantity);
-                        $stock->increment('quantity_total', $productLine->quantity);
-                    }
-                }
-            } elseif ($newStatus === 'done' && $oldStatus !== 'done') {
-                // Move quantities from incoming to saleable when goods are received
-                foreach ($receipt->productLines as $productLine) {
-                    $stock = Stock::where('company_id', $company->id)
-                        ->where('product_id', $productLine->product_id)
-                        ->where('warehouse_id', $receipt->warehouse_id)
-                        ->first();
-
-                    if ($stock) {
-                        // Move quantity from incoming to saleable
-                        $stock->decrement('quantity_incoming', $productLine->quantity);
-                        $stock->increment('quantity_saleable', $productLine->quantity);
-
-                        // Create stock detail for saleable quantity
-                        StockDetail::create([
-                            'stock_id' => $stock->id,
-                            'quantity' => $productLine->quantity,
-                            'reference' => 'Receipt #' . $receipt->id,
-                        ]);
-
-                        // Create stock history for the goods receiving
-                        StockHistory::create([
-                            'stock_id' => $stock->id,
-                            'type' => 'goods_received',
-                            'reference' => 'Receipt #' . $receipt->id,
-                            'quantity_total_before' => $stock->quantity_total,
-                            'quantity_total_after' => $stock->quantity_total,
-                            'quantity_incoming_before' => $stock->quantity_incoming + $productLine->quantity,
-                            'quantity_incoming_after' => $stock->quantity_incoming,
-                            'quantity_saleable_before' => $stock->quantity_saleable - $productLine->quantity,
-                            'quantity_saleable_after' => $stock->quantity_saleable,
-                            'quantity_reserve_before' => $stock->quantity_reserve,
-                            'quantity_reserve_after' => $stock->quantity_reserve,
-                            'date' => now(),
-                        ]);
-                    }
-                }
-            }
+            // Handle stock adjustments based on status change
+            $this->handleStatusChangeStockAdjustment($receipt, $oldStatus, $newStatus, $company->id);
 
             // Update receipt status
             $receipt->update(['status' => $request->status]);
@@ -530,6 +429,115 @@ class ReceiptController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
             return back()->with('error', 'Failed to update receipt status: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Update stock quantities for receipt operations
+     */
+    private function updateStockQuantities($companyId, $warehouseId, $products, $operation = 'create')
+    {
+        foreach ($products as $productData) {
+            $stock = Stock::where('company_id', $companyId)
+                ->where('product_id', $productData['product_id'])
+                ->where('warehouse_id', $warehouseId)
+                ->first();
+
+            if ($stock) {
+                // Update existing stock - increment incoming quantity
+                $stock->increment('quantity_incoming', $productData['quantity']);
+                $stock->increment('quantity_total', $productData['quantity']);
+            } else {
+                // Create new stock record
+                $stock = Stock::create([
+                    'company_id' => $companyId,
+                    'product_id' => $productData['product_id'],
+                    'warehouse_id' => $warehouseId,
+                    'quantity_total' => $productData['quantity'],
+                    'quantity_incoming' => $productData['quantity'],
+                    'quantity_saleable' => 0,
+                    'quantity_reserve' => 0,
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Process goods receiving - move quantities from incoming to saleable
+     */
+    private function processGoodsReceiving($receipt, $companyId)
+    {
+        foreach ($receipt->productLines as $productLine) {
+            $stock = Stock::where('company_id', $companyId)
+                ->where('product_id', $productLine->product_id)
+                ->where('warehouse_id', $receipt->warehouse_id)
+                ->first();
+
+            if ($stock) {
+                // Move quantity from incoming to saleable
+                $stock->decrement('quantity_incoming', $productLine->quantity);
+                $stock->increment('quantity_saleable', $productLine->quantity);
+
+                // Create stock detail for saleable quantity
+                StockDetail::create([
+                    'stock_id' => $stock->id,
+                    'quantity' => $productLine->quantity,
+                    'reference' => 'Receipt #' . $receipt->id,
+                ]);
+
+                // Create stock history for the goods receiving
+                StockHistory::create([
+                    'stock_id' => $stock->id,
+                    'type' => 'goods_received',
+                    'reference' => 'Receipt #' . $receipt->id,
+                    'quantity_total_before' => $stock->quantity_total,
+                    'quantity_total_after' => $stock->quantity_total,
+                    'quantity_incoming_before' => $stock->quantity_incoming + $productLine->quantity,
+                    'quantity_incoming_after' => $stock->quantity_incoming,
+                    'quantity_saleable_before' => $stock->quantity_saleable - $productLine->quantity,
+                    'quantity_saleable_after' => $stock->quantity_saleable,
+                    'quantity_reserve_before' => $stock->quantity_reserve,
+                    'quantity_reserve_after' => $stock->quantity_reserve,
+                    'date' => now(),
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Handle stock adjustments when receipt status changes
+     */
+    private function handleStatusChangeStockAdjustment($receipt, $oldStatus, $newStatus, $companyId)
+    {
+        if ($newStatus === 'cancel' && $oldStatus !== 'cancel') {
+            // Decrease stock quantities when cancelling
+            foreach ($receipt->productLines as $productLine) {
+                $stock = Stock::where('company_id', $companyId)
+                    ->where('product_id', $productLine->product_id)
+                    ->where('warehouse_id', $receipt->warehouse_id)
+                    ->first();
+
+                if ($stock) {
+                    $stock->decrement('quantity_incoming', $productLine->quantity);
+                    $stock->decrement('quantity_total', $productLine->quantity);
+                }
+            }
+        } elseif ($oldStatus === 'cancel' && $newStatus === 'draft') {
+            // Reactivate cancelled receipt - increase stock quantities back
+            foreach ($receipt->productLines as $productLine) {
+                $stock = Stock::where('company_id', $companyId)
+                    ->where('product_id', $productLine->product_id)
+                    ->where('warehouse_id', $receipt->warehouse_id)
+                    ->first();
+
+                if ($stock) {
+                    $stock->increment('quantity_incoming', $productLine->quantity);
+                    $stock->increment('quantity_total', $productLine->quantity);
+                }
+            }
+        } elseif ($newStatus === 'done' && $oldStatus !== 'done') {
+            // Move quantities from incoming to saleable when goods are received
+            $this->processGoodsReceiving($receipt, $companyId);
         }
     }
 }

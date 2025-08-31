@@ -7,13 +7,14 @@ use App\Models\Employee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class DepartmentController extends Controller
 {
     /**
      * Display a listing of departments.
      */
-    public function index()
+    public function index(Request $request)
     {
         $company = Auth::user()->currentCompany;
         
@@ -21,12 +22,37 @@ class DepartmentController extends Controller
             return redirect()->route('company.choice')->with('error', 'Please select a company first.');
         }
 
-        $departments = Department::where('company_id', $company->id)
-            ->with(['manager', 'parent', 'children'])
+        $query = Department::where('company_id', $company->id)
+            ->with(['manager', 'parent', 'children']);
+
+        // Apply search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('code', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhere('location', 'like', "%{$search}%");
+            });
+        }
+
+        // Apply parent filter
+        if ($request->filled('parent_id')) {
+            if ($request->parent_id === 'none') {
+                $query->whereNull('parent_id');
+            } else {
+                $query->where('parent_id', $request->parent_id);
+            }
+        }
+
+        $departments = $query->orderBy('name')->paginate(15);
+
+        // Get all departments for parent filter dropdown
+        $allDepartments = Department::where('company_id', $company->id)
             ->orderBy('name')
             ->get();
 
-        return view('pages.departments.index', compact('departments'));
+        return view('pages.departments.index', compact('departments', 'company', 'allDepartments'));
     }
 
     /**
@@ -46,7 +72,7 @@ class DepartmentController extends Controller
 
         $managers = $company->usersQuery()->orderBy('name')->get();
 
-        return view('pages.departments.create', compact('departments', 'managers'));
+        return view('pages.departments.create', compact('departments', 'managers', 'company'));
     }
 
     /**
@@ -88,6 +114,8 @@ class DepartmentController extends Controller
         }
 
         try {
+            DB::beginTransaction();
+            
             Department::create([
                 'company_id' => $company->id,
                 'code' => $request->code,
@@ -98,8 +126,10 @@ class DepartmentController extends Controller
                 'parent_id' => $request->parent_id,
             ]);
 
+            DB::commit();
             return redirect()->route('departments.index')->with('success', 'Department created successfully.');
         } catch (\Exception $e) {
+            DB::rollBack();
             return redirect()->back()->with('error', 'Failed to create department. Please try again.')->withInput();
         }
     }
@@ -122,7 +152,7 @@ class DepartmentController extends Controller
 
         $managers = $company->usersQuery()->orderBy('name')->get();
 
-        return view('pages.departments.edit', compact('department', 'departments', 'managers'));
+        return view('pages.departments.edit', compact('department', 'departments', 'managers', 'company'));
     }
 
     /**
@@ -168,6 +198,8 @@ class DepartmentController extends Controller
         }
 
         try {
+            DB::beginTransaction();
+            
             $department->update([
                 'code' => $request->code,
                 'name' => $request->name,
@@ -177,8 +209,10 @@ class DepartmentController extends Controller
                 'parent_id' => $request->parent_id,
             ]);
 
+            DB::commit();
             return redirect()->route('departments.index')->with('success', 'Department updated successfully.');
         } catch (\Exception $e) {
+            DB::rollBack();
             return redirect()->back()->with('error', 'Failed to update department. Please try again.')->withInput();
         }
     }
@@ -205,9 +239,14 @@ class DepartmentController extends Controller
         }
 
         try {
+            DB::beginTransaction();
+            
             $department->delete();
+            
+            DB::commit();
             return redirect()->route('departments.index')->with('success', 'Department deleted successfully.');
         } catch (\Exception $e) {
+            DB::rollBack();
             return redirect()->route('departments.index')->with('error', 'Failed to delete department. Please try again.');
         }
     }

@@ -89,7 +89,7 @@ class PurchaseOrder extends Model
      */
     public function isOverdue()
     {
-        return $this->deadline->isPast() && !in_array($this->status, ['completed', 'cancelled']);
+        return $this->deadline->isPast() && !in_array($this->status, ['done', 'cancel']);
     }
 
     /**

@@ -6,6 +6,7 @@ use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class CustomerController extends Controller
 {
@@ -41,7 +42,7 @@ class CustomerController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return view('pages.customer.index', compact('customers', 'company', 'request'));
+        return view('pages.customer.index', compact('customers', 'company'));
     }
 
     /**
@@ -70,7 +71,7 @@ class CustomerController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'type' => 'required|in:individual,company',
+            'type' => ['required', Rule::in(['individual', 'company'])],
             'name' => 'required|string|max:255',
             'address' => 'nullable|string|max:500',
             'phone' => 'nullable|string|max:20',
@@ -84,7 +85,7 @@ class CustomerController extends Controller
         }
 
         try {
-            $customer = Customer::create([
+            Customer::create([
                 'company_id' => $company->id,
                 'type' => $request->type,
                 'name' => $request->name,
@@ -97,7 +98,7 @@ class CustomerController extends Controller
                 ->with('success', 'Customer created successfully.');
         } catch (\Exception $e) {
             return redirect()->back()
-                ->with('error', 'Failed to create customer: ' . $e->getMessage())
+                ->with('error', 'Failed to create customer. Please try again.')
                 ->withInput();
         }
     }
@@ -138,7 +139,7 @@ class CustomerController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'type' => 'required|in:individual,company',
+            'type' => ['required', Rule::in(['individual', 'company'])],
             'name' => 'required|string|max:255',
             'address' => 'nullable|string|max:500',
             'phone' => 'nullable|string|max:20',
@@ -164,7 +165,7 @@ class CustomerController extends Controller
                 ->with('success', 'Customer updated successfully.');
         } catch (\Exception $e) {
             return redirect()->back()
-                ->with('error', 'Failed to update customer: ' . $e->getMessage())
+                ->with('error', 'Failed to update customer. Please try again.')
                 ->withInput();
         }
     }
@@ -198,7 +199,7 @@ class CustomerController extends Controller
                 ->with('success', 'Customer deleted successfully.');
         } catch (\Exception $e) {
             return redirect()->back()
-                ->with('error', 'Failed to delete customer: ' . $e->getMessage());
+                ->with('error', 'Failed to delete customer. Please try again.');
         }
     }
 }

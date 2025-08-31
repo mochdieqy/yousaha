@@ -24,6 +24,18 @@
             </a>
         </div>
 
+        <!-- Company Info -->
+        <div class="alert alert-info border-0 shadow-sm mb-4">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-building me-3 fa-lg"></i>
+                <div>
+                    <strong>Company:</strong> {{ $company->name }}
+                    <br>
+                    <small class="text-muted">Supplier is associated with this company</small>
+                </div>
+            </div>
+        </div>
+
         <!-- Supplier Form -->
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-light">
@@ -33,10 +45,6 @@
                         Supplier Information
                     </h5>
                     <div class="d-flex align-items-center">
-                        <span class="badge bg-info text-white me-2">
-                            <i class="fas fa-building me-1"></i>
-                            {{ $company->name }}
-                        </span>
                         @if($supplier->isIndividual())
                             <span class="badge bg-primary">Individual</span>
                         @else
@@ -54,15 +62,16 @@
                         <!-- Supplier Type -->
                         <div class="col-md-6 mb-3">
                             <label for="type" class="form-label">
+                                <i class="fas fa-tag me-1"></i>
                                 Supplier Type <span class="text-danger">*</span>
                             </label>
                             <select name="type" id="type" class="form-select @error('type') is-invalid @enderror" required>
                                 <option value="">Select Type</option>
                                 <option value="individual" {{ (old('type', $supplier->type) === 'individual') ? 'selected' : '' }}>
-                                    Individual
+                                    <i class="fas fa-user"></i> Individual
                                 </option>
                                 <option value="company" {{ (old('type', $supplier->type) === 'company') ? 'selected' : '' }}>
-                                    Company
+                                    <i class="fas fa-building"></i> Company
                                 </option>
                             </select>
                             @error('type')
@@ -76,6 +85,7 @@
                         <!-- Supplier Name -->
                         <div class="col-md-6 mb-3">
                             <label for="name" class="form-label">
+                                <i class="fas fa-user me-1"></i>
                                 Supplier Name <span class="text-danger">*</span>
                             </label>
                             <input type="text" 
@@ -95,6 +105,7 @@
                         <!-- Phone Number -->
                         <div class="col-md-6 mb-3">
                             <label for="phone" class="form-label">
+                                <i class="fas fa-phone me-1"></i>
                                 Phone Number
                             </label>
                             <div class="input-group">
@@ -116,6 +127,7 @@
                         <!-- Email Address -->
                         <div class="col-md-6 mb-3">
                             <label for="email" class="form-label">
+                                <i class="fas fa-envelope me-1"></i>
                                 Email Address
                             </label>
                             <div class="input-group">
@@ -136,8 +148,9 @@
                     </div>
 
                     <!-- Address -->
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label for="address" class="form-label">
+                            <i class="fas fa-map-marker-alt me-1"></i>
                             Address
                         </label>
                         <textarea class="form-control @error('address') is-invalid @enderror" 
@@ -151,7 +164,7 @@
                     </div>
 
                     <!-- Supplier Usage Information -->
-                    <div class="alert alert-warning">
+                    <div class="alert alert-warning border-0 shadow-sm mb-4">
                         <div class="d-flex align-items-center">
                             <i class="fas fa-exclamation-triangle me-2"></i>
                             <div>

@@ -16,6 +16,9 @@ class StockHistory extends Model
      */
     protected $fillable = [
         'stock_id',
+        'company_id',
+        'warehouse_id',
+        'product_id',
         'quantity_total_before',
         'quantity_total_after',
         'quantity_reserve_before',
@@ -26,13 +29,10 @@ class StockHistory extends Model
         'quantity_incoming_after',
         'type',
         'reference',
-        'date',
-        'company_id',
-        'warehouse_id',
-        'product_id',
-        'quantity',
         'reference_type',
         'reference_id',
+        'quantity',
+        'date',
         'notes',
     ];
 
@@ -42,7 +42,7 @@ class StockHistory extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'date' => 'date',
+        'date' => 'datetime',
     ];
 
     /**
@@ -51,6 +51,30 @@ class StockHistory extends Model
     public function stock()
     {
         return $this->belongsTo(Stock::class);
+    }
+
+    /**
+     * Get the company that owns this history.
+     */
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
+
+    /**
+     * Get the warehouse that owns this history.
+     */
+    public function warehouse()
+    {
+        return $this->belongsTo(Warehouse::class);
+    }
+
+    /**
+     * Get the product that owns this history.
+     */
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
     }
 
     /**

@@ -24,6 +24,18 @@
             </a>
         </div>
 
+        <!-- Company Info -->
+        <div class="alert alert-info border-0 shadow-sm mb-4">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-building me-3 fa-lg"></i>
+                <div>
+                    <strong>Company:</strong> {{ $company->name }}
+                    <br>
+                    <small class="text-muted">Supplier will be added to this company's records</small>
+                </div>
+            </div>
+        </div>
+
         <!-- Supplier Form -->
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-light">
@@ -40,15 +52,16 @@
                         <!-- Supplier Type -->
                         <div class="col-md-6 mb-3">
                             <label for="type" class="form-label">
+                                <i class="fas fa-tag me-1"></i>
                                 Supplier Type <span class="text-danger">*</span>
                             </label>
                             <select name="type" id="type" class="form-select @error('type') is-invalid @enderror" required>
                                 <option value="">Select Type</option>
                                 <option value="individual" {{ old('type') === 'individual' ? 'selected' : '' }}>
-                                    Individual
+                                    <i class="fas fa-user"></i> Individual
                                 </option>
                                 <option value="company" {{ old('type') === 'company' ? 'selected' : '' }}>
-                                    Company
+                                    <i class="fas fa-building"></i> Company
                                 </option>
                             </select>
                             @error('type')
@@ -62,6 +75,7 @@
                         <!-- Supplier Name -->
                         <div class="col-md-6 mb-3">
                             <label for="name" class="form-label">
+                                <i class="fas fa-user me-1"></i>
                                 Supplier Name <span class="text-danger">*</span>
                             </label>
                             <input type="text" 
@@ -81,6 +95,7 @@
                         <!-- Phone Number -->
                         <div class="col-md-6 mb-3">
                             <label for="phone" class="form-label">
+                                <i class="fas fa-phone me-1"></i>
                                 Phone Number
                             </label>
                             <div class="input-group">
@@ -102,6 +117,7 @@
                         <!-- Email Address -->
                         <div class="col-md-6 mb-3">
                             <label for="email" class="form-label">
+                                <i class="fas fa-envelope me-1"></i>
                                 Email Address
                             </label>
                             <div class="input-group">
@@ -122,8 +138,9 @@
                     </div>
 
                     <!-- Address -->
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label for="address" class="form-label">
+                            <i class="fas fa-map-marker-alt me-1"></i>
                             Address
                         </label>
                         <textarea class="form-control @error('address') is-invalid @enderror" 
@@ -134,17 +151,6 @@
                         @error('address')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-                    </div>
-
-                    <!-- Company Information -->
-                    <div class="alert alert-info">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-info-circle me-2"></i>
-                            <div>
-                                <strong>Company Context:</strong> This supplier will be associated with 
-                                <strong>{{ $company->name }}</strong>.
-                            </div>
-                        </div>
                     </div>
 
                     <!-- Form Actions -->

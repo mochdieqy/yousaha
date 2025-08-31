@@ -6,7 +6,6 @@ use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
 
 class WarehouseController extends Controller
 {
@@ -21,16 +20,11 @@ class WarehouseController extends Controller
             return redirect()->route('company.choice')->with('error', 'Please select a company first.');
         }
 
-        $query = Warehouse::where('company_id', $company->id);
+        $query = Warehouse::forCompany($company->id);
         
         // Handle search
         if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('code', 'like', "%{$search}%")
-                  ->orWhere('address', 'like', "%{$search}%");
-            });
+            $query->search($request->search);
         }
         
         $warehouses = $query->orderBy('name')
@@ -95,7 +89,7 @@ class WarehouseController extends Controller
                 ->with('success', 'Warehouse created successfully.');
         } catch (\Exception $e) {
             return redirect()->back()
-                ->with('error', 'Failed to create warehouse: ' . $e->getMessage())
+                ->with('error', 'Failed to create warehouse. Please try again.')
                 ->withInput();
         }
     }
@@ -166,7 +160,7 @@ class WarehouseController extends Controller
                 ->with('success', 'Warehouse updated successfully.');
         } catch (\Exception $e) {
             return redirect()->back()
-                ->with('error', 'Failed to update warehouse: ' . $e->getMessage())
+                ->with('error', 'Failed to update warehouse. Please try again.')
                 ->withInput();
         }
     }
@@ -189,7 +183,7 @@ class WarehouseController extends Controller
         }
 
         // Check if warehouse has associated stocks
-        if ($warehouse->stocks()->exists()) {
+        if ($warehouse->hasStock()) {
             return redirect()->route('warehouses.index')
                 ->with('error', 'Cannot delete warehouse. It has associated stock records.');
         }
@@ -200,7 +194,7 @@ class WarehouseController extends Controller
                 ->with('success', 'Warehouse deleted successfully.');
         } catch (\Exception $e) {
             return redirect()->route('warehouses.index')
-                ->with('error', 'Failed to delete warehouse: ' . $e->getMessage());
+                ->with('error', 'Failed to delete warehouse. Please try again.');
         }
     }
 }

@@ -7,6 +7,7 @@ use App\Models\IncomeDetail;
 use App\Models\GeneralLedger;
 use App\Models\GeneralLedgerDetail;
 use App\Models\Account;
+use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,7 @@ class IncomeController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $company = Auth::user()->currentCompany;
         
@@ -25,13 +26,42 @@ class IncomeController extends Controller
             return redirect()->route('company.choice')->with('error', 'Please select a company first.');
         }
 
-        $incomes = Income::where('company_id', $company->id)
-            ->with(['details.account'])
-            ->orderBy('date', 'desc')
+        $query = Income::where('company_id', $company->id)
+            ->with(['details.account', 'receiptAccount', 'customer']);
+
+        // Apply search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('number', 'like', "%{$search}%")
+                  ->orWhere('note', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        // Apply date filter
+        if ($request->filled('date_from')) {
+            $query->where('date', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->where('date', '<=', $request->date_to);
+        }
+
+        // Apply amount filter
+        if ($request->filled('amount_min')) {
+            $query->where('total', '>=', $request->amount_min);
+        }
+
+        if ($request->filled('amount_max')) {
+            $query->where('total', '<=', $request->amount_max);
+        }
+
+        $incomes = $query->orderBy('date', 'desc')
             ->orderBy('created_at', 'desc')
             ->paginate(15);
 
-        return view('pages.incomes.index', compact('incomes'));
+        return view('pages.incomes.index', compact('incomes', 'company'));
     }
 
     /**
@@ -55,7 +85,11 @@ class IncomeController extends Controller
             ->orderBy('code')
             ->get();
 
-        return view('pages.incomes.create', compact('accounts', 'receiptAccounts'));
+        $customers = Customer::where('company_id', $company->id)
+            ->orderBy('name')
+            ->get();
+
+        return view('pages.incomes.create', compact('accounts', 'receiptAccounts', 'customers', 'company'));
     }
 
     /**
@@ -114,7 +148,7 @@ class IncomeController extends Controller
                 IncomeDetail::create([
                     'income_id' => $income->id,
                     'account_id' => $detail['account_id'],
-                    'amount' => $detail['amount'],
+                    'value' => $detail['amount'],
                     'description' => $detail['description'] ?? null,
                 ]);
             }
@@ -182,7 +216,7 @@ class IncomeController extends Controller
 
         $income->load(['details.account', 'customer', 'receiptAccount']);
 
-        return view('pages.incomes.show', compact('income'));
+        return view('pages.incomes.show', compact('income', 'company'));
     }
 
     /**
@@ -206,9 +240,13 @@ class IncomeController extends Controller
             ->orderBy('code')
             ->get();
 
+        $customers = Customer::where('company_id', $company->id)
+            ->orderBy('name')
+            ->get();
+
         $income->load('details');
 
-        return view('pages.incomes.edit', compact('income', 'accounts', 'receiptAccounts'));
+        return view('pages.incomes.edit', compact('income', 'accounts', 'receiptAccounts', 'customers', 'company'));
     }
 
     /**
@@ -269,7 +307,7 @@ class IncomeController extends Controller
                 IncomeDetail::create([
                     'income_id' => $income->id,
                     'account_id' => $detail['account_id'],
-                    'amount' => $detail['amount'],
+                    'value' => $detail['amount'],
                     'description' => $detail['description'] ?? null,
                 ]);
             }

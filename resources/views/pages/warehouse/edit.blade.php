@@ -25,18 +25,36 @@
         </div>
 
         <!-- Company Info -->
-        <div class="alert alert-info" role="alert">
-            <i class="fas fa-building me-2"></i>
-            <strong>Company:</strong> {{ $company->name }}
+        <div class="alert alert-info border-0 shadow-sm mb-4">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-building me-3 fa-lg"></i>
+                <div>
+                    <strong>Company:</strong> {{ $company->name }}
+                    <br>
+                    <small class="text-muted">Editing warehouse in this company's inventory system</small>
+                </div>
+            </div>
         </div>
 
         <!-- Warehouse Info Card -->
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-light">
-                <h6 class="mb-0">
-                    <i class="fas fa-info-circle me-2"></i>
-                    Current Warehouse Information
-                </h6>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Current Warehouse Information
+                    </h6>
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-primary me-2">
+                            <i class="fas fa-warehouse me-1"></i>
+                            {{ $warehouse->code }}
+                        </span>
+                        <span class="badge bg-info">
+                            <i class="fas fa-boxes me-1"></i>
+                            {{ $warehouse->total_products }} Products
+                        </span>
+                    </div>
+                </div>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -50,7 +68,7 @@
                     </div>
                     <div class="col-md-3">
                         <strong>Total Quantity:</strong>
-                                                        <span class="badge bg-success">{{ number_format($warehouse->total_quantity, 0, ',', '.') }}</span>
+                        <span class="badge bg-success">{{ number_format($warehouse->total_quantity, 0, ',', '.') }}</span>
                     </div>
                     <div class="col-md-3">
                         <strong>Created:</strong>

@@ -18,10 +18,7 @@ class Income extends Model
         'company_id',
         'number',
         'date',
-        'due_date',
         'total',
-        'paid',
-        'status',
         'note',
         'description',
         'customer_id',
@@ -35,9 +32,7 @@ class Income extends Model
      */
     protected $casts = [
         'date' => 'date',
-        'due_date' => 'date',
         'total' => 'decimal:2',
-        'paid' => 'boolean',
     ];
 
     /**
@@ -70,21 +65,5 @@ class Income extends Model
     public function receiptAccount()
     {
         return $this->belongsTo(Account::class, 'receipt_account_id');
-    }
-
-    /**
-     * Check if the income is overdue.
-     */
-    public function isOverdue()
-    {
-        return !$this->paid && $this->due_date->isPast();
-    }
-
-    /**
-     * Get the remaining amount to be received.
-     */
-    public function getRemainingAmountAttribute()
-    {
-        return $this->paid ? 0 : $this->total;
     }
 }

@@ -189,7 +189,7 @@ class Company extends Model
     public function usersQuery()
     {
         // Get company owner ID
-        $ownerId = $this->owner;
+        $ownerId = $this->owner_id;
         
         // Get employee user IDs
         $employeeUserIds = $this->employees()->pluck('user_id')->toArray();

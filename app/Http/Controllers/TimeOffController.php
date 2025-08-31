@@ -14,7 +14,7 @@ class TimeOffController extends Controller
     /**
      * Display a listing of time offs.
      */
-    public function index()
+    public function index(Request $request)
     {
         $company = Auth::user()->currentCompany;
         
@@ -22,17 +22,14 @@ class TimeOffController extends Controller
             return redirect()->route('company.choice')->with('error', 'Please select a company first.');
         }
 
-        // Check if current user is the company owner
         $isCompanyOwner = $company->owner === Auth::id();
+        $query = TimeOff::query();
 
         if ($isCompanyOwner) {
             // Company owner can see all time off requests in the company
-            $timeOffs = TimeOff::whereHas('employee', function($query) use ($company) {
-                    $query->where('company_id', $company->id);
-                })
-                ->with(['employee.user', 'employee.department'])
-                ->orderBy('date', 'desc')
-                ->get();
+            $query->whereHas('employee', function($q) use ($company) {
+                $q->where('company_id', $company->id);
+            });
         } else {
             // Regular employees can only see their own time off requests
             $currentEmployee = Employee::where('company_id', $company->id)
@@ -43,13 +40,37 @@ class TimeOffController extends Controller
                 return redirect()->route('home')->with('error', 'You must be an employee to view time off requests.');
             }
 
-            $timeOffs = TimeOff::where('employee_id', $currentEmployee->id)
-                ->with(['employee.user', 'employee.department'])
-                ->orderBy('date', 'desc')
-                ->get();
+            $query->where('employee_id', $currentEmployee->id);
         }
 
-        return view('pages.time-offs.index', compact('timeOffs', 'isCompanyOwner'));
+        // Apply filters
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->whereHas('employee.user', function($subQ) use ($search) {
+                    $subQ->where('name', 'like', "%{$search}%");
+                })
+                ->orWhere('reason', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('status') && $request->status !== '') {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->where('date', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->where('date', '<=', $request->date_to);
+        }
+
+        $timeOffs = $query->with(['employee.user', 'employee.department'])
+            ->orderBy('date', 'desc')
+            ->paginate(15);
+
+        return view('pages.time-offs.index', compact('timeOffs', 'isCompanyOwner', 'company'));
     }
 
     /**
@@ -63,7 +84,6 @@ class TimeOffController extends Controller
             return redirect()->route('company.choice')->with('error', 'Please select a company first.');
         }
 
-        // Get current user's employee record
         $currentEmployee = Employee::where('company_id', $company->id)
             ->where('user_id', Auth::id())
             ->with('user')
@@ -73,7 +93,7 @@ class TimeOffController extends Controller
             return redirect()->route('time-offs.index')->with('error', 'You must be an employee to request time off.');
         }
 
-        return view('pages.time-offs.create', compact('currentEmployee'));
+        return view('pages.time-offs.create', compact('currentEmployee', 'company'));
     }
 
     /**
@@ -90,7 +110,7 @@ class TimeOffController extends Controller
         $validator = Validator::make($request->all(), [
             'employee_id' => 'required|exists:employees,id',
             'date' => 'required|date|after_or_equal:today',
-            'reason' => 'required|string|max:500',
+            'reason' => 'required|string|min:10|max:500',
         ], [
             'employee_id.required' => 'Please select an employee.',
             'employee_id.exists' => 'The selected employee is invalid.',
@@ -98,6 +118,7 @@ class TimeOffController extends Controller
             'date.date' => 'Date must be a valid date.',
             'date.after_or_equal' => 'Date must be today or in the future.',
             'reason.required' => 'Reason is required.',
+            'reason.min' => 'Reason must be at least 10 characters.',
             'reason.max' => 'Reason cannot exceed 500 characters.',
         ]);
 
@@ -150,17 +171,15 @@ class TimeOffController extends Controller
             return redirect()->route('time-offs.index')->with('error', 'Time off request not found.');
         }
 
-        // Only allow editing if status is pending
         if ($timeOff->status !== 'pending') {
             return redirect()->route('time-offs.index')->with('error', 'Cannot edit approved or rejected time off requests.');
         }
 
-        // Only allow users to edit their own time off requests
         if ($timeOff->employee->user_id !== Auth::id()) {
             return redirect()->route('time-offs.index')->with('error', 'You can only edit your own time off requests.');
         }
 
-        return view('pages.time-offs.edit', compact('timeOff'));
+        return view('pages.time-offs.edit', compact('timeOff', 'company'));
     }
 
     /**
@@ -174,7 +193,6 @@ class TimeOffController extends Controller
             return redirect()->route('time-offs.index')->with('error', 'Time off request not found.');
         }
 
-        // Only allow editing if status is pending
         if ($timeOff->status !== 'pending') {
             return redirect()->route('time-offs.index')->with('error', 'Cannot edit approved or rejected time off requests.');
         }
@@ -182,7 +200,7 @@ class TimeOffController extends Controller
         $validator = Validator::make($request->all(), [
             'employee_id' => 'required|exists:employees,id',
             'date' => 'required|date|after_or_equal:today',
-            'reason' => 'required|string|max:500',
+            'reason' => 'required|string|min:10|max:500',
         ], [
             'employee_id.required' => 'Please select an employee.',
             'employee_id.exists' => 'The selected employee is invalid.',
@@ -190,6 +208,7 @@ class TimeOffController extends Controller
             'date.date' => 'Date must be a valid date.',
             'date.after_or_equal' => 'Date must be today or in the future.',
             'reason.required' => 'Reason is required.',
+            'reason.min' => 'Reason must be at least 10 characters.',
             'reason.max' => 'Reason cannot exceed 500 characters.',
         ]);
 
@@ -242,12 +261,10 @@ class TimeOffController extends Controller
             return redirect()->route('time-offs.index')->with('error', 'Time off request not found.');
         }
 
-        // Only allow deletion if status is pending
         if ($timeOff->status !== 'pending') {
             return redirect()->route('time-offs.index')->with('error', 'Cannot delete approved or rejected time off requests.');
         }
 
-        // Only allow users to delete their own time off requests
         if ($timeOff->employee->user_id !== Auth::id()) {
             return redirect()->route('time-offs.index')->with('error', 'You can only delete your own time off requests.');
         }
@@ -263,7 +280,7 @@ class TimeOffController extends Controller
     /**
      * Show time off requests for approval (for managers and company owners).
      */
-    public function approvalIndex()
+    public function approvalIndex(Request $request)
     {
         $company = Auth::user()->currentCompany;
         
@@ -271,32 +288,50 @@ class TimeOffController extends Controller
             return redirect()->route('company.choice')->with('error', 'Please select a company first.');
         }
 
-        // Check if current user is the company owner
         $isCompanyOwner = $company->owner === Auth::id();
+        $query = TimeOff::query();
 
         if ($isCompanyOwner) {
             // Company owner can see all pending time off requests
-            $timeOffs = TimeOff::whereHas('employee', function($query) use ($company) {
-                    $query->where('company_id', $company->id);
-                })
-                ->where('status', 'pending')
-                ->with(['employee.user', 'employee.department'])
-                ->orderBy('date', 'asc')
-                ->get();
+            $query->whereHas('employee', function($q) use ($company) {
+                $q->where('company_id', $company->id);
+            });
         } else {
             // Regular managers can only see employees they manage
             $managedEmployees = Employee::where('company_id', $company->id)
                 ->where('manager', Auth::id())
                 ->pluck('id');
 
-            $timeOffs = TimeOff::whereIn('employee_id', $managedEmployees)
-                ->where('status', 'pending')
-                ->with(['employee.user', 'employee.department'])
-                ->orderBy('date', 'asc')
-                ->get();
+            if ($managedEmployees->isEmpty()) {
+                return redirect()->route('time-offs.index')->with('error', 'You are not managing any employees.');
+            }
+
+            $query->whereIn('employee_id', $managedEmployees);
         }
 
-        return view('pages.time-offs.approval', compact('timeOffs', 'isCompanyOwner'));
+        // Apply filters
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->whereHas('employee.user', function($subQ) use ($search) {
+                    $subQ->where('name', 'like', "%{$search}%");
+                })
+                ->orWhere('reason', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('department') && $request->department !== '') {
+            $query->whereHas('employee.department', function($q) use ($request) {
+                $q->where('id', $request->department);
+            });
+        }
+
+        $timeOffs = $query->where('status', 'pending')
+            ->with(['employee.user', 'employee.department', 'employee.managerUser'])
+            ->orderBy('date', 'asc')
+            ->paginate(15);
+
+        return view('pages.time-offs.approval', compact('timeOffs', 'isCompanyOwner', 'company'));
     }
 
     /**
@@ -310,7 +345,6 @@ class TimeOffController extends Controller
             return redirect()->route('time-offs.approval')->with('error', 'Time off request not found.');
         }
 
-        // Check if current user is the company owner or the manager of this employee
         $isCompanyOwner = $company->owner === Auth::id();
         $isManager = $timeOff->employee->manager === Auth::id();
 
@@ -318,12 +352,11 @@ class TimeOffController extends Controller
             return redirect()->route('time-offs.approval')->with('error', 'You are not authorized to approve this request.');
         }
 
-        // Check if status is still pending
         if ($timeOff->status !== 'pending') {
             return redirect()->route('time-offs.approval')->with('error', 'This request has already been processed.');
         }
 
-        return view('pages.time-offs.approval-form', compact('timeOff', 'isCompanyOwner'));
+        return view('pages.time-offs.approval-form', compact('timeOff', 'isCompanyOwner', 'company'));
     }
 
     /**
@@ -337,7 +370,6 @@ class TimeOffController extends Controller
             return redirect()->route('time-offs.approval')->with('error', 'Time off request not found.');
         }
 
-        // Check if current user is the company owner or the manager of this employee
         $isCompanyOwner = $company->owner === Auth::id();
         $isManager = $timeOff->employee->manager === Auth::id();
 
@@ -345,7 +377,6 @@ class TimeOffController extends Controller
             return redirect()->route('time-offs.approval')->with('error', 'You are not authorized to approve this request.');
         }
 
-        // Check if status is still pending
         if ($timeOff->status !== 'pending') {
             return redirect()->route('time-offs.approval')->with('error', 'This request has already been processed.');
         }
@@ -362,9 +393,7 @@ class TimeOffController extends Controller
         }
 
         try {
-            $timeOff->update([
-                'status' => $request->status,
-            ]);
+            $timeOff->update(['status' => $request->status]);
 
             $statusMessage = $request->status === 'approved' ? 'approved' : 'rejected';
             return redirect()->route('time-offs.approval')->with('success', "Time off request {$statusMessage} successfully.");

@@ -36,7 +36,7 @@
                         <h6 class="mb-1 fw-bold">{{ $company->name }}</h6>
                         <small class="text-muted">
                             <i class="fas fa-map-marker-alt me-1"></i>
-                            {{ $company->address }}
+                            {{ $company->address ?? 'No address specified' }}
                         </small>
                     </div>
                 </div>
