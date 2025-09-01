@@ -48,19 +48,22 @@
                 <div class="p-3 border-bottom">
                     <form method="GET" action="{{ route('ai-evaluation.index') }}" class="row g-3">
                         <div class="col-md-4">
+                            <label for="search" class="form-label">Search</label>
                             <div class="input-group">
                                 <span class="input-group-text">
                                     <i class="fas fa-search"></i>
                                 </span>
                                 <input type="text" 
                                        class="form-control" 
+                                       id="search"
                                        name="search" 
                                        placeholder="Search evaluations..." 
                                        value="{{ request('search') }}">
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <select name="category" class="form-select">
+                            <label for="category" class="form-label">Category</label>
+                            <select name="category" id="category" class="form-select">
                                 <option value="">All Categories</option>
                                 @foreach($categories as $key => $name)
                                     <option value="{{ $key }}" {{ request('category') === $key ? 'selected' : '' }}>
@@ -70,7 +73,8 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <select name="status" class="form-select">
+                            <label for="status" class="form-label">Status</label>
+                            <select name="status" id="status" class="form-select">
                                 <option value="">All Statuses</option>
                                 <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>Completed</option>
                                 <option value="draft" {{ request('status') === 'draft' ? 'selected' : '' }}>Draft</option>
@@ -78,6 +82,7 @@
                             </select>
                         </div>
                         <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
                             <button type="submit" class="btn btn-primary w-100">
                                 <i class="fas fa-filter me-2"></i>Filter
                             </button>

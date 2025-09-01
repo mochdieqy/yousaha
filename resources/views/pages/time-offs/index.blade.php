@@ -68,19 +68,22 @@
                 <div class="p-3 border-bottom">
                     <form method="GET" action="{{ route('time-offs.index') }}" class="row g-3">
                         <div class="col-md-3">
+                            <label for="search" class="form-label">Search</label>
                             <div class="input-group">
                                 <span class="input-group-text">
                                     <i class="fas fa-search"></i>
                                 </span>
                                 <input type="text" 
                                        class="form-control" 
+                                       id="search"
                                        name="search" 
                                        placeholder="Search employee or reason..." 
                                        value="{{ request('search') }}">
                             </div>
                         </div>
                         <div class="col-md-2">
-                            <select name="status" class="form-select">
+                            <label for="status" class="form-label">Status</label>
+                            <select name="status" id="status" class="form-select">
                                 <option value="">All Status</option>
                                 <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
                                 <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Approved</option>
@@ -88,28 +91,35 @@
                             </select>
                         </div>
                         <div class="col-md-2">
+                            <label for="date_from" class="form-label">From Date</label>
                             <input type="date" 
                                    class="form-control" 
+                                   id="date_from"
                                    name="date_from" 
                                    placeholder="From Date"
                                    value="{{ request('date_from') }}">
                         </div>
                         <div class="col-md-2">
+                            <label for="date_to" class="form-label">To Date</label>
                             <input type="date" 
                                    class="form-control" 
+                                   id="date_to"
                                    name="date_to" 
                                    placeholder="To Date"
                                    value="{{ request('date_to') }}">
                         </div>
                         <div class="col-md-3">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-filter me-2"></i>Filter
-                            </button>
-                            @if(request('search') || request('status') || request('date_from') || request('date_to'))
-                                <a href="{{ route('time-offs.index') }}" class="btn btn-outline-secondary ms-2">
-                                    <i class="fas fa-times me-2"></i>Clear
-                                </a>
-                            @endif
+                            <label class="form-label">&nbsp;</label>
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-filter me-2"></i>Filter
+                                </button>
+                                @if(request('search') || request('status') || request('date_from') || request('date_to'))
+                                    <a href="{{ route('time-offs.index') }}" class="btn btn-outline-secondary ms-2">
+                                        <i class="fas fa-times me-2"></i>Clear
+                                    </a>
+                                @endif
+                            </div>
                         </div>
                     </form>
                 </div>

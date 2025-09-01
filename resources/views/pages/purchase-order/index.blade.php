@@ -50,29 +50,32 @@
                 <div class="p-3 border-bottom">
                     <form method="GET" action="{{ route('purchase-orders.index') }}" class="row g-3">
                         <div class="col-md-3">
+                            <label for="search" class="form-label">Search</label>
                             <div class="input-group">
                                 <span class="input-group-text">
                                     <i class="fas fa-search"></i>
                                 </span>
                                 <input type="text" 
                                        class="form-control" 
+                                       id="search"
                                        name="search" 
                                        placeholder="Search orders..." 
                                        value="{{ request('search') }}">
                             </div>
                         </div>
                         <div class="col-md-2">
-                            <select name="status" class="form-select">
+                            <label for="status" class="form-label">Status</label>
+                            <select name="status" id="status" class="form-select">
                                 <option value="">All Statuses</option>
                                 <option value="draft" {{ request('status') === 'draft' ? 'selected' : '' }}>Draft</option>
                                 <option value="accepted" {{ request('status') === 'accepted' ? 'selected' : '' }}>Accepted</option>
-
                                 <option value="done" {{ request('status') === 'done' ? 'selected' : '' }}>Done</option>
                                 <option value="cancel" {{ request('status') === 'cancel' ? 'selected' : '' }}>Cancel</option>
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <select name="supplier_id" class="form-select">
+                            <label for="supplier_id" class="form-label">Supplier</label>
+                            <select name="supplier_id" id="supplier_id" class="form-select">
                                 <option value="">All Suppliers</option>
                                 @foreach($suppliers as $supplier)
                                     <option value="{{ $supplier->id }}" {{ request('supplier_id') == $supplier->id ? 'selected' : '' }}>
@@ -82,11 +85,15 @@
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-filter me-2"></i>Filter
-                            </button>
+                            <label class="form-label">&nbsp;</label>
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-filter me-2"></i>Filter
+                                </button>
+                            </div>
                         </div>
                         <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
                             @if(request('search') || request('status') || request('supplier_id'))
                                 <a href="{{ route('purchase-orders.index') }}" class="btn btn-outline-secondary">
                                     <i class="fas fa-times me-2"></i>Clear

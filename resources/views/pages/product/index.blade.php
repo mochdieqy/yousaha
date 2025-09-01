@@ -50,19 +50,22 @@
                 <div class="p-3 border-bottom">
                     <form method="GET" action="{{ route('products.index') }}" class="row g-3">
                         <div class="col-md-4">
+                            <label for="search" class="form-label">Search</label>
                             <div class="input-group">
                                 <span class="input-group-text">
                                     <i class="fas fa-search"></i>
                                 </span>
                                 <input type="text" 
                                        class="form-control" 
+                                       id="search"
                                        name="search" 
                                        placeholder="Search products..." 
                                        value="{{ request('search') }}">
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <select name="type" class="form-select">
+                            <label for="type" class="form-label">Type</label>
+                            <select name="type" id="type" class="form-select">
                                 <option value="">All Types</option>
                                 <option value="goods" {{ request('type') === 'goods' ? 'selected' : '' }}>Goods</option>
                                 <option value="service" {{ request('type') === 'service' ? 'selected' : '' }}>Services</option>
@@ -70,14 +73,17 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-filter me-2"></i>Filter
-                            </button>
-                            @if(request('search') || request('type'))
-                                <a href="{{ route('products.index') }}" class="btn btn-outline-secondary ms-2">
-                                    <i class="fas fa-times me-2"></i>Clear
-                                </a>
-                            @endif
+                            <label class="form-label">&nbsp;</label>
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-filter me-2"></i>Filter
+                                </button>
+                                @if(request('search') || request('type'))
+                                    <a href="{{ route('products.index') }}" class="btn btn-outline-secondary ms-2">
+                                        <i class="fas fa-times me-2"></i>Clear
+                                    </a>
+                                @endif
+                            </div>
                         </div>
                     </form>
                 </div>

@@ -50,26 +50,31 @@
                 <div class="p-3 border-bottom">
                     <form method="GET" action="{{ route('warehouses.index') }}" class="row g-3">
                         <div class="col-md-6">
+                            <label for="search" class="form-label">Search</label>
                             <div class="input-group">
                                 <span class="input-group-text">
                                     <i class="fas fa-search"></i>
                                 </span>
                                 <input type="text" 
                                        class="form-control" 
+                                       id="search"
                                        name="search" 
                                        placeholder="Search warehouses by name, code, or address..." 
                                        value="{{ request('search') }}">
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-filter me-2"></i>Filter
-                            </button>
-                            @if(request('search'))
-                                <a href="{{ route('warehouses.index') }}" class="btn btn-outline-secondary ms-2">
-                                    <i class="fas fa-times me-2"></i>Clear
-                                </a>
-                            @endif
+                            <label class="form-label">&nbsp;</label>
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-filter me-2"></i>Filter
+                                </button>
+                                @if(request('search'))
+                                    <a href="{{ route('warehouses.index') }}" class="btn btn-outline-secondary ms-2">
+                                        <i class="fas fa-times me-2"></i>Clear
+                                    </a>
+                                @endif
+                            </div>
                         </div>
                     </form>
                 </div>

@@ -50,40 +50,49 @@
                 <div class="p-3 border-bottom">
                     <form method="GET" action="{{ route('expenses.index') }}" class="row g-3">
                         <div class="col-md-3">
+                            <label for="search" class="form-label">Search</label>
                             <div class="input-group">
                                 <span class="input-group-text">
                                     <i class="fas fa-search"></i>
                                 </span>
                                 <input type="text" 
                                        class="form-control" 
+                                       id="search"
                                        name="search" 
                                        placeholder="Search expenses..." 
                                        value="{{ request('search') }}">
                             </div>
                         </div>
                         <div class="col-md-3">
+                            <label for="date_from" class="form-label">Date From</label>
                             <input type="date" 
                                    class="form-control" 
+                                   id="date_from"
                                    name="date_from" 
                                    placeholder="Date From"
                                    value="{{ request('date_from') }}">
                         </div>
                         <div class="col-md-3">
+                            <label for="date_to" class="form-label">Date To</label>
                             <input type="date" 
                                    class="form-control" 
+                                   id="date_to"
                                    name="date_to" 
                                    placeholder="Date To"
                                    value="{{ request('date_to') }}">
                         </div>
                         <div class="col-md-3">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-filter me-2"></i>Filter
-                            </button>
-                            @if(request('search') || request('date_from') || request('date_to'))
-                                <a href="{{ route('expenses.index') }}" class="btn btn-outline-secondary ms-2">
-                                    <i class="fas fa-times me-2"></i>Clear
-                                </a>
-                            @endif
+                            <label class="form-label">&nbsp;</label>
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-filter me-2"></i>Filter
+                                </button>
+                                @if(request('search') || request('date_from') || request('date_to'))
+                                    <a href="{{ route('expenses.index') }}" class="btn btn-outline-secondary ms-2">
+                                        <i class="fas fa-times me-2"></i>Clear
+                                    </a>
+                                @endif
+                            </div>
                         </div>
                     </form>
                 </div>

@@ -50,19 +50,22 @@
                 <div class="p-3 border-bottom">
                     <form method="GET" action="{{ route('assets.index') }}" class="row g-3">
                         <div class="col-md-4">
+                            <label for="search" class="form-label">Search</label>
                             <div class="input-group">
                                 <span class="input-group-text">
                                     <i class="fas fa-search"></i>
                                 </span>
                                 <input type="text" 
                                        class="form-control" 
+                                       id="search"
                                        name="search" 
                                        placeholder="Search assets..." 
                                        value="{{ request('search') }}">
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <select name="location" class="form-select">
+                            <label for="location" class="form-label">Location</label>
+                            <select name="location" id="location" class="form-select">
                                 <option value="">All Locations</option>
                                 @foreach($assets->pluck('location')->filter()->unique() as $location)
                                     <option value="{{ $location }}" {{ request('location') === $location ? 'selected' : '' }}>
@@ -72,14 +75,17 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-filter me-2"></i>Filter
-                            </button>
-                            @if(request('search') || request('location'))
-                                <a href="{{ route('assets.index') }}" class="btn btn-outline-secondary ms-2">
-                                    <i class="fas fa-times me-2"></i>Clear
-                                </a>
-                            @endif
+                            <label class="form-label">&nbsp;</label>
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-filter me-2"></i>Filter
+                                </button>
+                                @if(request('search') || request('location'))
+                                    <a href="{{ route('assets.index') }}" class="btn btn-outline-secondary ms-2">
+                                        <i class="fas fa-times me-2"></i>Clear
+                                    </a>
+                                @endif
+                            </div>
                         </div>
                     </form>
                 </div>

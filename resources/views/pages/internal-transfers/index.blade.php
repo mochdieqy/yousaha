@@ -50,19 +50,22 @@
                 <div class="p-3 border-bottom">
                     <form method="GET" action="{{ route('internal-transfers.index') }}" class="row g-3">
                         <div class="col-md-4">
+                            <label for="search" class="form-label">Search</label>
                             <div class="input-group">
                                 <span class="input-group-text">
                                     <i class="fas fa-search"></i>
                                 </span>
                                 <input type="text" 
                                        class="form-control" 
+                                       id="search"
                                        name="search" 
                                        placeholder="Search transfers..." 
                                        value="{{ request('search') }}">
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <select name="account_type" class="form-select">
+                            <label for="account_type" class="form-label">Account Type</label>
+                            <select name="account_type" id="account_type" class="form-select">
                                 <option value="">All Account Types</option>
                                 <option value="Asset" {{ request('account_type') === 'Asset' ? 'selected' : '' }}>Asset</option>
                                 <option value="Liability" {{ request('account_type') === 'Liability' ? 'selected' : '' }}>Liability</option>
@@ -70,13 +73,16 @@
                             </select>
                         </div>
                         <div class="col-md-3">
+                            <label for="date_from" class="form-label">From Date</label>
                             <input type="date" 
                                    class="form-control" 
+                                   id="date_from"
                                    name="date_from" 
                                    placeholder="From Date" 
                                    value="{{ request('date_from') }}">
                         </div>
                         <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
                             <button type="submit" class="btn btn-primary w-100">
                                 <i class="fas fa-filter me-2"></i>Filter
                             </button>

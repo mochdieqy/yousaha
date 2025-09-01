@@ -50,19 +50,22 @@
                 <div class="p-3 border-bottom">
                     <form method="GET" action="{{ route('stocks.index') }}" class="row g-3">
                         <div class="col-md-3">
+                            <label for="search" class="form-label">Search</label>
                             <div class="input-group">
                                 <span class="input-group-text">
                                     <i class="fas fa-search"></i>
                                 </span>
                                 <input type="text" 
                                        class="form-control" 
+                                       id="search"
                                        name="search" 
                                        placeholder="Search products or warehouses..." 
                                        value="{{ request('search') }}">
                             </div>
                         </div>
                         <div class="col-md-2">
-                            <select name="warehouse_id" class="form-select">
+                            <label for="warehouse_id" class="form-label">Warehouse</label>
+                            <select name="warehouse_id" id="warehouse_id" class="form-select">
                                 <option value="">All Warehouses</option>
                                 @foreach($warehouses as $warehouse)
                                     <option value="{{ $warehouse->id }}" {{ request('warehouse_id') == $warehouse->id ? 'selected' : '' }}>
@@ -72,7 +75,8 @@
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <select name="product_id" class="form-select">
+                            <label for="product_id" class="form-label">Product</label>
+                            <select name="product_id" id="product_id" class="form-select">
                                 <option value="">All Products</option>
                                 @foreach($products as $product)
                                     <option value="{{ $product->id }}" {{ request('product_id') == $product->id ? 'selected' : '' }}>
@@ -82,7 +86,8 @@
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <select name="stock_status" class="form-select">
+                            <label for="stock_status" class="form-label">Status</label>
+                            <select name="stock_status" id="stock_status" class="form-select">
                                 <option value="">All Status</option>
                                 <option value="normal" {{ request('stock_status') == 'normal' ? 'selected' : '' }}>Normal</option>
                                 <option value="low" {{ request('stock_status') == 'low' ? 'selected' : '' }}>Low Stock</option>
@@ -90,14 +95,17 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-filter me-2"></i>Filter
-                            </button>
-                            @if(request('search') || request('warehouse_id') || request('product_id') || request('stock_status'))
-                                <a href="{{ route('stocks.index') }}" class="btn btn-outline-secondary ms-2">
-                                    <i class="fas fa-times me-2"></i>Clear
-                                </a>
-                            @endif
+                            <label class="form-label">&nbsp;</label>
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-filter me-2"></i>Filter
+                                </button>
+                                @if(request('search') || request('warehouse_id') || request('product_id') || request('stock_status'))
+                                    <a href="{{ route('stocks.index') }}" class="btn btn-outline-secondary ms-2">
+                                        <i class="fas fa-times me-2"></i>Clear
+                                    </a>
+                                @endif
+                            </div>
                         </div>
                     </form>
                 </div>

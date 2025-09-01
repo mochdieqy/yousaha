@@ -69,19 +69,22 @@
                 <div class="p-3 border-bottom">
                     <form method="GET" action="{{ route('employee-roles.index') }}" class="row g-3">
                         <div class="col-md-4">
+                            <label for="search" class="form-label">Search</label>
                             <div class="input-group">
                                 <span class="input-group-text">
                                     <i class="fas fa-search"></i>
                                 </span>
                                 <input type="text" 
                                        class="form-control" 
+                                       id="search"
                                        name="search" 
                                        placeholder="Search employees..." 
                                        value="{{ request('search') }}">
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <select name="role_filter" class="form-select">
+                            <label for="role_filter" class="form-label">Role</label>
+                            <select name="role_filter" id="role_filter" class="form-select">
                                 <option value="">All Roles</option>
                                 @foreach($employees->flatMap->roles->unique('id') as $role)
                                     <option value="{{ $role->id }}" {{ request('role_filter') == $role->id ? 'selected' : '' }}>
@@ -91,14 +94,17 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-filter me-2"></i>Filter
-                            </button>
-                            @if(request('search') || request('role_filter'))
-                                <a href="{{ route('employee-roles.index') }}" class="btn btn-outline-secondary ms-2">
-                                    <i class="fas fa-times me-2"></i>Clear
-                                </a>
-                            @endif
+                            <label class="form-label">&nbsp;</label>
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-filter me-2"></i>Filter
+                                </button>
+                                @if(request('search') || request('role_filter'))
+                                    <a href="{{ route('employee-roles.index') }}" class="btn btn-outline-secondary ms-2">
+                                        <i class="fas fa-times me-2"></i>Clear
+                                    </a>
+                                @endif
+                            </div>
                         </div>
                     </form>
                 </div>

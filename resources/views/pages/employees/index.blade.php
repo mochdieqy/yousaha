@@ -50,19 +50,22 @@
                 <div class="p-3 border-bottom">
                     <form method="GET" action="{{ route('employees.index') }}" class="row g-3">
                         <div class="col-md-3">
+                            <label for="search" class="form-label">Search</label>
                             <div class="input-group">
                                 <span class="input-group-text">
                                     <i class="fas fa-search"></i>
                                 </span>
                                 <input type="text" 
                                        class="form-control" 
+                                       id="search"
                                        name="search" 
                                        placeholder="Search employees..." 
                                        value="{{ request('search') }}">
                             </div>
                         </div>
                         <div class="col-md-2">
-                            <select name="department_id" class="form-select">
+                            <label for="department_id" class="form-label">Department</label>
+                            <select name="department_id" id="department_id" class="form-select">
                                 <option value="">All Departments</option>
                                 @foreach($departments as $department)
                                     <option value="{{ $department->id }}" {{ request('department_id') == $department->id ? 'selected' : '' }}>
@@ -72,7 +75,8 @@
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <select name="level" class="form-select">
+                            <label for="level" class="form-label">Level</label>
+                            <select name="level" id="level" class="form-select">
                                 <option value="">All Levels</option>
                                 <option value="Junior" {{ request('level') === 'Junior' ? 'selected' : '' }}>Junior</option>
                                 <option value="Middle" {{ request('level') === 'Middle' ? 'selected' : '' }}>Middle</option>
@@ -85,7 +89,8 @@
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <select name="work_arrangement" class="form-select">
+                            <label for="work_arrangement" class="form-label">Work Arrangement</label>
+                            <select name="work_arrangement" id="work_arrangement" class="form-select">
                                 <option value="">All Arrangements</option>
                                 <option value="WFO" {{ request('work_arrangement') === 'WFO' ? 'selected' : '' }}>WFO</option>
                                 <option value="WFH" {{ request('work_arrangement') === 'WFH' ? 'selected' : '' }}>WFH</option>
@@ -93,14 +98,17 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-filter me-2"></i>Filter
-                            </button>
-                            @if(request('search') || request('department_id') || request('level') || request('work_arrangement'))
-                                <a href="{{ route('employees.index') }}" class="btn btn-outline-secondary ms-2">
-                                    <i class="fas fa-times me-2"></i>Clear
-                                </a>
-                            @endif
+                            <label class="form-label">&nbsp;</label>
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-filter me-2"></i>Filter
+                                </button>
+                                @if(request('search') || request('department_id') || request('level') || request('work_arrangement'))
+                                    <a href="{{ route('employees.index') }}" class="btn btn-outline-secondary ms-2">
+                                        <i class="fas fa-times me-2"></i>Clear
+                                    </a>
+                                @endif
+                            </div>
                         </div>
                     </form>
                 </div>

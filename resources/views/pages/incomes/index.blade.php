@@ -50,46 +50,57 @@
                 <div class="p-3 border-bottom">
                     <form method="GET" action="{{ route('incomes.index') }}" class="row g-3">
                         <div class="col-md-3">
+                            <label for="search" class="form-label">Search</label>
                             <div class="input-group">
                                 <span class="input-group-text">
                                     <i class="fas fa-search"></i>
                                 </span>
                                 <input type="text" 
                                        class="form-control" 
+                                       id="search"
                                        name="search" 
                                        placeholder="Search incomes..." 
                                        value="{{ request('search') }}">
                             </div>
                         </div>
                         <div class="col-md-2">
+                            <label for="date_from" class="form-label">From Date</label>
                             <input type="date" 
                                    class="form-control" 
+                                   id="date_from"
                                    name="date_from" 
                                    placeholder="From Date"
                                    value="{{ request('date_from') }}">
                         </div>
                         <div class="col-md-2">
+                            <label for="date_to" class="form-label">To Date</label>
                             <input type="date" 
                                    class="form-control" 
+                                   id="date_to"
                                    name="date_to" 
                                    placeholder="To Date"
                                    value="{{ request('date_to') }}">
                         </div>
                         <div class="col-md-2">
+                            <label for="amount_min" class="form-label">Min Amount</label>
                             <input type="number" 
                                    class="form-control" 
+                                   id="amount_min"
                                    name="amount_min" 
                                    placeholder="Min Amount"
                                    value="{{ request('amount_min') }}">
                         </div>
                         <div class="col-md-2">
+                            <label for="amount_max" class="form-label">Max Amount</label>
                             <input type="number" 
                                    class="form-control" 
+                                   id="amount_max"
                                    name="amount_max" 
                                    placeholder="Max Amount"
                                    value="{{ request('amount_max') }}">
                         </div>
                         <div class="col-md-1">
+                            <label class="form-label">&nbsp;</label>
                             <button type="submit" class="btn btn-primary w-100">
                                 <i class="fas fa-filter"></i>
                             </button>
